@@ -1,0 +1,116 @@
+{
+  "report": {
+    "sc1_seed7": {
+      "rounds": 600,
+      "statuses": {
+        "success": 600,
+        "failed": 0,
+        "timeout": 0
+      },
+      "invalid_outputs": 0,
+      "nonfinite_outputs": 0,
+      "mean_saving_rate": 42.9
+    },
+    "sc1_seed42": {
+      "rounds": 600,
+      "statuses": {
+        "success": 600,
+        "failed": 0,
+        "timeout": 0
+      },
+      "invalid_outputs": 0,
+      "nonfinite_outputs": 0,
+      "mean_saving_rate": 47.28
+    },
+    "sc1_seed99": {
+      "rounds": 600,
+      "statuses": {
+        "success": 600,
+        "failed": 0,
+        "timeout": 0
+      },
+      "invalid_outputs": 0,
+      "nonfinite_outputs": 0,
+      "mean_saving_rate": 43.94
+    },
+    "sc2_seed11": {
+      "invalid_outputs": 0,
+      "statuses": {
+        "success": 150,
+        "failed": 0,
+        "timeout": 0
+      }
+    },
+    "sc2_seed77": {
+      "invalid_outputs": 0,
+      "statuses": {
+        "success": 150,
+        "failed": 0,
+        "timeout": 0
+      }
+    },
+    "sc3_seed3": {
+      "invalid_outputs": 0,
+      "statuses": {
+        "success": 127,
+        "failed": 73,
+        "timeout": 0
+      }
+    },
+    "sc3_seed13": {
+      "invalid_outputs": 0,
+      "statuses": {
+        "success": 127,
+        "failed": 73,
+        "timeout": 0
+      }
+    },
+    "sc4_seed5": {
+      "invalid_outputs": 0,
+      "statuses": {
+        "success": 90,
+        "failed": 60,
+        "timeout": 0
+      }
+    },
+    "sc4_seed55": {
+      "invalid_outputs": 0,
+      "statuses": {
+        "success": 90,
+        "failed": 60,
+        "timeout": 0
+      }
+    },
+    "sc5_seed9": {
+      "rounds": 400,
+      "statuses": {
+        "success": 400,
+        "failed": 0,
+        "timeout": 0
+      },
+      "invalid_outputs": 0,
+      "mean_saving_rate": 49.84
+    },
+    "sc5_seed29": {
+      "rounds": 400,
+      "statuses": {
+        "success": 400,
+        "failed": 0,
+        "timeout": 0
+      },
+      "invalid_outputs": 0,
+      "mean_saving_rate": 46.97
+    },
+    "sc5_seed89": {
+      "rounds": 400,
+      "statuses": {
+        "success": 400,
+        "failed": 0,
+        "timeout": 0
+      },
+      "invalid_outputs": 0,
+      "mean_saving_rate": 45.95
+    }
+  },
+  "issues": []
+}

@@ -1,0 +1,32 @@
+# Web 框架
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+
+# ORM
+sqlmodel>=0.0.16
+
+# 配置管理
+pydantic-settings>=2.2.1
+pyyaml>=6.0.1
+
+# 日志
+loguru>=0.7.2
+
+# 定时任务
+apscheduler>=3.10.4
+python-dateutil>=2.8.2
+
+# HTTP 客户端（云端同步）
+httpx>=0.27.0
+
+# MQTT 客户端（备用，对接设备）
+aiomqtt>=2.2.0
+
+# 寻优算法（Cursor 核心：PSO 粒子群寻优）
+scikit-opt>=0.6.6
+numpy>=1.26.0
+scipy>=1.11.0
+
+# 测试
+pytest>=8.1.1
+pytest-asyncio>=0.23.6

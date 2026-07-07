@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中央空调AI寻优系统 - 边缘端状态</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #f0f2f5;
+            color: #333;
+            padding: 20px;
+        }
+        .container { max-width: 960px; margin: 0 auto; }
+        h1 {
+            color: #1890ff;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            padding: 16px 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .card h2 {
+            font-size: 14px;
+            color: #999;
+            margin-bottom: 12px;
+            font-weight: normal;
+        }
+        .card .value {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1890ff;
+        }
+        .card .sub {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+        .status-ok { color: #52c41a; }
+        .status-warning { color: #faad14; }
+        .status-error { color: #f5222d; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 10px 16px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+        }
+        th {
+            background: #fafafa;
+            color: #666;
+            font-weight: 600;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #fff;
+        }
+        .badge-INFO { background: #1890ff; }
+        .badge-WARNING { background: #faad14; }
+        .badge-CRITICAL { background: #f5222d; }
+        .footer {
+            text-align: center;
+            color: #999;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+        .refresh-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: #52c41a;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>中央空调AI寻优系统 - 边缘端状态</h1>
+
+        <div class="grid">
+            <div class="card">
+                <h2>服务状态</h2>
+                <div class="value" id="status">--</div>
+                <div class="sub" id="uptime">运行时长: --</div>
+            </div>
+            <div class="card">
+                <h2>版本</h2>
+                <div class="value" id="version">--</div>
+                <div class="sub">边缘端 v0.1.0</div>
+            </div>
+            <div class="card">
+                <h2>最近寻优节能率</h2>
+                <div class="value" id="saving-rate">-- %</div>
+                <div class="sub" id="last-optimize">--</div>
+            </div>
+            <div class="card">
+                <h2>设备在线</h2>
+                <div class="value" id="device-count">-- / --</div>
+                <div class="sub">在线 / 总数</div>
+            </div>
+        </div>
+
+        <h2 style="font-size:16px; color:#666; margin: 20px 0 12px;">最近告警</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>级别</th>
+                    <th>内容</th>
+                    <th>时间</th>
+                </tr>
+            </thead>
+            <tbody id="alarm-table">
+                <tr><td colspan="3" style="text-align:center; color:#999;">暂无告警</td></tr>
+            </tbody>
+        </table>
+
+        <div class="footer">
+            <span class="refresh-indicator"></span>
+            每 5 秒自动刷新
+        </div>
+    </div>
+
+    <script>
+        async function fetchStatus() {
+            try {
+                const res = await fetch('/api/v1/status/local');
+                const json = await res.json();
+                if (json.code === 0 && json.data) {
+                    const d = json.data;
+                    document.getElementById('status').textContent = d.status.toUpperCase();
+                    document.getElementById('status').className = 'value status-' + (
+                        d.status === 'ok' ? 'ok' : d.status === 'warning' ? 'warning' : 'error'
+                    );
+                    document.getElementById('uptime').textContent = '运行时长: ' + d.app_uptime;
+                    document.getElementById('version').textContent = d.app_version;
+                    document.getElementById('saving-rate').textContent =
+                        (d.last_optimize_saving_rate || 0).toFixed(1) + ' %';
+                    document.getElementById('last-optimize').textContent =
+                        d.last_optimize_at ? '最近寻优: ' + d.last_optimize_at : '暂未寻优';
+                    document.getElementById('device-count').textContent =
+                        d.online_device_count + ' / ' + d.device_count;
+
+                    const tbody = document.getElementById('alarm-table');
+                    if (d.recent_alarms && d.recent_alarms.length > 0) {
+                        tbody.innerHTML = d.recent_alarms.map(a =>
+                            '<tr>' +
+                            '<td><span class="badge badge-' + a.level + '">' + a.level + '</span></td>' +
+                            '<td>' + a.message + '</td>' +
+                            '<td>' + a.created_at + '</td>' +
+                            '</tr>'
+                        ).join('');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#999;">暂无告警</td></tr>';
+                    }
+                }
+            } catch (e) {
+                console.error('获取状态失败:', e);
+            }
+        }
+
+        fetchStatus();
+        setInterval(fetchStatus, 5000);
+    </script>
+</body>
+</html>

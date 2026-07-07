@@ -1,0 +1,110 @@
+2026-07-06 13:52:28 | ERROR    | app.algorithms.optimizer:optimize:101 | 寻优输入解析失败: 16 validation errors for DeviceData
+outdoor_temp
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='hot', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+outdoor_humidity
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='wet', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+indoor_temp
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='warm', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+indoor_load
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='high', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chiller_load
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='busy', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chiller_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='strong', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chilled_water_temp
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='cold', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_water_temp
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='warmish', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chilled_pump_freq
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='fast', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chilled_pump_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='high', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_pump_freq
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='slow', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_pump_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='low', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_tower_fan_freq
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='normal', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_tower_fan_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='medium', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+terminal_fan_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='small', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+total_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='big', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+2026-07-06 13:52:28 | ERROR    | app.algorithms.optimizer:optimize:101 | 寻优输入解析失败: 16 validation errors for DeviceData
+outdoor_temp
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+outdoor_humidity
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+indoor_temp
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+indoor_load
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chiller_load
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chiller_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chilled_water_temp
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_water_temp
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chilled_pump_freq
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chilled_pump_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_pump_freq
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_pump_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_tower_fan_freq
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_tower_fan_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+terminal_fan_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+total_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+2026-07-06 14:01:17 | ERROR    | app.services.storage:save_optimize_record:72 | 保存寻优记录失败: (sqlite3.OperationalError) database is locked
+[SQL: INSERT INTO optimize_record (created_at, updated_at, task_id, status, chilled_water_temp, chilled_pump_freq, cooling_pump_freq, cooling_tower_fan_freq, predicted_power, energy_saving_rate, duration, optimized_at, input_snapshot, remark, synced) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('2026-07-06 14:01:10.010762', '2026-07-06 14:01:10.010928', 'e17f6a79-e274-4575-a38a-27db273e568b', 'success', 7.82, 25.0, 25.0, 24.22, 10.921, 45.87, 0.0422, '2026-07-06 14:01:10.010254', '{"timestamp":"2026-07-08T08:39:42.878932","outdoor_temp":17.2,"outdoor_humidity":63.72,"indoor_temp":24.830491854645906,"indoor_humidity":51.28,"indo ... (252 characters truncated) ... g_pump_power":4.6654800000000005,"cooling_tower_fan_freq":33.696,"cooling_tower_fan_power":2.38224,"terminal_fan_power":2.292,"total_power":46.46236}', '', 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-07-06 14:37:10 | ERROR    | app.algorithms.optimizer:optimize:101 | 寻优输入解析失败: 1 validation error for DeviceData
+timestamp
+  Field required [type=missing, input_value={'data_time': '2026-07-17...total_power": 22.4354}'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+2026-07-06 14:47:16 | ERROR    | app.algorithms.optimizer:optimize:101 | 寻优输入解析失败: 1 validation error for DeviceData
+timestamp
+  Field required [type=missing, input_value={'data_time': '2026-07-17...total_power": 22.2317}'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing

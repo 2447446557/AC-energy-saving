@@ -1,0 +1,981 @@
+2026-07-06 10:50:53 | INFO     | __main__:main:170 | 业务配置已加载: 5 个模块
+2026-07-06 10:50:55 | INFO     | __main__:main:174 | 数据库已初始化
+2026-07-06 10:50:55 | INFO     | __main__:main:181 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-06 10:50:55 | INFO     | __main__:lifespan:112 | 边缘端服务启动中...
+2026-07-06 10:50:55 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-06 10:50:55 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-06 10:50:55 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-06 10:50:55 | INFO     | __main__:lifespan:125 | 边缘端服务已启动
+2026-07-06 10:51:54 | WARNING  | app.algorithms.optimizer_stub:optimize:30 | OptimizerStub.optimize: 使用 stub 默认值，请 Cursor 替换为真实 PSO 实现
+2026-07-06 13:21:08 | INFO     | __main__:main:193 | 业务配置已加载: 5 个模块
+2026-07-06 13:21:08 | INFO     | __main__:main:197 | 数据库已初始化
+2026-07-06 13:21:08 | INFO     | __main__:main:204 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-06 13:21:08 | INFO     | __main__:lifespan:135 | 边缘端服务启动中...
+2026-07-06 13:21:08 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-06 13:21:08 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-06 13:21:08 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-06 13:21:08 | INFO     | __main__:lifespan:148 | 边缘端服务已启动
+2026-07-06 13:31:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:27 | ===== 寻优任务开始 =====
+2026-07-06 13:31:09 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-06 13:31:09 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-06 13:31:09 | INFO     | app.main:set_optimizer:81 | 寻优算法已注入
+2026-07-06 13:31:09 | INFO     | app.main:set_energy_model:88 | 能耗模型已注入
+2026-07-06 13:31:09 | INFO     | app.main:set_data_cleaner:95 | 数据清洗已注入
+2026-07-06 13:31:09 | INFO     | app.main:set_constraints:102 | 约束校验已注入
+2026-07-06 13:31:09 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-06 13:31:09 | INFO     | app.main:bootstrap_cursor_algorithms:122 | Cursor 核心算法已全部注入并接管闭环
+2026-07-06 13:31:09 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:98 | 寻优完成: 节能率=11.6%, 耗时=0.03s
+2026-07-06 13:31:09 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:106 | ===== 寻优任务结束 =====
+2026-07-06 13:41:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:27 | ===== 寻优任务开始 =====
+2026-07-06 13:41:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:98 | 寻优完成: 节能率=21.9%, 耗时=0.03s
+2026-07-06 13:41:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:106 | ===== 寻优任务结束 =====
+2026-07-06 13:51:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:27 | ===== 寻优任务开始 =====
+2026-07-06 13:51:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:98 | 寻优完成: 节能率=28.6%, 耗时=0.04s
+2026-07-06 13:51:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:106 | ===== 寻优任务结束 =====
+2026-07-06 13:51:57 | INFO     | __main__:main:193 | 业务配置已加载: 5 个模块
+2026-07-06 13:51:58 | INFO     | __main__:main:197 | 数据库已初始化
+2026-07-06 13:51:58 | INFO     | __main__:main:204 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-06 13:51:58 | INFO     | __main__:lifespan:135 | 边缘端服务启动中...
+2026-07-06 13:51:58 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-06 13:51:58 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-06 13:51:58 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-06 13:51:58 | INFO     | __main__:lifespan:148 | 边缘端服务已启动
+2026-07-06 13:51:58 | INFO     | __main__:lifespan:153 | 边缘端服务关闭中...
+2026-07-06 13:51:58 | INFO     | app.scheduler.scheduler:shutdown_scheduler:80 | 定时任务调度器已关闭
+2026-07-06 13:51:58 | INFO     | __main__:lifespan:155 | 边缘端服务已关闭
+2026-07-06 13:52:26 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:27 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:28 | ERROR    | app.algorithms.optimizer:optimize:101 | 寻优输入解析失败: 16 validation errors for DeviceData
+outdoor_temp
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='hot', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+outdoor_humidity
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='wet', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+indoor_temp
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='warm', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+indoor_load
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='high', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chiller_load
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='busy', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chiller_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='strong', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chilled_water_temp
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='cold', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_water_temp
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='warmish', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chilled_pump_freq
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='fast', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chilled_pump_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='high', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_pump_freq
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='slow', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_pump_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='low', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_tower_fan_freq
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='normal', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_tower_fan_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='medium', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+terminal_fan_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='small', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+total_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='big', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+2026-07-06 13:52:28 | WARNING  | app.algorithms.fallback:fallback_params:120 | 触发兜底[输入解析失败:16 validation errors for DeviceData
+outdoor_temp
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='hot', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+outdoor_humidity
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='wet', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+indoor_temp
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='warm', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+indoor_load
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='high', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chiller_load
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='busy', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chiller_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='strong', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chilled_water_temp
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='cold', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_water_temp
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='warmish', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chilled_pump_freq
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='fast', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chilled_pump_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='high', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_pump_freq
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='slow', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_pump_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='low', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_tower_fan_freq
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='normal', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_tower_fan_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='medium', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+terminal_fan_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='small', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+total_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='big', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing]，采用上一次最优值: {'chilled_water_temp': 7.993377549185786, 'chilled_pump_freq': 25.0, 'cooling_pump_freq': 25.0, 'cooling_tower_fan_freq': 23.152994514651574}
+2026-07-06 13:52:28 | ERROR    | app.algorithms.optimizer:optimize:101 | 寻优输入解析失败: 16 validation errors for DeviceData
+outdoor_temp
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+outdoor_humidity
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+indoor_temp
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+indoor_load
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chiller_load
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chiller_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chilled_water_temp
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_water_temp
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chilled_pump_freq
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chilled_pump_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_pump_freq
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_pump_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_tower_fan_freq
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_tower_fan_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+terminal_fan_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+total_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+2026-07-06 13:52:28 | WARNING  | app.algorithms.fallback:fallback_params:120 | 触发兜底[输入解析失败:16 validation errors for DeviceData
+outdoor_temp
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+outdoor_humidity
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+indoor_temp
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+indoor_load
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chiller_load
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chiller_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chilled_water_temp
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_water_temp
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chilled_pump_freq
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+chilled_pump_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_pump_freq
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_pump_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_tower_fan_freq
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+cooling_tower_fan_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+terminal_fan_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing
+total_power
+  Input should be a valid number, unable to parse string as a number [type=float_parsing, input_value='', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.13/v/float_parsing]，采用上一次最优值: {'chilled_water_temp': 7.993377549185786, 'chilled_pump_freq': 25.0, 'cooling_pump_freq': 25.0, 'cooling_tower_fan_freq': 23.152994514651574}
+2026-07-06 13:52:29 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:31 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:31 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:31 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:32 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:32 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:32 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:32 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:33 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:33 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:33 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:34 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:34 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:34 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:34 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:35 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:35 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:37 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:37 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:37 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:37 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:39 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:39 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:40 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:40 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:40 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:40 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:41 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:41 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:42 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:42 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:42 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:42 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:42 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:43 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:43 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:44 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:44 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:45 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:45 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:46 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:47 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:47 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:47 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:47 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:48 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:48 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:48 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:49 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:50 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:51 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:51 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:52 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:53 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:54 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:54 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:54 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:55 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:55 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:56 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:56 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:57 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:58 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:59 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:59 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:59 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:59 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:52:59 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:00 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:00 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:01 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:01 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:02 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:02 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:02 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:03 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:03 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:04 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:04 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:04 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:05 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:05 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:06 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:06 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:06 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:07 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:07 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:07 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:08 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:08 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:08 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:09 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:09 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:09 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:09 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:09 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:10 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:10 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:10 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:10 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:11 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:11 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:11 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:11 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:11 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:12 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:12 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:12 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:12 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:12 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:13 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:13 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:13 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:13 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:13 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:14 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:14 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:15 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:15 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:15 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:15 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:16 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:16 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:17 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:17 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:17 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:17 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:18 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:18 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:18 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:18 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:19 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:19 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:19 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:19 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:20 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:20 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:21 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:21 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:22 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:23 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:23 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:23 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:23 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:24 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:24 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:24 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:25 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:26 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:27 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:27 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:27 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:27 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:27 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:28 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:28 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:28 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:28 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:28 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:28 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:29 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:29 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:31 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:31 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:32 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:32 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:33 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:33 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:33 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:34 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:35 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:35 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:36 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:37 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:37 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:38 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:38 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:39 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:39 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:39 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:40 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:40 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:40 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:42 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:43 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:43 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:44 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:44 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:44 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:44 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:45 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:46 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:47 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:48 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:48 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:49 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:50 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:50 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:50 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:51 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:51 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:52 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:53 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:53 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:54 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:54 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:54 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:54 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:55 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:55 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:56 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:56 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:57 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:57 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:58 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:59 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:59 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:53:59 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:54:00 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:54:00 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:54:00 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:54:00 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:54:00 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:54:01 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:54:01 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:54:01 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:54:01 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:54:02 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:54:02 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:54:02 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:54:02 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:02 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:02 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:02 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:03 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:03 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:03 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:04 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:04 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:05 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:05 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:06 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:06 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:07 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:08 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:08 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:08 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:09 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:10 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:12 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:13 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:13 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:13 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:13 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:14 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:14 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:14 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:14 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:14 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:14 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:15 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:15 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:15 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:16 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:16 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:17 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:17 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:17 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:18 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:18 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:19 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:19 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:19 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:20 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:20 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:21 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:21 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:21 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:22 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:23 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:23 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:23 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:24 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:24 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:24 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:25 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:25 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:25 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:26 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:27 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:27 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:27 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:27 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:29 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:29 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:30 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:30 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:30 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:30 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:31 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:31 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:32 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:32 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:33 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:34 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:34 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:35 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:35 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:36 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:36 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:37 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:37 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:38 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:39 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:39 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:40 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:40 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:41 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:42 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:42 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:43 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:43 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:44 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:44 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:45 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:46 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:46 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:47 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:47 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:48 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:48 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:50 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:50 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:51 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:53 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:53 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:54 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:54 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:56 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:57 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:57 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:58 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:57:59 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:58:00 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:58:02 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:58:02 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:58:04 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:58:05 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:58:05 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:58:06 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:58:07 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:58:09 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 13:58:09 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 14:01:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:27 | ===== 寻优任务开始 =====
+2026-07-06 14:01:17 | ERROR    | app.services.storage:save_optimize_record:72 | 保存寻优记录失败: (sqlite3.OperationalError) database is locked
+[SQL: INSERT INTO optimize_record (created_at, updated_at, task_id, status, chilled_water_temp, chilled_pump_freq, cooling_pump_freq, cooling_tower_fan_freq, predicted_power, energy_saving_rate, duration, optimized_at, input_snapshot, remark, synced) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('2026-07-06 14:01:10.010762', '2026-07-06 14:01:10.010928', 'e17f6a79-e274-4575-a38a-27db273e568b', 'success', 7.82, 25.0, 25.0, 24.22, 10.921, 45.87, 0.0422, '2026-07-06 14:01:10.010254', '{"timestamp":"2026-07-08T08:39:42.878932","outdoor_temp":17.2,"outdoor_humidity":63.72,"indoor_temp":24.830491854645906,"indoor_humidity":51.28,"indo ... (252 characters truncated) ... g_pump_power":4.6654800000000005,"cooling_tower_fan_freq":33.696,"cooling_tower_fan_power":2.38224,"terminal_fan_power":2.292,"total_power":46.46236}', '', 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-07-06 14:01:17 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:98 | 寻优完成: 节能率=45.9%, 耗时=0.04s
+2026-07-06 14:01:17 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:106 | ===== 寻优任务结束 =====
+2026-07-06 14:11:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:27 | ===== 寻优任务开始 =====
+2026-07-06 14:11:09 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:98 | 寻优完成: 节能率=49.1%, 耗时=0.04s
+2026-07-06 14:11:09 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:106 | ===== 寻优任务结束 =====
+2026-07-06 14:21:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:27 | ===== 寻优任务开始 =====
+2026-07-06 14:21:08 | INFO     | app.algorithms.data_cleaner:clean:164 | [清洗] 识别到工况突变，自适应接受新工况: outdoor_temp=28.11
+2026-07-06 14:21:10 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:98 | 寻优完成: 节能率=52.0%, 耗时=0.05s
+2026-07-06 14:21:10 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:106 | ===== 寻优任务结束 =====
+2026-07-06 14:31:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:27 | ===== 寻优任务开始 =====
+2026-07-06 14:31:10 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:98 | 寻优完成: 节能率=56.5%, 耗时=0.08s
+2026-07-06 14:31:10 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:106 | ===== 寻优任务结束 =====
+2026-07-06 14:37:10 | ERROR    | app.algorithms.optimizer:optimize:101 | 寻优输入解析失败: 1 validation error for DeviceData
+timestamp
+  Field required [type=missing, input_value={'data_time': '2026-07-17...total_power": 22.4354}'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+2026-07-06 14:37:10 | WARNING  | app.algorithms.fallback:fallback_params:120 | 触发兜底[输入解析失败:1 validation error for DeviceData
+timestamp
+  Field required [type=missing, input_value={'data_time': '2026-07-17...total_power": 22.4354}'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing]，采用上一次最优值: {'chilled_water_temp': 10.178644301405715, 'chilled_pump_freq': 25.0, 'cooling_pump_freq': 25.0, 'cooling_tower_fan_freq': 20.0}
+2026-07-06 14:41:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:27 | ===== 寻优任务开始 =====
+2026-07-06 14:41:09 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:98 | 寻优完成: 节能率=66.5%, 耗时=0.07s
+2026-07-06 14:41:09 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:106 | ===== 寻优任务结束 =====
+2026-07-06 14:47:16 | ERROR    | app.algorithms.optimizer:optimize:101 | 寻优输入解析失败: 1 validation error for DeviceData
+timestamp
+  Field required [type=missing, input_value={'data_time': '2026-07-17...total_power": 22.2317}'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing
+2026-07-06 14:47:16 | WARNING  | app.algorithms.fallback:fallback_params:120 | 触发兜底[输入解析失败:1 validation error for DeviceData
+timestamp
+  Field required [type=missing, input_value={'data_time': '2026-07-17...total_power": 22.2317}'}, input_type=dict]
+    For further information visit https://errors.pydantic.dev/2.13/v/missing]，采用上一次最优值: {'chilled_water_temp': 10.380657386253171, 'chilled_pump_freq': 25.0, 'cooling_pump_freq': 25.0, 'cooling_tower_fan_freq': 20.0}
+2026-07-06 14:51:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:27 | ===== 寻优任务开始 =====
+2026-07-06 14:51:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:98 | 寻优完成: 节能率=67.4%, 耗时=0.03s
+2026-07-06 14:51:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:106 | ===== 寻优任务结束 =====
+2026-07-06 15:01:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:27 | ===== 寻优任务开始 =====
+2026-07-06 15:01:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:98 | 寻优完成: 节能率=67.9%, 耗时=0.04s
+2026-07-06 15:01:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:106 | ===== 寻优任务结束 =====
+2026-07-06 15:11:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:27 | ===== 寻优任务开始 =====
+2026-07-06 15:11:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:98 | 寻优完成: 节能率=68.2%, 耗时=0.03s
+2026-07-06 15:11:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:106 | ===== 寻优任务结束 =====
+2026-07-06 15:21:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:27 | ===== 寻优任务开始 =====
+2026-07-06 15:21:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:98 | 寻优完成: 节能率=68.3%, 耗时=0.03s
+2026-07-06 15:21:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:106 | ===== 寻优任务结束 =====
+2026-07-06 15:31:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:27 | ===== 寻优任务开始 =====
+2026-07-06 15:31:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:98 | 寻优完成: 节能率=68.4%, 耗时=0.03s
+2026-07-06 15:31:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:106 | ===== 寻优任务结束 =====
+2026-07-06 15:40:19 | INFO     | __main__:lifespan:153 | 边缘端服务关闭中...
+2026-07-06 15:40:19 | INFO     | app.scheduler.scheduler:shutdown_scheduler:80 | 定时任务调度器已关闭
+2026-07-06 15:40:19 | INFO     | __main__:lifespan:155 | 边缘端服务已关闭
+2026-07-06 15:40:19 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-06 15:40:19 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-06 15:40:19 | INFO     | __main__:set_optimizer:81 | 寻优算法已注入
+2026-07-06 15:40:19 | INFO     | __main__:set_energy_model:88 | 能耗模型已注入
+2026-07-06 15:40:19 | INFO     | __main__:set_data_cleaner:95 | 数据清洗已注入
+2026-07-06 15:40:19 | INFO     | __main__:set_constraints:102 | 约束校验已注入
+2026-07-06 15:40:19 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-06 15:40:19 | INFO     | __main__:bootstrap_cursor_algorithms:122 | Cursor 核心算法已全部注入并接管闭环
+2026-07-06 15:40:21 | INFO     | __main__:main:193 | 业务配置已加载: 5 个模块
+2026-07-06 15:40:30 | INFO     | __main__:main:197 | 数据库已初始化
+2026-07-06 15:40:30 | INFO     | __main__:main:204 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-06 15:40:30 | INFO     | __main__:lifespan:135 | 边缘端服务启动中...
+2026-07-06 15:40:30 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-06 15:40:30 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-06 15:40:30 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-06 15:40:30 | INFO     | __main__:lifespan:148 | 边缘端服务已启动
+2026-07-06 15:50:30 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-06 15:50:31 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-06 15:50:31 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-06 15:50:31 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-06 15:50:31 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-06 15:50:31 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-06 15:50:31 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-06 15:50:31 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-06 15:50:31 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-06 15:50:31 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=10.7%, 耗时=0.03s
+2026-07-06 15:50:31 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-06 15:57:25 | INFO     | __main__:main:246 | 业务配置已加载: 6 个模块
+2026-07-06 15:57:26 | INFO     | __main__:main:250 | 数据库已初始化
+2026-07-06 15:57:26 | INFO     | __main__:main:257 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-06 15:57:26 | INFO     | __main__:lifespan:182 | 边缘端服务启动中...
+2026-07-06 15:57:27 | INFO     | app.services.mqtt_subscriber:start:208 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-06 15:57:27 | INFO     | app.services.mqtt_simulator:start:97 | MQTT 模拟发布器已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/device-001/data, interval=5.0s
+2026-07-06 15:57:27 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-06 15:57:27 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-06 15:57:27 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-06 15:57:27 | INFO     | __main__:lifespan:200 | 边缘端服务已启动
+2026-07-06 15:57:27 | INFO     | __main__:lifespan:205 | 边缘端服务关闭中...
+2026-07-06 15:57:32 | INFO     | app.services.mqtt_subscriber:stop:217 | MQTT 订阅服务已停止: 收到 0 条，异常 0 条
+2026-07-06 15:57:37 | WARNING  | app.services.mqtt_subscriber:_subscribe_loop:281 | MQTT 连接/接收异常: Operation timed out，2 秒后重连
+2026-07-06 15:57:37 | WARNING  | app.services.mqtt_simulator:_publish_loop:178 | MQTT 模拟发布连接异常: Operation timed out，2s 后重连
+2026-07-06 15:57:37 | INFO     | app.services.mqtt_simulator:stop:109 | MQTT 模拟发布器已停止: 共发布 0 条
+2026-07-06 15:57:37 | INFO     | app.scheduler.scheduler:shutdown_scheduler:80 | 定时任务调度器已关闭
+2026-07-06 15:57:37 | INFO     | __main__:lifespan:208 | 边缘端服务已关闭
+2026-07-06 16:00:30 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-06 16:00:30 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=23.2%, 耗时=0.03s
+2026-07-06 16:00:30 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-06 16:02:58 | INFO     | __main__:main:247 | 业务配置已加载: 6 个模块
+2026-07-06 16:02:58 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-06 16:02:58 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-06 16:02:58 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-06 16:02:59 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-06 16:02:59 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-06 16:02:59 | INFO     | app.services.mqtt_simulator:start:83 | MQTT 模拟发布器正在连接: test.mosquitto.org:1883
+2026-07-06 16:02:59 | INFO     | app.services.mqtt_simulator:start:88 | MQTT 模拟发布器已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/device-001/data, interval=5.0s
+2026-07-06 16:02:59 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1] indoor_temp=25.218128918018618°C, total_power=32.0095kW
+2026-07-06 16:02:59 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-06 16:02:59 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-06 16:02:59 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-06 16:02:59 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-06 16:03:04 | INFO     | app.services.mqtt_subscriber:_on_disconnect:230 | MQTT 已断开（rc=Unspecified error），paho 会自动重连...
+2026-07-06 16:03:04 | INFO     | app.services.mqtt_simulator:_on_disconnect:162 | MQTT 模拟发布器断开（rc=Unspecified error），自动重连中...
+2026-07-06 16:03:04 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:03:10 | INFO     | app.services.mqtt_simulator:_on_disconnect:162 | MQTT 模拟发布器断开（rc=Unspecified error），自动重连中...
+2026-07-06 16:03:10 | INFO     | app.services.mqtt_subscriber:_on_disconnect:230 | MQTT 已断开（rc=Unspecified error），paho 会自动重连...
+2026-07-06 16:03:17 | INFO     | app.services.mqtt_simulator:_on_disconnect:162 | MQTT 模拟发布器断开（rc=Unspecified error），自动重连中...
+2026-07-06 16:03:17 | INFO     | app.services.mqtt_subscriber:_on_disconnect:230 | MQTT 已断开（rc=Unspecified error），paho 会自动重连...
+2026-07-06 16:03:19 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:03:26 | INFO     | app.services.mqtt_simulator:_on_disconnect:162 | MQTT 模拟发布器断开（rc=Unspecified error），自动重连中...
+2026-07-06 16:03:26 | INFO     | app.services.mqtt_subscriber:_on_disconnect:230 | MQTT 已断开（rc=Unspecified error），paho 会自动重连...
+2026-07-06 16:03:29 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:03:39 | INFO     | app.services.mqtt_simulator:_on_disconnect:162 | MQTT 模拟发布器断开（rc=Unspecified error），自动重连中...
+2026-07-06 16:03:39 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:03:40 | INFO     | app.services.mqtt_subscriber:_on_disconnect:230 | MQTT 已断开（rc=Unspecified error），paho 会自动重连...
+2026-07-06 16:03:44 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:03:49 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:03:54 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:04:00 | INFO     | app.services.mqtt_simulator:_on_disconnect:162 | MQTT 模拟发布器断开（rc=Unspecified error），自动重连中...
+2026-07-06 16:04:01 | INFO     | app.services.mqtt_subscriber:_on_disconnect:230 | MQTT 已断开（rc=Unspecified error），paho 会自动重连...
+2026-07-06 16:04:04 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:04:09 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:04:14 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:04:19 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:04:24 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:04:29 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:04:37 | INFO     | app.services.mqtt_simulator:_on_disconnect:162 | MQTT 模拟发布器断开（rc=Unspecified error），自动重连中...
+2026-07-06 16:04:38 | INFO     | app.services.mqtt_subscriber:_on_disconnect:230 | MQTT 已断开（rc=Unspecified error），paho 会自动重连...
+2026-07-06 16:04:39 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:04:44 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:04:49 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:04:54 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:04:59 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:05:04 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:05:09 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:05:14 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:05:19 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:05:24 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:05:29 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:05:34 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:05:39 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:05:46 | INFO     | app.services.mqtt_simulator:_on_disconnect:162 | MQTT 模拟发布器断开（rc=Unspecified error），自动重连中...
+2026-07-06 16:05:47 | INFO     | app.services.mqtt_subscriber:_on_disconnect:230 | MQTT 已断开（rc=Unspecified error），paho 会自动重连...
+2026-07-06 16:05:49 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:05:54 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:05:59 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:06:04 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:06:09 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:06:14 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:06:19 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:06:24 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:06:29 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:06:34 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:06:39 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:06:44 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:06:49 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:06:54 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:06:59 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:07:04 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:07:09 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:07:14 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:07:19 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:07:24 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:07:29 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:07:34 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:07:39 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:07:44 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:07:51 | INFO     | app.services.mqtt_simulator:_on_disconnect:162 | MQTT 模拟发布器断开（rc=Unspecified error），自动重连中...
+2026-07-06 16:07:52 | INFO     | app.services.mqtt_subscriber:_on_disconnect:230 | MQTT 已断开（rc=Unspecified error），paho 会自动重连...
+2026-07-06 16:07:54 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:07:59 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:08:04 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:08:09 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:08:14 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:08:19 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:08:24 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:08:29 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:08:34 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:08:39 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:08:44 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:08:49 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:08:54 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:08:59 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:09:04 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:09:09 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:09:14 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:09:19 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:09:24 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:09:29 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:09:34 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:09:39 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:09:44 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:09:49 | WARNING  | app.services.mqtt_simulator:_publish_loop:147 | MQTT 发布失败 rc=4
+2026-07-06 16:09:52 | INFO     | app.services.mqtt_simulator:_on_connect:156 | MQTT 模拟发布器已连接 Broker: test.mosquitto.org:1883
+2026-07-06 16:09:54 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-06 16:09:55 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1] topic=ac/hospital/device-001/data, indoor_temp=25.073411808496033°C, total_power=34.7041kW
+2026-07-06 16:10:49 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #21] indoor_temp=25.004972985332305°C, total_power=35.0691kW
+2026-07-06 16:11:35 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #21] topic=ac/hospital/device-001/data, indoor_temp=25.542611153128572°C, total_power=35.085kW
+2026-07-06 16:12:29 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #41] indoor_temp=25.39714637879922°C, total_power=33.3162kW
+2026-07-06 16:12:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-06 16:12:59 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-06 16:12:59 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-06 16:12:59 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-06 16:12:59 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-06 16:12:59 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-06 16:12:59 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-06 16:12:59 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-06 16:12:59 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-06 16:13:00 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=10.7%, 耗时=0.03s
+2026-07-06 16:13:00 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-06 16:13:15 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #41] topic=ac/hospital/device-001/data, indoor_temp=24.53553071373387°C, total_power=33.7146kW
+2026-07-06 16:14:09 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #61] indoor_temp=24.9540825601196°C, total_power=33.0918kW
+2026-07-06 16:14:55 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #61] topic=ac/hospital/device-001/data, indoor_temp=25.468967615976855°C, total_power=34.2848kW
+2026-07-06 16:15:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #81] indoor_temp=24.956314408324474°C, total_power=33.9613kW
+2026-07-06 16:16:35 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #81] topic=ac/hospital/device-001/data, indoor_temp=25.08127620480017°C, total_power=33.6164kW
+2026-07-06 16:17:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #101] indoor_temp=24.92079214497197°C, total_power=34.5224kW
+2026-07-06 16:18:15 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #101] topic=ac/hospital/device-001/data, indoor_temp=25.27948060709456°C, total_power=34.0817kW
+2026-07-06 16:19:10 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #121] indoor_temp=24.9694902145637°C, total_power=34.3763kW
+2026-07-06 16:19:55 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #121] topic=ac/hospital/device-001/data, indoor_temp=24.971043571290245°C, total_power=34.3367kW
+2026-07-06 16:20:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #141] indoor_temp=25.036616157498006°C, total_power=34.1152kW
+2026-07-06 16:21:35 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #141] topic=ac/hospital/device-001/data, indoor_temp=25.38844816778354°C, total_power=34.63kW
+2026-07-06 16:22:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #161] indoor_temp=25.142449717776486°C, total_power=33.9165kW
+2026-07-06 16:22:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-06 16:22:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=23.2%, 耗时=0.03s
+2026-07-06 16:22:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-06 16:23:15 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #161] topic=ac/hospital/device-001/data, indoor_temp=24.96664803330079°C, total_power=34.8339kW
+2026-07-06 16:24:10 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #181] indoor_temp=24.72488336099975°C, total_power=32.4874kW
+2026-07-06 16:24:55 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #181] topic=ac/hospital/device-001/data, indoor_temp=25.004349226567204°C, total_power=34.5679kW
+2026-07-06 16:25:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #201] indoor_temp=25.014654049019047°C, total_power=34.1718kW
+2026-07-06 16:26:35 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #201] topic=ac/hospital/device-001/data, indoor_temp=25.08819368476998°C, total_power=33.8332kW
+2026-07-06 16:27:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #221] indoor_temp=24.945222751093233°C, total_power=33.8583kW
+2026-07-06 16:28:15 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #221] topic=ac/hospital/device-001/data, indoor_temp=0.0°C, total_power=33.2973kW
+2026-07-06 16:29:10 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #241] indoor_temp=24.98376519240341°C, total_power=33.8858kW
+2026-07-06 16:29:55 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #241] topic=ac/hospital/device-001/data, indoor_temp=24.429896415409°C, total_power=33.4507kW
+2026-07-06 16:30:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #261] indoor_temp=24.932837680069746°C, total_power=30.9652kW
+2026-07-06 16:31:35 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #261] topic=ac/hospital/device-001/data, indoor_temp=24.480641751415376°C, total_power=34.752kW
+2026-07-06 16:32:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #281] indoor_temp=25.269020964352507°C, total_power=33.4891kW
+2026-07-06 16:32:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-06 16:32:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=36.3%, 耗时=0.03s
+2026-07-06 16:32:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-06 16:33:15 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #281] topic=ac/hospital/device-001/data, indoor_temp=25.1336455934585°C, total_power=34.4378kW
+2026-07-06 16:34:10 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #301] indoor_temp=25.251089517935043°C, total_power=32.5628kW
+2026-07-06 16:34:55 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #301] topic=ac/hospital/device-001/data, indoor_temp=24.92411175706655°C, total_power=33.9109kW
+2026-07-06 16:35:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #321] indoor_temp=25.125357967581664°C, total_power=31.0955kW
+2026-07-06 16:36:35 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #321] topic=ac/hospital/device-001/data, indoor_temp=24.40897775532671°C, total_power=33.344kW
+2026-07-06 16:37:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #341] indoor_temp=25.06113308570717°C, total_power=32.5147kW
+2026-07-06 16:38:15 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #341] topic=ac/hospital/device-001/data, indoor_temp=25.061953611277776°C, total_power=33.114kW
+2026-07-06 16:39:10 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #361] indoor_temp=25.23974131308515°C, total_power=33.4197kW
+2026-07-06 16:39:55 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #361] topic=ac/hospital/device-001/data, indoor_temp=25.507533477365698°C, total_power=34.0024kW
+2026-07-06 16:40:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #381] indoor_temp=25.00814693484737°C, total_power=33.1423kW
+2026-07-06 16:41:35 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #381] topic=ac/hospital/device-001/data, indoor_temp=24.94549190835729°C, total_power=33.2144kW
+2026-07-06 16:42:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #401] indoor_temp=25.054817255934445°C, total_power=32.1063kW
+2026-07-06 16:42:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-06 16:42:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=47.9%, 耗时=0.04s
+2026-07-06 16:42:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-06 16:43:15 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #401] topic=ac/hospital/device-001/data, indoor_temp=25.073689621008263°C, total_power=34.2183kW
+2026-07-06 16:44:10 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #421] indoor_temp=24.909049474342115°C, total_power=32.869kW
+2026-07-06 16:44:55 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #421] topic=ac/hospital/device-001/data, indoor_temp=24.981627248189774°C, total_power=35.2356kW
+2026-07-06 16:45:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #441] indoor_temp=25.23025015988211°C, total_power=1032.2136kW
+2026-07-06 16:46:35 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #441] topic=ac/hospital/device-001/data, indoor_temp=25.352809270185507°C, total_power=34.1944kW
+2026-07-06 16:47:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #461] indoor_temp=25.140293973005186°C, total_power=32.8777kW
+2026-07-06 16:48:16 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #461] topic=ac/hospital/device-001/data, indoor_temp=25.137644456386035°C, total_power=32.9948kW
+2026-07-06 16:49:10 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #481] indoor_temp=25.335633180633778°C, total_power=34.0579kW
+2026-07-06 16:49:55 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #481] topic=ac/hospital/device-001/data, indoor_temp=1024.3753902505503°C, total_power=34.0207kW
+2026-07-06 16:50:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #501] indoor_temp=24.750735577673375°C, total_power=31.5971kW
+2026-07-06 16:51:35 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #501] topic=ac/hospital/device-001/data, indoor_temp=24.98482707995204°C, total_power=30.876kW
+2026-07-06 16:52:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #521] indoor_temp=25.418502044098386°C, total_power=31.5532kW
+2026-07-06 16:52:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-06 16:52:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=58.1%, 耗时=0.03s
+2026-07-06 16:52:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-06 16:53:15 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #521] topic=ac/hospital/device-001/data, indoor_temp=25.50633203512779°C, total_power=31.0925kW
+2026-07-06 16:54:10 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #541] indoor_temp=25.329504952526772°C, total_power=32.0362kW
+2026-07-06 16:54:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #541] topic=ac/hospital/device-001/data, indoor_temp=24.901357753895162°C, total_power=31.4407kW
+2026-07-06 16:55:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #561] indoor_temp=25.078127195072412°C, total_power=32.926kW
+2026-07-06 16:56:36 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #561] topic=ac/hospital/device-001/data, indoor_temp=24.756866615182613°C, total_power=31.6474kW
+2026-07-06 16:57:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #581] indoor_temp=24.74714298538156°C, total_power=31.5754kW
+2026-07-06 16:58:16 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #581] topic=ac/hospital/device-001/data, indoor_temp=25.008402708037035°C, total_power=31.0785kW
+2026-07-06 16:59:10 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #601] indoor_temp=24.4862255728192°C, total_power=32.3293kW
+2026-07-06 16:59:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #601] topic=ac/hospital/device-001/data, indoor_temp=24.79570635925005°C, total_power=32.0064kW
+2026-07-06 17:00:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #621] indoor_temp=25.24155469017376°C, total_power=32.2184kW
+2026-07-06 17:01:36 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #621] topic=ac/hospital/device-001/data, indoor_temp=25.16108536581102°C, total_power=32.1396kW
+2026-07-06 17:02:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #641] indoor_temp=25.3785583104727°C, total_power=31.434kW
+2026-07-06 17:02:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-06 17:03:00 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=63.7%, 耗时=0.03s
+2026-07-06 17:03:00 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-06 17:03:16 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #641] topic=ac/hospital/device-001/data, indoor_temp=24.6956776008852°C, total_power=30.6855kW
+2026-07-06 17:04:10 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #661] indoor_temp=25.01662310916537°C, total_power=31.5284kW
+2026-07-06 17:04:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #661] topic=ac/hospital/device-001/data, indoor_temp=25.20503527571878°C, total_power=31.8689kW
+2026-07-06 17:05:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #681] indoor_temp=24.885685882178286°C, total_power=31.7471kW
+2026-07-06 17:06:36 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #681] topic=ac/hospital/device-001/data, indoor_temp=25.18936707306134°C, total_power=32.0076kW
+2026-07-06 17:07:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #701] indoor_temp=24.519895161782955°C, total_power=30.6101kW
+2026-07-06 17:08:16 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #701] topic=ac/hospital/device-001/data, indoor_temp=24.97794081339761°C, total_power=31.8057kW
+2026-07-06 17:09:10 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #721] indoor_temp=25.228513881851047°C, total_power=31.1357kW
+2026-07-06 17:09:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #721] topic=ac/hospital/device-001/data, indoor_temp=25.056999615464054°C, total_power=31.6024kW
+2026-07-06 17:10:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #741] indoor_temp=25.236582924216286°C, total_power=31.4345kW
+2026-07-06 17:11:36 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #741] topic=ac/hospital/device-001/data, indoor_temp=25.14959294078187°C, total_power=31.035kW
+2026-07-06 17:12:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #761] indoor_temp=24.690998809172008°C, total_power=30.4543kW
+2026-07-06 17:12:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-06 17:12:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=67.1%, 耗时=0.03s
+2026-07-06 17:12:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-06 17:13:16 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #761] topic=ac/hospital/device-001/data, indoor_temp=24.61743618206771°C, total_power=31.3676kW
+2026-07-06 17:14:10 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #781] indoor_temp=25.010139323349588°C, total_power=31.3889kW
+2026-07-06 17:14:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #781] topic=ac/hospital/device-001/data, indoor_temp=24.426748413847783°C, total_power=31.1063kW
+2026-07-06 17:15:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #801] indoor_temp=24.703251633657068°C, total_power=30.4646kW
+2026-07-06 17:16:36 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #801] topic=ac/hospital/device-001/data, indoor_temp=25.00485696943748°C, total_power=30.5579kW
+2026-07-06 17:17:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #821] indoor_temp=24.760442397656156°C, total_power=31.4678kW
+2026-07-06 17:18:16 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #821] topic=ac/hospital/device-001/data, indoor_temp=25.255671537377342°C, total_power=31.9637kW
+2026-07-06 17:19:10 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #841] indoor_temp=24.750146806271147°C, total_power=30.1195kW
+2026-07-06 17:19:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #841] topic=ac/hospital/device-001/data, indoor_temp=25.297166206201958°C, total_power=31.4977kW
+2026-07-06 17:20:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #861] indoor_temp=24.828093765883793°C, total_power=31.7275kW
+2026-07-06 17:21:36 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #861] topic=ac/hospital/device-001/data, indoor_temp=25.062700619662444°C, total_power=32.1106kW
+2026-07-06 17:22:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #881] indoor_temp=24.6662915126753°C, total_power=31.2352kW
+2026-07-06 17:22:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-06 17:22:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=68.6%, 耗时=0.03s
+2026-07-06 17:22:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-06 17:23:16 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #881] topic=ac/hospital/device-001/data, indoor_temp=24.491297022183158°C, total_power=31.3628kW
+2026-07-06 17:24:10 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #901] indoor_temp=24.665561822550256°C, total_power=31.1044kW
+2026-07-06 17:24:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #901] topic=ac/hospital/device-001/data, indoor_temp=25.434560344885863°C, total_power=30.8172kW
+2026-07-06 17:25:51 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #921] indoor_temp=25.30651989877331°C, total_power=33.1736kW
+2026-07-06 17:26:36 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #921] topic=ac/hospital/device-001/data, indoor_temp=25.024198842576972°C, total_power=31.5152kW
+2026-07-06 17:27:31 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #941] indoor_temp=25.425586406816247°C, total_power=30.9782kW
+2026-07-06 17:28:16 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #941] topic=ac/hospital/device-001/data, indoor_temp=24.566740795984295°C, total_power=30.8521kW
+2026-07-06 17:29:11 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #961] indoor_temp=24.963727805757408°C, total_power=31.433kW
+2026-07-06 17:29:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #961] topic=ac/hospital/device-001/data, indoor_temp=25.502139584146047°C, total_power=32.0952kW
+2026-07-06 17:30:51 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #981] indoor_temp=24.6426553597855°C, total_power=32.3551kW
+2026-07-06 17:31:37 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #981] topic=ac/hospital/device-001/data, indoor_temp=25.254868329384607°C, total_power=32.4553kW
+2026-07-06 17:32:31 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1001] indoor_temp=24.7990069736907°C, total_power=31.0312kW
+2026-07-06 17:32:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-06 17:32:59 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 17:32:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=68.6%, 耗时=0.04s
+2026-07-06 17:32:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-06 17:33:16 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1001] topic=ac/hospital/device-001/data, indoor_temp=24.949098432658758°C, total_power=30.802kW
+2026-07-06 17:34:11 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1021] indoor_temp=24.831621883991108°C, total_power=31.4547kW
+2026-07-06 17:34:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1021] topic=ac/hospital/device-001/data, indoor_temp=24.616874802347645°C, total_power=31.5451kW
+2026-07-06 17:35:51 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1041] indoor_temp=25.46247877618443°C, total_power=30.7363kW
+2026-07-06 17:36:36 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1041] topic=ac/hospital/device-001/data, indoor_temp=25.234140776359183°C, total_power=31.7566kW
+2026-07-06 17:37:31 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1061] indoor_temp=24.61703818101672°C, total_power=30.55kW
+2026-07-06 17:38:16 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1061] topic=ac/hospital/device-001/data, indoor_temp=24.757212191508877°C, total_power=30.7634kW
+2026-07-06 17:39:11 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1081] indoor_temp=25.079277552690872°C, total_power=30.6716kW
+2026-07-06 17:39:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1081] topic=ac/hospital/device-001/data, indoor_temp=24.851059426404188°C, total_power=31.3431kW
+2026-07-06 17:40:51 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1101] indoor_temp=24.999514106283776°C, total_power=30.2792kW
+2026-07-06 17:41:36 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1101] topic=ac/hospital/device-001/data, indoor_temp=24.894919072614883°C, total_power=31.3645kW
+2026-07-06 17:42:31 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1121] indoor_temp=24.767807201189825°C, total_power=29.7359kW
+2026-07-06 17:42:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-06 17:42:59 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 17:42:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=68.6%, 耗时=0.03s
+2026-07-06 17:42:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-06 17:43:16 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1121] topic=ac/hospital/device-001/data, indoor_temp=25.628235827970535°C, total_power=30.0034kW
+2026-07-06 17:44:11 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1141] indoor_temp=24.714184903428876°C, total_power=29.1512kW
+2026-07-06 17:44:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1141] topic=ac/hospital/device-001/data, indoor_temp=24.621172970736044°C, total_power=31.623kW
+2026-07-06 17:45:51 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1161] indoor_temp=25.025666590588404°C, total_power=29.7304kW
+2026-07-06 17:46:36 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1161] topic=ac/hospital/device-001/data, indoor_temp=24.755717506984723°C, total_power=30.2416kW
+2026-07-06 17:47:31 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1181] indoor_temp=25.242502920560767°C, total_power=28.8179kW
+2026-07-06 17:48:16 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1181] topic=ac/hospital/device-001/data, indoor_temp=24.97465801450519°C, total_power=31.5408kW
+2026-07-06 17:49:11 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1201] indoor_temp=24.842648982379583°C, total_power=30.4822kW
+2026-07-06 17:49:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1201] topic=ac/hospital/device-001/data, indoor_temp=24.955316800255364°C, total_power=29.8127kW
+2026-07-06 17:50:51 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1221] indoor_temp=25.2599011832482°C, total_power=30.4445kW
+2026-07-06 17:51:36 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1221] topic=ac/hospital/device-001/data, indoor_temp=24.885623630152804°C, total_power=29.8407kW
+2026-07-06 17:52:31 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1241] indoor_temp=24.969289781736535°C, total_power=29.3756kW
+2026-07-06 17:52:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-06 17:52:59 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-06 17:52:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=68.6%, 耗时=0.03s
+2026-07-06 17:52:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-06 17:53:16 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1241] topic=ac/hospital/device-001/data, indoor_temp=24.917860886260783°C, total_power=29.7527kW
+2026-07-06 17:54:11 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1261] indoor_temp=24.968740626293528°C, total_power=29.8999kW
+2026-07-06 17:54:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1261] topic=ac/hospital/device-001/data, indoor_temp=24.28901517519727°C, total_power=29.4896kW
+2026-07-06 17:55:51 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1281] indoor_temp=25.68332573471361°C, total_power=30.1244kW
+2026-07-06 17:56:37 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1281] topic=ac/hospital/device-001/data, indoor_temp=25.155902554880033°C, total_power=29.686kW
+2026-07-06 17:57:31 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1301] indoor_temp=24.927296145509914°C, total_power=31.5292kW
+2026-07-06 17:58:17 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1301] topic=ac/hospital/device-001/data, indoor_temp=24.75299491953632°C, total_power=30.1252kW
+2026-07-06 17:59:11 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1321] indoor_temp=25.267025419430503°C, total_power=29.9001kW
+2026-07-06 17:59:57 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1321] topic=ac/hospital/device-001/data, indoor_temp=24.819675004666802°C, total_power=29.6745kW

@@ -1,0 +1,27 @@
+# ============ 中央空调AI寻优系统 - 边缘端 Docker 编排 ============
+# Compose v2 已弃用 version 字段，此处省略
+
+services:
+  edge:
+    build: .
+    container_name: ac-edge
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      # 数据持久化
+      - ./data:/app/data
+      # 日志持久化
+      - ./logs:/app/logs
+      # 配置文件（部署时修改 .env 和 settings.yaml）
+      - ./config:/app/config
+      # 环境变量
+      - ./.env:/app/.env:ro
+    environment:
+      - TZ=Asia/Shanghai
+    networks:
+      - edge-net
+
+networks:
+  edge-net:
+    driver: bridge

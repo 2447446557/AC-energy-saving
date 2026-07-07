@@ -1,0 +1,15 @@
+# Docker 忽略文件
+__pycache__
+*.pyc
+*.pyo
+.git
+.gitignore
+.env
+*.md
+tests/
+.trae/
+venv/
+.venv/
+*.egg-info
+.pytest_cache
+.mypy_cache
