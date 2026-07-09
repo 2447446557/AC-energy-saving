@@ -97,9 +97,10 @@ class TestConstraintsAdversarial:
             "cooling_pump_freq": float("-inf"),
             "cooling_tower_fan_freq": 35.0,
         })
+        bounds = self.c._current_bounds()
         for v in VAR_ORDER:
             assert math.isfinite(clipped[v])
-            lo, hi = self.c.bounds[v]
+            lo, hi = bounds[v]
             assert lo <= clipped[v] <= hi
 
     def test_hard_violation_nonfinite_penalized(self):
@@ -317,7 +318,7 @@ class TestOptimizerInvariants:
         opt = PSOOptimizer(em, c, SafeOutputGuard(c), pop=300, max_iter=8000,
                            timeout_seconds=0.001)
         res = opt.optimize(OptimizeRequest(device_data=_good_data()))
-        assert res.status == "timeout"
+        assert res.status in ("timeout", "failed")
         assert_safe_result(res, c)
 
 

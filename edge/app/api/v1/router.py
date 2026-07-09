@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from app.api.v1 import control, data, optimize, status, system
+from app.api.v1 import control, data, equipment, optimize, settings, status, system
 
 
 def create_v1_router() -> APIRouter:
@@ -15,6 +15,12 @@ def create_v1_router() -> APIRouter:
         optimize.router, prefix="/optimize", tags=["寻优"]
     )
     router.include_router(data.router, prefix="/data", tags=["数据"])
+    router.include_router(
+        equipment.router, prefix="/equipment", tags=["设备配置"]
+    )
+    router.include_router(
+        settings.router, prefix="/settings", tags=["策略配置"]
+    )
     router.include_router(
         control.router, prefix="/control", tags=["控制"]
     )

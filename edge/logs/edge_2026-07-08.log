@@ -1,0 +1,634 @@
+2026-07-08 09:20:37 | INFO     | __main__:main:247 | 业务配置已加载: 6 个模块
+2026-07-08 09:20:37 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-08 09:20:37 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-08 09:20:37 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-08 09:20:37 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-08 09:20:37 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-08 09:20:37 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-08 09:20:37 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-08 09:20:37 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-08 09:20:37 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-08 09:20:41 | INFO     | app.services.mqtt_subscriber:_on_disconnect:230 | MQTT 已断开（rc=Unspecified error），paho 会自动重连...
+2026-07-08 09:20:50 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-08 09:30:37 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 09:30:40 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 09:30:40 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 09:30:40 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-08 09:30:40 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-08 09:30:40 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 09:30:40 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-08 09:30:40 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 09:30:40 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 09:30:51 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=55.8%, 耗时=11.61s
+2026-07-08 09:30:51 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 09:35:27 | INFO     | app.services.mqtt_subscriber:_on_disconnect:230 | MQTT 已断开（rc=Unspecified error），paho 会自动重连...
+2026-07-08 09:35:32 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-08 09:40:37 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 09:40:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=58.1%, 耗时=12.72s
+2026-07-08 09:40:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 09:50:37 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 09:50:49 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=60.1%, 耗时=11.07s
+2026-07-08 09:50:49 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 10:00:37 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 10:00:48 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=61.3%, 耗时=10.88s
+2026-07-08 10:00:48 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 10:10:37 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 10:10:48 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=61.5%, 耗时=10.88s
+2026-07-08 10:10:48 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 10:20:37 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 10:20:48 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=61.5%, 耗时=10.36s
+2026-07-08 10:20:48 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 10:30:37 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 10:30:48 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=61.5%, 耗时=10.61s
+2026-07-08 10:30:48 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 10:40:37 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 10:40:48 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=61.5%, 耗时=10.96s
+2026-07-08 10:40:48 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 10:50:37 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 10:50:48 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=61.5%, 耗时=10.89s
+2026-07-08 10:50:48 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 11:00:37 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 11:00:48 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=61.5%, 耗时=10.94s
+2026-07-08 11:00:48 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 11:10:37 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 11:10:49 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=61.5%, 耗时=11.38s
+2026-07-08 11:10:49 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 11:20:37 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 11:20:49 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=61.5%, 耗时=11.10s
+2026-07-08 11:20:49 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 11:30:37 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 11:30:51 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=61.5%, 耗时=13.50s
+2026-07-08 11:30:51 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 11:34:07 | INFO     | app.services.batch_import:parse_runtime_file:408 | 批量导入解析完成: file=2026-07-07 08_00-2026-07-07 09_00运行趋势.xls, total=4, running=4, skipped_not_running=0, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 11:34:19 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 11:34:30 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 11:34:41 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 11:34:51 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 11:40:37 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 11:40:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=57.7%, 耗时=12.30s
+2026-07-08 11:40:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 11:41:10 | INFO     | app.services.mqtt_subscriber:_on_disconnect:230 | MQTT 已断开（rc=Unspecified error），paho 会自动重连...
+2026-07-08 11:41:13 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-08 11:41:14 | INFO     | app.services.mqtt_subscriber:_on_disconnect:230 | MQTT 已断开（rc=Unspecified error），paho 会自动重连...
+2026-07-08 11:41:16 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-08 11:41:47 | INFO     | app.services.mqtt_subscriber:_on_disconnect:230 | MQTT 已断开（rc=Unspecified error），paho 会自动重连...
+2026-07-08 11:41:51 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-08 11:50:37 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 11:50:49 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=41.9%, 耗时=11.23s
+2026-07-08 11:50:49 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 12:00:37 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 12:00:48 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=42.3%, 耗时=10.61s
+2026-07-08 12:00:48 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 12:10:37 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 12:10:48 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=43.0%, 耗时=10.60s
+2026-07-08 12:10:48 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 12:20:37 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 12:20:49 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=46.5%, 耗时=11.26s
+2026-07-08 12:20:49 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 12:30:37 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 12:30:49 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=49.9%, 耗时=11.40s
+2026-07-08 12:30:49 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 12:40:37 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 12:40:49 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=52.0%, 耗时=11.38s
+2026-07-08 12:40:49 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 12:50:37 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 12:50:49 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=52.0%, 耗时=11.29s
+2026-07-08 12:50:49 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 13:00:37 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 13:00:52 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=52.0%, 耗时=14.65s
+2026-07-08 13:00:52 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 13:10:37 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 13:10:49 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=52.0%, 耗时=11.18s
+2026-07-08 13:10:49 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 13:20:33 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 13:20:40 | INFO     | __main__:main:247 | 业务配置已加载: 6 个模块
+2026-07-08 13:20:40 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-08 13:20:40 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-08 13:20:40 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-08 13:20:40 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-08 13:20:40 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-08 13:20:40 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-08 13:20:40 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-08 13:20:40 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-08 13:20:40 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-08 13:20:40 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-08 13:26:52 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 13:26:52 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 13:26:52 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-08 13:26:52 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-08 13:26:52 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 13:26:52 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-08 13:26:52 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 13:26:52 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 13:26:52 | INFO     | app.services.batch_import:parse_runtime_file:418 | 批量导入解析完成: file=2026-07-07 08_00-2026-07-07 09_00运行趋势.xls, total=4, running=4, skipped_not_running=0, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 13:27:09 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 13:27:28 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 13:27:46 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 13:28:04 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 13:30:40 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 13:30:53 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=41.6%, 耗时=12.12s
+2026-07-08 13:30:53 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 13:40:40 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 13:40:52 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=41.9%, 耗时=11.93s
+2026-07-08 13:40:52 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 13:43:54 | INFO     | app.services.equipment_config:save_config:47 | 设备配置已保存: config\equipment.json
+2026-07-08 13:43:58 | INFO     | app.services.equipment_config:save_config:47 | 设备配置已保存: config\equipment.json
+2026-07-08 13:43:58 | INFO     | app.services.equipment_config:save_config:47 | 设备配置已保存: config\equipment.json
+2026-07-08 13:43:58 | INFO     | app.services.equipment_config:save_config:47 | 设备配置已保存: config\equipment.json
+2026-07-08 13:43:59 | INFO     | app.services.equipment_config:save_config:47 | 设备配置已保存: config\equipment.json
+2026-07-08 13:44:28 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 13:44:28 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 13:44:28 | INFO     | __main__:set_optimizer:86 | 寻优算法已注入
+2026-07-08 13:44:28 | INFO     | __main__:set_energy_model:93 | 能耗模型已注入
+2026-07-08 13:44:28 | INFO     | __main__:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 13:44:28 | INFO     | __main__:set_constraints:107 | 约束校验已注入
+2026-07-08 13:44:28 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 13:44:28 | INFO     | __main__:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 13:44:41 | INFO     | __main__:main:247 | 业务配置已加载: 6 个模块
+2026-07-08 13:44:41 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-08 13:44:41 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-08 13:44:41 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-08 13:44:41 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-08 13:44:41 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-08 13:44:41 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-08 13:44:41 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-08 13:44:41 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-08 13:44:41 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-08 13:44:41 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-08 13:45:10 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 13:45:10 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 13:45:10 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-08 13:45:10 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-08 13:45:10 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 13:45:10 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-08 13:45:10 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 13:45:10 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 13:45:10 | INFO     | app.services.batch_import:parse_runtime_file:418 | 批量导入解析完成: file=2026-07-07 08_00-2026-07-07 09_00运行趋势.xls, total=4, running=4, skipped_not_running=0, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 13:45:23 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 13:45:36 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 13:46:01 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 13:54:41 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 13:54:55 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=35.7%, 耗时=13.60s
+2026-07-08 13:54:55 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 14:04:41 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 14:04:47 | ERROR    | app.services.equipment_config:get_config:37 | 读取设备配置失败，使用默认配置: Expecting value: line 1 column 1 (char 0)
+2026-07-08 14:04:47 | ERROR    | app.services.equipment_config:get_config:37 | 读取设备配置失败，使用默认配置: Expecting value: line 1 column 1 (char 0)
+2026-07-08 14:04:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=65.3%, 耗时=17.59s
+2026-07-08 14:04:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 14:07:52 | INFO     | __main__:lifespan:206 | 边缘端服务关闭中...
+2026-07-08 14:07:53 | INFO     | app.services.mqtt_subscriber:stop:190 | MQTT 订阅服务已停止: 收到 0 条，异常 0 条
+2026-07-08 14:07:53 | INFO     | app.scheduler.scheduler:shutdown_scheduler:80 | 定时任务调度器已关闭
+2026-07-08 14:07:53 | INFO     | __main__:lifespan:209 | 边缘端服务已关闭
+2026-07-08 14:07:53 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 14:07:53 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 14:07:53 | INFO     | __main__:set_optimizer:86 | 寻优算法已注入
+2026-07-08 14:07:53 | INFO     | __main__:set_energy_model:93 | 能耗模型已注入
+2026-07-08 14:07:53 | INFO     | __main__:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 14:07:53 | INFO     | __main__:set_constraints:107 | 约束校验已注入
+2026-07-08 14:07:53 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 14:07:53 | INFO     | __main__:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 14:07:56 | INFO     | __main__:main:247 | 业务配置已加载: 8 个模块
+2026-07-08 14:07:56 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-08 14:07:56 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-08 14:07:56 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-08 14:07:56 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-08 14:07:57 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-08 14:07:57 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-08 14:07:57 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-08 14:07:57 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-08 14:07:57 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-08 14:07:57 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-08 14:09:27 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 14:09:27 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 14:09:27 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-08 14:09:27 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-08 14:09:27 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 14:09:27 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-08 14:09:27 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 14:09:27 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 14:09:27 | INFO     | app.services.batch_import:parse_runtime_file:430 | 批量导入解析完成: file=2026-07-08 00-2026-07-08 13运行趋势.xls, total=14, running=5, skipped_not_running=9, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 14:09:40 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 14:09:52 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 14:10:03 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 14:10:27 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 14:10:37 | INFO     | app.services.settings_config:save_app_settings:208 | 系统配置已保存: config\settings.yaml
+2026-07-08 14:10:37 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 14:10:37 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-08 14:10:37 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-08 14:12:09 | INFO     | app.services.equipment_config:save_config:47 | 设备配置已保存: config\equipment.json
+2026-07-08 14:12:12 | INFO     | app.services.equipment_config:save_config:47 | 设备配置已保存: config\equipment.json
+2026-07-08 14:12:55 | INFO     | app.services.batch_import:parse_runtime_file:430 | 批量导入解析完成: file=2026-07-08 00-2026-07-08 13运行趋势.xls, total=14, running=5, skipped_not_running=9, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 14:13:06 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 14:13:57 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 14:17:57 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 14:18:10 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=35.9%, 耗时=13.11s
+2026-07-08 14:18:10 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 14:23:55 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1] topic=ac/hospital/device-001/data, indoor_temp=25.48082452065521°C, total_power=34.8657kW
+2026-07-08 14:25:34 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #21] topic=ac/hospital/device-001/data, indoor_temp=25.175905770998856°C, total_power=31.8504kW
+2026-07-08 14:26:08 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 14:26:08 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 14:26:08 | INFO     | __main__:set_optimizer:86 | 寻优算法已注入
+2026-07-08 14:26:08 | INFO     | __main__:set_energy_model:93 | 能耗模型已注入
+2026-07-08 14:26:08 | INFO     | __main__:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 14:26:08 | INFO     | __main__:set_constraints:107 | 约束校验已注入
+2026-07-08 14:26:08 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 14:26:08 | INFO     | __main__:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 14:26:11 | INFO     | __main__:main:247 | 业务配置已加载: 8 个模块
+2026-07-08 14:26:11 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-08 14:26:11 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-08 14:26:11 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-08 14:26:11 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-08 14:26:12 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-08 14:26:12 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-08 14:26:12 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-08 14:26:12 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-08 14:26:13 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-08 14:26:15 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1] topic=ac/hospital/device-001/data, indoor_temp=25.3508927526863°C, total_power=1033.5771kW
+2026-07-08 14:26:41 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 14:26:41 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 14:26:41 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-08 14:26:41 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-08 14:26:41 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 14:26:41 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-08 14:26:41 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 14:26:41 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 14:26:41 | INFO     | app.services.batch_import:parse_runtime_file:467 | 批量导入解析完成: file=2026-07-08 00-2026-07-08 13运行趋势.xls, total=14, running=5, skipped_not_running=9, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 14:27:05 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 14:27:21 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 14:27:33 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 14:27:55 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #21] topic=ac/hospital/device-001/data, indoor_temp=25.43816487581015°C, total_power=34.9048kW
+2026-07-08 14:27:57 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 14:29:35 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #41] topic=ac/hospital/device-001/data, indoor_temp=25.071285919242438°C, total_power=32.9589kW
+2026-07-08 14:31:15 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #61] topic=ac/hospital/device-001/data, indoor_temp=24.371929976618198°C, total_power=36.8687kW
+2026-07-08 14:32:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #81] topic=ac/hospital/device-001/data, indoor_temp=25.091178144476096°C, total_power=35.8696kW
+2026-07-08 14:34:35 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #101] topic=ac/hospital/device-001/data, indoor_temp=24.838186303806463°C, total_power=35.9184kW
+2026-07-08 14:36:24 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #121] topic=ac/hospital/device-001/data, indoor_temp=25.331804561390676°C, total_power=34.9757kW
+2026-07-08 14:45:52 | INFO     | __main__:lifespan:206 | 边缘端服务关闭中...
+2026-07-08 14:45:52 | INFO     | app.services.mqtt_subscriber:stop:190 | MQTT 订阅服务已停止: 收到 128 条，异常 0 条
+2026-07-08 14:45:52 | INFO     | app.scheduler.scheduler:shutdown_scheduler:80 | 定时任务调度器已关闭
+2026-07-08 14:45:52 | INFO     | __main__:lifespan:209 | 边缘端服务已关闭
+2026-07-08 14:45:52 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 14:45:52 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 14:45:52 | INFO     | __main__:set_optimizer:86 | 寻优算法已注入
+2026-07-08 14:45:52 | INFO     | __main__:set_energy_model:93 | 能耗模型已注入
+2026-07-08 14:45:52 | INFO     | __main__:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 14:45:52 | INFO     | __main__:set_constraints:107 | 约束校验已注入
+2026-07-08 14:45:52 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 14:45:52 | INFO     | __main__:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 14:49:01 | INFO     | __main__:main:247 | 业务配置已加载: 8 个模块
+2026-07-08 14:49:01 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-08 14:49:01 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-08 14:49:01 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-08 14:49:01 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-08 14:49:01 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-08 14:49:01 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-08 14:49:01 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-08 14:49:01 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-08 14:49:01 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-08 14:49:20 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 14:49:20 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 14:49:20 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-08 14:49:20 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-08 14:49:20 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 14:49:20 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-08 14:49:20 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 14:49:20 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 14:49:20 | INFO     | app.services.batch_import:parse_runtime_file:485 | 批量导入解析完成: file=2026-07-08 00-2026-07-08 13运行趋势.xls, total=14, running=5, skipped_not_running=9, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 14:50:02 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 14:50:45 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 14:51:26 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 14:52:47 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 15:15:19 | INFO     | __main__:lifespan:206 | 边缘端服务关闭中...
+2026-07-08 15:15:19 | INFO     | app.services.mqtt_subscriber:stop:190 | MQTT 订阅服务已停止: 收到 0 条，异常 0 条
+2026-07-08 15:15:19 | INFO     | app.scheduler.scheduler:shutdown_scheduler:80 | 定时任务调度器已关闭
+2026-07-08 15:15:19 | INFO     | __main__:lifespan:209 | 边缘端服务已关闭
+2026-07-08 15:15:19 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 15:15:19 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 15:15:19 | INFO     | __main__:set_optimizer:86 | 寻优算法已注入
+2026-07-08 15:15:19 | INFO     | __main__:set_energy_model:93 | 能耗模型已注入
+2026-07-08 15:15:19 | INFO     | __main__:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 15:15:19 | INFO     | __main__:set_constraints:107 | 约束校验已注入
+2026-07-08 15:15:19 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 15:15:19 | INFO     | __main__:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 15:15:24 | INFO     | __main__:main:247 | 业务配置已加载: 8 个模块
+2026-07-08 15:15:24 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-08 15:15:24 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-08 15:15:24 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-08 15:15:24 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-08 15:15:25 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-08 15:15:25 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-08 15:15:25 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-08 15:15:25 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-08 15:15:25 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-08 15:20:45 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 15:20:45 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 15:20:45 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-08 15:20:45 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-08 15:20:45 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 15:20:45 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-08 15:20:45 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 15:20:45 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 15:20:45 | INFO     | app.services.batch_import:parse_runtime_file:664 | 批量导入解析完成: file=模拟仿真数据.xls, total=5, running=5, skipped_not_running=0, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 15:21:11 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 15:21:39 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 15:35:42 | INFO     | app.services.batch_import:parse_runtime_file:664 | 批量导入解析完成: file=simulation_ramp_6rows.xlsx, total=6, running=6, skipped_not_running=0, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 15:36:07 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 15:37:01 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 15:38:14 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 15:38:41 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 15:40:42 | INFO     | app.services.batch_import:parse_runtime_file:664 | 批量导入解析完成: file=simulation_ramp_6rows.xlsx, total=6, running=6, skipped_not_running=0, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 15:41:07 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 15:42:27 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 15:42:53 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 16:05:01 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 16:05:01 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 16:05:01 | INFO     | __main__:set_optimizer:86 | 寻优算法已注入
+2026-07-08 16:05:01 | INFO     | __main__:set_energy_model:93 | 能耗模型已注入
+2026-07-08 16:05:01 | INFO     | __main__:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 16:05:01 | INFO     | __main__:set_constraints:107 | 约束校验已注入
+2026-07-08 16:05:01 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 16:05:01 | INFO     | __main__:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 16:05:05 | INFO     | __main__:main:247 | 业务配置已加载: 8 个模块
+2026-07-08 16:05:05 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-08 16:05:05 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-08 16:05:05 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-08 16:05:05 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-08 16:05:06 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-08 16:05:06 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-08 16:05:06 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-08 16:05:06 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-08 16:05:06 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-08 16:05:07 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-08 16:05:18 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 16:05:18 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 16:05:18 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-08 16:05:18 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-08 16:05:18 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 16:05:18 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-08 16:05:18 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 16:05:18 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 16:05:18 | INFO     | app.services.batch_import:parse_runtime_file:664 | 批量导入解析完成: file=模拟仿真数据.xls, total=5, running=5, skipped_not_running=0, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 16:05:22 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 16:06:25 | INFO     | app.services.batch_import:parse_runtime_file:664 | 批量导入解析完成: file=模拟仿真数据.xls, total=5, running=5, skipped_not_running=0, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 16:06:28 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 16:06:47 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 16:06:47 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 16:06:47 | INFO     | __main__:set_optimizer:86 | 寻优算法已注入
+2026-07-08 16:06:47 | INFO     | __main__:set_energy_model:93 | 能耗模型已注入
+2026-07-08 16:06:47 | INFO     | __main__:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 16:06:47 | INFO     | __main__:set_constraints:107 | 约束校验已注入
+2026-07-08 16:06:47 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 16:06:47 | INFO     | __main__:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 16:06:50 | INFO     | __main__:main:247 | 业务配置已加载: 8 个模块
+2026-07-08 16:06:50 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-08 16:06:50 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-08 16:06:50 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-08 16:06:50 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-08 16:06:50 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-08 16:06:50 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-08 16:06:50 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-08 16:06:50 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-08 16:06:50 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-08 16:06:50 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-08 16:07:13 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 16:07:13 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 16:07:13 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-08 16:07:13 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-08 16:07:13 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 16:07:13 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-08 16:07:13 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 16:07:13 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 16:07:14 | INFO     | app.services.batch_import:parse_runtime_file:664 | 批量导入解析完成: file=simulation_ramp_6rows.xlsx, total=6, running=6, skipped_not_running=0, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 16:07:17 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 16:14:36 | INFO     | __main__:lifespan:206 | 边缘端服务关闭中...
+2026-07-08 16:14:36 | INFO     | app.services.mqtt_subscriber:stop:190 | MQTT 订阅服务已停止: 收到 0 条，异常 0 条
+2026-07-08 16:14:36 | INFO     | app.scheduler.scheduler:shutdown_scheduler:80 | 定时任务调度器已关闭
+2026-07-08 16:14:36 | INFO     | __main__:lifespan:209 | 边缘端服务已关闭
+2026-07-08 16:14:36 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 16:14:36 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 16:14:36 | INFO     | __main__:set_optimizer:86 | 寻优算法已注入
+2026-07-08 16:14:36 | INFO     | __main__:set_energy_model:93 | 能耗模型已注入
+2026-07-08 16:14:36 | INFO     | __main__:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 16:14:36 | INFO     | __main__:set_constraints:107 | 约束校验已注入
+2026-07-08 16:14:36 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 16:14:36 | INFO     | __main__:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 16:14:39 | INFO     | __main__:main:247 | 业务配置已加载: 8 个模块
+2026-07-08 16:14:39 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-08 16:14:39 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-08 16:14:39 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-08 16:14:39 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-08 16:14:39 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-08 16:14:39 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-08 16:14:39 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-08 16:14:39 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-08 16:14:39 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-08 16:14:39 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-08 16:24:39 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 16:24:40 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 16:24:40 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 16:24:40 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-08 16:24:40 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-08 16:24:40 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 16:24:40 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-08 16:24:40 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 16:24:40 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 16:24:46 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=0.8%, 耗时=6.27s
+2026-07-08 16:24:46 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 16:29:40 | INFO     | __main__:lifespan:206 | 边缘端服务关闭中...
+2026-07-08 16:29:40 | INFO     | app.services.mqtt_subscriber:stop:190 | MQTT 订阅服务已停止: 收到 0 条，异常 0 条
+2026-07-08 16:29:40 | INFO     | app.scheduler.scheduler:shutdown_scheduler:80 | 定时任务调度器已关闭
+2026-07-08 16:29:40 | INFO     | __main__:lifespan:209 | 边缘端服务已关闭
+2026-07-08 16:29:40 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 16:29:40 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 16:29:40 | INFO     | __main__:set_optimizer:86 | 寻优算法已注入
+2026-07-08 16:29:40 | INFO     | __main__:set_energy_model:93 | 能耗模型已注入
+2026-07-08 16:29:40 | INFO     | __main__:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 16:29:40 | INFO     | __main__:set_constraints:107 | 约束校验已注入
+2026-07-08 16:29:40 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 16:29:40 | INFO     | __main__:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 16:29:42 | INFO     | __main__:main:247 | 业务配置已加载: 8 个模块
+2026-07-08 16:29:42 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-08 16:29:42 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-08 16:29:42 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-08 16:29:42 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-08 16:29:43 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-08 16:29:43 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-08 16:29:43 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-08 16:29:43 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-08 16:29:43 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-08 16:29:43 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-08 16:30:15 | INFO     | app.services.batch_import:parse_runtime_file:877 | 批量导入解析完成: file=模拟仿真数据.xls, total=5, running=5, skipped_not_running=0, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 16:33:00 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 16:33:00 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 16:33:00 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-08 16:33:00 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-08 16:33:00 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 16:33:00 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-08 16:33:00 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 16:33:00 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 16:33:12 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 16:33:26 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 16:33:33 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 16:35:55 | INFO     | app.services.batch_import:parse_runtime_file:877 | 批量导入解析完成: file=模拟仿真数据.xls, total=5, running=5, skipped_not_running=0, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 16:38:59 | INFO     | app.services.batch_import:parse_runtime_file:877 | 批量导入解析完成: file=simulation_ramp_6rows.xlsx, total=6, running=6, skipped_not_running=0, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 16:39:03 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 16:39:43 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 16:39:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=0.8%, 耗时=7.28s
+2026-07-08 16:39:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 16:40:37 | INFO     | app.services.settings_config:save_app_settings:208 | 系统配置已保存: config\settings.yaml
+2026-07-08 16:40:37 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 16:40:37 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-08 16:40:37 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-08 16:49:43 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 16:49:51 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=0.0%, 耗时=7.69s
+2026-07-08 16:49:51 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 16:51:23 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 16:51:23 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 16:51:23 | INFO     | __main__:set_optimizer:86 | 寻优算法已注入
+2026-07-08 16:51:23 | INFO     | __main__:set_energy_model:93 | 能耗模型已注入
+2026-07-08 16:51:23 | INFO     | __main__:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 16:51:23 | INFO     | __main__:set_constraints:107 | 约束校验已注入
+2026-07-08 16:51:23 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 16:51:23 | INFO     | __main__:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 16:51:26 | INFO     | __main__:main:247 | 业务配置已加载: 8 个模块
+2026-07-08 16:51:26 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-08 16:51:26 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-08 16:51:26 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-08 16:51:26 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-08 16:51:26 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-08 16:51:26 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-08 16:51:26 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-08 16:51:26 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-08 16:51:27 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-08 16:51:36 | INFO     | app.services.batch_import:parse_runtime_file:1144 | 批量导入解析完成: file=模拟仿真数据.xls, total=5, running=5, skipped_not_running=0, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 16:51:36 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 16:51:36 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 16:52:08 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 16:52:08 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 16:52:08 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-08 16:52:08 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-08 16:52:08 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 16:52:08 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-08 16:52:08 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 16:52:08 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 16:52:26 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 16:52:32 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 17:02:56 | INFO     | __main__:lifespan:206 | 边缘端服务关闭中...
+2026-07-08 17:02:57 | INFO     | app.services.mqtt_subscriber:stop:190 | MQTT 订阅服务已停止: 收到 0 条，异常 0 条
+2026-07-08 17:02:57 | INFO     | app.scheduler.scheduler:shutdown_scheduler:80 | 定时任务调度器已关闭
+2026-07-08 17:02:57 | INFO     | __main__:lifespan:209 | 边缘端服务已关闭
+2026-07-08 17:02:57 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 17:02:57 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 17:02:57 | INFO     | __main__:set_optimizer:86 | 寻优算法已注入
+2026-07-08 17:02:57 | INFO     | __main__:set_energy_model:93 | 能耗模型已注入
+2026-07-08 17:02:57 | INFO     | __main__:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 17:02:57 | INFO     | __main__:set_constraints:107 | 约束校验已注入
+2026-07-08 17:02:57 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 17:02:57 | INFO     | __main__:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 17:02:59 | INFO     | __main__:main:247 | 业务配置已加载: 8 个模块
+2026-07-08 17:02:59 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-08 17:02:59 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-08 17:02:59 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-08 17:02:59 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-08 17:02:59 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-08 17:02:59 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-08 17:02:59 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-08 17:02:59 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-08 17:02:59 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-08 17:03:00 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-08 17:03:19 | INFO     | app.services.batch_import:parse_runtime_file:1175 | 批量导入解析完成: file=模拟仿真数据.xls, total=5, running=5, skipped_not_running=0, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 17:03:19 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 17:03:19 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 17:04:09 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 17:04:09 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 17:04:09 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-08 17:04:09 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-08 17:04:09 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 17:04:09 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-08 17:04:09 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 17:04:09 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 17:04:09 | INFO     | app.services.batch_import:parse_runtime_file:1175 | 批量导入解析完成: file=模拟仿真数据.xls, total=5, running=5, skipped_not_running=0, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 17:04:13 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 17:12:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 17:13:12 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=0.0%, 耗时=12.33s
+2026-07-08 17:13:12 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 17:22:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 17:23:07 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=0.0%, 耗时=7.25s
+2026-07-08 17:23:07 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 17:25:59 | INFO     | __main__:lifespan:206 | 边缘端服务关闭中...
+2026-07-08 17:26:02 | INFO     | app.services.mqtt_subscriber:stop:190 | MQTT 订阅服务已停止: 收到 0 条，异常 0 条
+2026-07-08 17:26:02 | INFO     | app.scheduler.scheduler:shutdown_scheduler:80 | 定时任务调度器已关闭
+2026-07-08 17:26:02 | INFO     | __main__:lifespan:209 | 边缘端服务已关闭
+2026-07-08 17:26:03 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 17:26:03 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 17:26:03 | INFO     | __main__:set_optimizer:86 | 寻优算法已注入
+2026-07-08 17:26:03 | INFO     | __main__:set_energy_model:93 | 能耗模型已注入
+2026-07-08 17:26:03 | INFO     | __main__:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 17:26:03 | INFO     | __main__:set_constraints:107 | 约束校验已注入
+2026-07-08 17:26:03 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 17:26:03 | INFO     | __main__:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 17:26:16 | INFO     | __main__:main:247 | 业务配置已加载: 8 个模块
+2026-07-08 17:26:17 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-08 17:26:17 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-08 17:26:17 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-08 17:26:17 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-08 17:26:18 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-08 17:26:18 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-08 17:26:18 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-08 17:26:18 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-08 17:26:18 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-08 17:26:18 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-08 17:32:37 | INFO     | app.services.batch_import:parse_runtime_file:1175 | 批量导入解析完成: file=模拟仿真数据.xls, total=5, running=5, skipped_not_running=0, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 17:32:37 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 17:32:37 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 17:46:57 | INFO     | __main__:main:247 | 业务配置已加载: 8 个模块
+2026-07-08 17:46:57 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-08 17:46:57 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-08 17:46:57 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-08 17:46:57 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-08 17:46:57 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-08 17:46:57 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-08 17:46:57 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-08 17:46:57 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-08 17:46:57 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-08 17:47:02 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-08 17:47:24 | INFO     | app.services.batch_import:parse_runtime_file:1175 | 批量导入解析完成: file=模拟仿真数据.xls, total=5, running=5, skipped_not_running=0, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 17:47:24 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 17:47:24 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 17:47:28 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 17:47:28 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-08 17:47:28 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-08 17:47:28 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-08 17:47:28 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-08 17:47:28 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-08 17:47:28 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-08 17:47:28 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-08 17:47:43 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 17:47:49 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 17:47:56 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 17:48:48 | INFO     | app.services.batch_import:parse_runtime_file:1175 | 批量导入解析完成: file=模拟仿真数据.xls, total=5, running=5, skipped_not_running=0, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 17:48:53 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 17:54:20 | INFO     | app.services.batch_import:parse_runtime_file:1175 | 批量导入解析完成: file=模拟仿真数据.xls, total=5, running=5, skipped_not_running=0, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 17:54:20 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 17:54:20 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 17:54:22 | INFO     | app.services.batch_import:parse_runtime_file:1175 | 批量导入解析完成: file=模拟仿真数据.xls, total=5, running=5, skipped_not_running=0, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 17:54:22 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 17:54:22 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 17:54:30 | INFO     | app.services.batch_import:parse_runtime_file:1175 | 批量导入解析完成: file=模拟仿真数据.xls, total=5, running=5, skipped_not_running=0, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 17:54:30 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 17:54:30 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 17:55:10 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 17:55:15 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 17:56:57 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 17:57:03 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=0.0%, 耗时=6.06s
+2026-07-08 17:57:03 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 17:57:31 | INFO     | app.services.batch_import:parse_runtime_file:1175 | 批量导入解析完成: file=模拟仿真数据.xls, total=5, running=5, skipped_not_running=0, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-08 17:57:31 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 17:57:31 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-08 17:57:52 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 17:57:57 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-08 18:06:57 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-08 18:07:04 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=0.0%, 耗时=6.25s
+2026-07-08 18:07:04 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-08 18:13:02 | INFO     | app.services.mqtt_subscriber:_on_disconnect:230 | MQTT 已断开（rc=Unspecified error），paho 会自动重连...
+2026-07-08 18:13:04 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data

@@ -143,6 +143,30 @@ class HospitalDataGenerator:
 
     def _baseline_control(self) -> dict[str, float]:
         """现场既有（未寻优）控制参数，带小幅噪声。"""
+        try:
+            from app.services.equipment_config import equipment_config_service
+
+            eq = equipment_config_service.get_config()
+            tower_freq = next(
+                (tower.fixed_freq for tower in eq.cooling_towers if tower.enabled),
+                50.0,
+            )
+            chilled_min, chilled_max = eq.chilled_pump.min_freq, eq.chilled_pump.max_freq
+            cooling_min, cooling_max = eq.cooling_pump.min_freq, eq.cooling_pump.max_freq
+            chilled_base = (chilled_min + chilled_max) / 2.0
+            cooling_base = (cooling_min + cooling_max) / 2.0
+            return {
+                "chilled_water_temp": float(np.clip(7.0 + self._rng.normal(0, 0.2), 6.0, 12.0)),
+                "chilled_pump_freq": float(
+                    np.clip(chilled_base + self._rng.normal(0, 1.0), chilled_min, chilled_max)
+                ),
+                "cooling_pump_freq": float(
+                    np.clip(cooling_base + self._rng.normal(0, 1.0), cooling_min, cooling_max)
+                ),
+                "cooling_tower_fan_freq": float(tower_freq),
+            }
+        except Exception:
+            pass
         return {
             "chilled_water_temp": float(np.clip(7.0 + self._rng.normal(0, 0.2), 6.0, 12.0)),
             "chilled_pump_freq": float(np.clip(42.0 + self._rng.normal(0, 1.0), 25.0, 50.0)),

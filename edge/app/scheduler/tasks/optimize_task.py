@@ -77,6 +77,7 @@ def run_optimize() -> None:
         optimizer = get_optimizer()
         request = OptimizeRequest(
             device_data=cleaned_data.model_dump(mode="json"),
+            force=True,
         )
         result = optimizer.optimize(request)
 
@@ -111,8 +112,14 @@ def run_optimize() -> None:
             status=result.status,
             chilled_water_temp=result.chilled_water_temp,
             chilled_pump_freq=result.chilled_pump_freq,
+            chilled_pump_count=result.chilled_pump_count,
+            chilled_pump_power=result.chilled_pump_power,
             cooling_pump_freq=result.cooling_pump_freq,
+            cooling_pump_count=result.cooling_pump_count,
+            cooling_pump_power=result.cooling_pump_power,
             cooling_tower_fan_freq=result.cooling_tower_fan_freq,
+            cooling_tower_count=result.cooling_tower_count,
+            cooling_tower_power=result.cooling_tower_power,
             predicted_power=result.predicted_power,
             energy_saving_rate=result.energy_saving_rate,
             duration=result.duration,

@@ -1,0 +1,726 @@
+2026-07-07 11:50:52 | INFO     | __main__:main:247 | 业务配置已加载: 6 个模块
+2026-07-07 11:50:52 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-07 11:50:52 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-07 11:50:52 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-07 11:50:52 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-07 11:50:52 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-07 11:50:52 | INFO     | app.services.mqtt_simulator:start:83 | MQTT 模拟发布器正在连接: test.mosquitto.org:1883
+2026-07-07 11:50:52 | INFO     | app.services.mqtt_simulator:start:88 | MQTT 模拟发布器已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/device-001/data, interval=5.0s
+2026-07-07 11:50:52 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1] indoor_temp=25.068550600044233°C, total_power=34.3177kW
+2026-07-07 11:50:52 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-07 11:50:52 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-07 11:50:52 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-07 11:50:52 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-07 11:50:54 | INFO     | app.services.mqtt_simulator:_on_connect:156 | MQTT 模拟发布器已连接 Broker: test.mosquitto.org:1883
+2026-07-07 11:50:54 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-07 11:50:58 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1] topic=ac/hospital/device-001/data, indoor_temp=24.942657110158134°C, total_power=32.8798kW
+2026-07-07 11:51:08 | INFO     | __main__:lifespan:206 | 边缘端服务关闭中...
+2026-07-07 11:51:09 | INFO     | app.services.mqtt_subscriber:stop:190 | MQTT 订阅服务已停止: 收到 3 条，异常 0 条
+2026-07-07 11:51:09 | INFO     | app.services.mqtt_simulator:stop:108 | MQTT 模拟发布器已停止: 共发布 4 条
+2026-07-07 11:51:09 | INFO     | app.scheduler.scheduler:shutdown_scheduler:80 | 定时任务调度器已关闭
+2026-07-07 11:51:09 | INFO     | __main__:lifespan:209 | 边缘端服务已关闭
+2026-07-07 11:51:49 | INFO     | __main__:main:247 | 业务配置已加载: 6 个模块
+2026-07-07 11:51:50 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-07 11:51:50 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-07 11:51:50 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-07 11:51:50 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-07 11:51:50 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-07 11:51:50 | INFO     | app.services.mqtt_simulator:start:83 | MQTT 模拟发布器正在连接: test.mosquitto.org:1883
+2026-07-07 11:51:50 | INFO     | app.services.mqtt_simulator:start:88 | MQTT 模拟发布器已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/device-001/data, interval=5.0s
+2026-07-07 11:51:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1] indoor_temp=24.674423183673884°C, total_power=33.6869kW
+2026-07-07 11:51:50 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-07 11:51:50 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-07 11:51:50 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-07 11:51:50 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-07 11:51:51 | INFO     | app.services.mqtt_simulator:_on_connect:156 | MQTT 模拟发布器已连接 Broker: test.mosquitto.org:1883
+2026-07-07 11:51:51 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-07 11:51:55 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1] topic=ac/hospital/device-001/data, indoor_temp=25.373615724149925°C, total_power=35.3kW
+2026-07-07 11:53:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #21] indoor_temp=25.07583083219367°C, total_power=34.8318kW
+2026-07-07 11:53:35 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #21] topic=ac/hospital/device-001/data, indoor_temp=24.729066300645396°C, total_power=33.668kW
+2026-07-07 11:55:10 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #41] indoor_temp=24.591302780271157°C, total_power=33.6141kW
+2026-07-07 11:55:15 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #41] topic=ac/hospital/device-001/data, indoor_temp=24.822835159639038°C, total_power=35.109kW
+2026-07-07 11:56:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #61] indoor_temp=1023.8887843693661°C, total_power=34.1093kW
+2026-07-07 11:56:55 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #61] topic=ac/hospital/device-001/data, indoor_temp=25.126316054433556°C, total_power=33.4071kW
+2026-07-07 11:58:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #81] indoor_temp=24.53057656165172°C, total_power=34.8295kW
+2026-07-07 11:58:35 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #81] topic=ac/hospital/device-001/data, indoor_temp=24.9713609522194°C, total_power=35.7546kW
+2026-07-07 12:00:10 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #101] indoor_temp=24.447893829039803°C, total_power=33.3427kW
+2026-07-07 12:00:15 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #101] topic=ac/hospital/device-001/data, indoor_temp=24.968322374869558°C, total_power=36.0628kW
+2026-07-07 12:01:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 12:01:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #121] indoor_temp=25.31605360832363°C, total_power=33.9358kW
+2026-07-07 12:01:50 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-07 12:01:50 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-07 12:01:50 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-07 12:01:50 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-07 12:01:50 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-07 12:01:50 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-07 12:01:50 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-07 12:01:50 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-07 12:01:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=10.7%, 耗时=0.03s
+2026-07-07 12:01:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 12:01:55 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #121] topic=ac/hospital/device-001/data, indoor_temp=24.85159422265994°C, total_power=31.3856kW
+2026-07-07 12:03:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #141] indoor_temp=25.369553176729656°C, total_power=32.8131kW
+2026-07-07 12:03:35 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #141] topic=ac/hospital/device-001/data, indoor_temp=24.687540705154834°C, total_power=31.4264kW
+2026-07-07 12:05:10 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #161] indoor_temp=24.99118272180634°C, total_power=33.5903kW
+2026-07-07 12:05:15 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #161] topic=ac/hospital/device-001/data, indoor_temp=25.160610460809963°C, total_power=34.5451kW
+2026-07-07 12:06:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #181] indoor_temp=24.97167194014936°C, total_power=33.485kW
+2026-07-07 12:06:55 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #181] topic=ac/hospital/device-001/data, indoor_temp=24.921607756383576°C, total_power=34.4213kW
+2026-07-07 12:08:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #201] indoor_temp=24.545538485920645°C, total_power=33.3128kW
+2026-07-07 12:08:36 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #201] topic=ac/hospital/device-001/data, indoor_temp=24.460712900339082°C, total_power=34.0175kW
+2026-07-07 12:10:10 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #221] indoor_temp=24.65353008393322°C, total_power=34.9751kW
+2026-07-07 12:10:16 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #221] topic=ac/hospital/device-001/data, indoor_temp=24.99405701285311°C, total_power=33.1542kW
+2026-07-07 12:11:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 12:11:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #241] indoor_temp=25.06699627989505°C, total_power=34.6442kW
+2026-07-07 12:11:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=23.2%, 耗时=0.04s
+2026-07-07 12:11:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 12:11:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #241] topic=ac/hospital/device-001/data, indoor_temp=25.26096320107698°C, total_power=34.3893kW
+2026-07-07 12:13:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #261] indoor_temp=24.92968143265539°C, total_power=33.4257kW
+2026-07-07 12:13:36 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #261] topic=ac/hospital/device-001/data, indoor_temp=25.36752667607239°C, total_power=35.1466kW
+2026-07-07 12:15:10 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #281] indoor_temp=25.020085865077622°C, total_power=32.3244kW
+2026-07-07 12:15:16 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #281] topic=ac/hospital/device-001/data, indoor_temp=24.663763646907796°C, total_power=36.0126kW
+2026-07-07 12:16:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #301] indoor_temp=24.704281064757534°C, total_power=33.2649kW
+2026-07-07 12:16:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #301] topic=ac/hospital/device-001/data, indoor_temp=25.09988616831907°C, total_power=33.6374kW
+2026-07-07 12:18:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #321] indoor_temp=24.902228769055114°C, total_power=33.7037kW
+2026-07-07 12:18:36 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #321] topic=ac/hospital/device-001/data, indoor_temp=25.40992511247881°C, total_power=34.8242kW
+2026-07-07 12:20:10 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #341] indoor_temp=24.903500803673435°C, total_power=34.844kW
+2026-07-07 12:20:16 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #341] topic=ac/hospital/device-001/data, indoor_temp=24.957280623310627°C, total_power=34.7798kW
+2026-07-07 12:21:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 12:21:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=36.3%, 耗时=0.04s
+2026-07-07 12:21:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 12:21:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #361] indoor_temp=25.313749522477114°C, total_power=35.9055kW
+2026-07-07 12:21:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #361] topic=ac/hospital/device-001/data, indoor_temp=25.448136029866856°C, total_power=34.4183kW
+2026-07-07 12:23:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #381] indoor_temp=25.230728756094305°C, total_power=34.8302kW
+2026-07-07 12:23:36 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #381] topic=ac/hospital/device-001/data, indoor_temp=25.217142178959538°C, total_power=35.2221kW
+2026-07-07 12:25:10 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #401] indoor_temp=25.5673522487453°C, total_power=32.5407kW
+2026-07-07 12:25:16 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #401] topic=ac/hospital/device-001/data, indoor_temp=24.625049493224427°C, total_power=34.9474kW
+2026-07-07 12:26:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #421] indoor_temp=24.967928893109413°C, total_power=35.7652kW
+2026-07-07 12:26:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #421] topic=ac/hospital/device-001/data, indoor_temp=24.75861015784649°C, total_power=33.8998kW
+2026-07-07 12:28:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #441] indoor_temp=24.397378189624437°C, total_power=31.4877kW
+2026-07-07 12:28:36 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #441] topic=ac/hospital/device-001/data, indoor_temp=24.537182473749443°C, total_power=34.9241kW
+2026-07-07 12:30:10 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #461] indoor_temp=25.634315222022465°C, total_power=33.3243kW
+2026-07-07 12:30:16 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #461] topic=ac/hospital/device-001/data, indoor_temp=25.408805173242968°C, total_power=33.77kW
+2026-07-07 12:31:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 12:31:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=47.9%, 耗时=0.06s
+2026-07-07 12:31:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 12:31:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #481] indoor_temp=25.273375577484988°C, total_power=37.2914kW
+2026-07-07 12:31:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #481] topic=ac/hospital/device-001/data, indoor_temp=24.675665930189478°C, total_power=32.458kW
+2026-07-07 12:33:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #501] indoor_temp=24.99212383364296°C, total_power=35.5607kW
+2026-07-07 12:33:36 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #501] topic=ac/hospital/device-001/data, indoor_temp=25.043571864671392°C, total_power=32.8497kW
+2026-07-07 12:35:10 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #521] indoor_temp=24.817924393797497°C, total_power=35.7404kW
+2026-07-07 12:35:16 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #521] topic=ac/hospital/device-001/data, indoor_temp=24.901614242813604°C, total_power=36.3176kW
+2026-07-07 12:36:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #541] indoor_temp=25.80749299646335°C, total_power=33.678kW
+2026-07-07 12:36:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #541] topic=ac/hospital/device-001/data, indoor_temp=24.583787016041914°C, total_power=33.7552kW
+2026-07-07 12:38:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #561] indoor_temp=24.733041414401654°C, total_power=34.9471kW
+2026-07-07 12:38:36 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #561] topic=ac/hospital/device-001/data, indoor_temp=25.137121804809805°C, total_power=35.1652kW
+2026-07-07 12:40:10 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #581] indoor_temp=24.970211829088182°C, total_power=35.5994kW
+2026-07-07 12:40:16 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #581] topic=ac/hospital/device-001/data, indoor_temp=24.992574784492813°C, total_power=30.7306kW
+2026-07-07 12:41:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 12:41:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=58.1%, 耗时=0.04s
+2026-07-07 12:41:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 12:41:50 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #601] indoor_temp=25.34927982552013°C, total_power=32.996kW
+2026-07-07 12:41:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #601] topic=ac/hospital/device-001/data, indoor_temp=24.76033094678314°C, total_power=35.8198kW
+2026-07-07 12:43:30 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #621] indoor_temp=24.809625307229815°C, total_power=32.3708kW
+2026-07-07 12:43:36 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #621] topic=ac/hospital/device-001/data, indoor_temp=24.72573317953509°C, total_power=36.5368kW
+2026-07-07 12:45:11 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #641] indoor_temp=25.12895000364491°C, total_power=33.2064kW
+2026-07-07 12:45:16 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #641] topic=ac/hospital/device-001/data, indoor_temp=25.502577964602082°C, total_power=35.9964kW
+2026-07-07 12:46:51 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #661] indoor_temp=25.31443858886042°C, total_power=32.2862kW
+2026-07-07 12:46:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #661] topic=ac/hospital/device-001/data, indoor_temp=24.681111648164887°C, total_power=35.4133kW
+2026-07-07 12:48:31 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #681] indoor_temp=25.210209916543665°C, total_power=36.7727kW
+2026-07-07 12:48:36 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #681] topic=ac/hospital/device-001/data, indoor_temp=25.036393217123205°C, total_power=35.7341kW
+2026-07-07 12:50:11 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #701] indoor_temp=25.116670314818037°C, total_power=34.8704kW
+2026-07-07 12:50:16 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #701] topic=ac/hospital/device-001/data, indoor_temp=25.68329563940318°C, total_power=37.7683kW
+2026-07-07 12:51:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 12:51:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=63.7%, 耗时=0.03s
+2026-07-07 12:51:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 12:51:51 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #721] indoor_temp=24.99921857952592°C, total_power=35.052kW
+2026-07-07 12:51:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #721] topic=ac/hospital/device-001/data, indoor_temp=24.97380210580154°C, total_power=36.1845kW
+2026-07-07 12:53:31 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #741] indoor_temp=24.4018275343617°C, total_power=33.5814kW
+2026-07-07 12:53:36 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #741] topic=ac/hospital/device-001/data, indoor_temp=24.91685367558624°C, total_power=34.8642kW
+2026-07-07 12:55:11 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #761] indoor_temp=24.664033043290413°C, total_power=34.3029kW
+2026-07-07 12:55:16 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #761] topic=ac/hospital/device-001/data, indoor_temp=24.666158723676936°C, total_power=34.1131kW
+2026-07-07 12:56:51 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #781] indoor_temp=25.113316644004787°C, total_power=33.7085kW
+2026-07-07 12:56:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #781] topic=ac/hospital/device-001/data, indoor_temp=25.345999370010308°C, total_power=33.0162kW
+2026-07-07 12:58:31 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #801] indoor_temp=25.07594555059016°C, total_power=36.1006kW
+2026-07-07 12:58:36 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #801] topic=ac/hospital/device-001/data, indoor_temp=24.270985648628816°C, total_power=35.9586kW
+2026-07-07 13:00:11 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #821] indoor_temp=25.190097574626236°C, total_power=35.6545kW
+2026-07-07 13:00:16 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #821] topic=ac/hospital/device-001/data, indoor_temp=25.463853447701815°C, total_power=34.042kW
+2026-07-07 13:01:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 13:01:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=67.1%, 耗时=0.06s
+2026-07-07 13:01:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 13:01:51 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #841] indoor_temp=24.831699304130677°C, total_power=33.9897kW
+2026-07-07 13:01:56 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #841] topic=ac/hospital/device-001/data, indoor_temp=24.922652131317165°C, total_power=34.5084kW
+2026-07-07 13:03:31 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #861] indoor_temp=24.961189415845134°C, total_power=33.867kW
+2026-07-07 13:03:36 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #861] topic=ac/hospital/device-001/data, indoor_temp=25.096326614862402°C, total_power=32.9103kW
+2026-07-07 13:05:11 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #881] indoor_temp=25.053078877032846°C, total_power=36.1941kW
+2026-07-07 13:05:17 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #881] topic=ac/hospital/device-001/data, indoor_temp=25.02673777520105°C, total_power=35.5755kW
+2026-07-07 13:06:51 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #901] indoor_temp=25.198396959134453°C, total_power=32.1316kW
+2026-07-07 13:06:58 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #901] topic=ac/hospital/device-001/data, indoor_temp=24.729904531222246°C, total_power=36.0333kW
+2026-07-07 13:07:08 | ERROR    | app.services.storage:save_runtime_data:52 | 保存运行数据失败: (sqlite3.OperationalError) database is locked
+[SQL: INSERT INTO runtime_data (created_at, updated_at, data_time, source, raw_data, outdoor_temp, outdoor_humidity, indoor_temp, indoor_humidity, indoor_load, chiller_load, chiller_power, chilled_water_temp, cooling_water_temp, chilled_pump_freq, chilled_pump_power, cooling_pump_freq, cooling_pump_power, cooling_tower_fan_freq, cooling_tower_fan_power, terminal_fan_power, total_power, synced) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)]
+[parameters: ('2026-07-07 13:07:01.849340', '2026-07-07 13:07:01.849457', '2026-07-07 13:22:08.214848', 'mqtt', '{"timestamp":"2026-07-07T13:22:08.214848","outdoor_temp":33.79,"outdoor_humidity":63.5,"indoor_temp":25.243618790121257,"indoor_humidity":51.8,"indoo ... (182 characters truncated) ... q":41.35,"cooling_pump_power":3.9588,"cooling_tower_fan_freq":37.77,"cooling_tower_fan_power":1.9398,"terminal_fan_power":2.99,"total_power":33.8553}', 33.79, 63.5, 25.243618790121257, 51.8, 89.07, 74.2, 20.8696, 0.0, 37.633, 41.82, 4.0971, 41.35, 3.9588, 37.77, 1.9398, 2.99, 33.8553, 0)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2026-07-07 13:08:31 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #921] indoor_temp=25.17380517116049°C, total_power=36.5556kW
+2026-07-07 13:08:37 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #921] topic=ac/hospital/device-001/data, indoor_temp=25.44150587442825°C, total_power=34.6767kW
+2026-07-07 13:10:11 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #941] indoor_temp=25.03425543392108°C, total_power=33.497kW
+2026-07-07 13:10:17 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #941] topic=ac/hospital/device-001/data, indoor_temp=24.81144117945492°C, total_power=34.0774kW
+2026-07-07 13:11:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 13:11:51 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #961] indoor_temp=0.0°C, total_power=36.8306kW
+2026-07-07 13:11:57 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #961] topic=ac/hospital/device-001/data, indoor_temp=1023.7843758497497°C, total_power=35.2861kW
+2026-07-07 13:11:58 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=68.6%, 耗时=0.03s
+2026-07-07 13:11:58 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 13:13:31 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #981] indoor_temp=25.07953114473593°C, total_power=33.7478kW
+2026-07-07 13:13:37 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #981] topic=ac/hospital/device-001/data, indoor_temp=25.621390039849288°C, total_power=35.5487kW
+2026-07-07 13:15:11 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1001] indoor_temp=24.433007539097822°C, total_power=35.4469kW
+2026-07-07 13:15:17 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1001] topic=ac/hospital/device-001/data, indoor_temp=24.519679023664338°C, total_power=36.7917kW
+2026-07-07 13:16:51 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1021] indoor_temp=25.783375106355525°C, total_power=35.9531kW
+2026-07-07 13:16:57 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1021] topic=ac/hospital/device-001/data, indoor_temp=24.98222866318786°C, total_power=36.0834kW
+2026-07-07 13:18:31 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1041] indoor_temp=25.01559702063888°C, total_power=33.3161kW
+2026-07-07 13:18:37 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1041] topic=ac/hospital/device-001/data, indoor_temp=25.19867143480622°C, total_power=35.6495kW
+2026-07-07 13:20:11 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1061] indoor_temp=25.26161018918744°C, total_power=33.5474kW
+2026-07-07 13:20:17 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1061] topic=ac/hospital/device-001/data, indoor_temp=25.62098352817641°C, total_power=35.2634kW
+2026-07-07 13:21:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 13:21:50 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 13:21:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=68.6%, 耗时=0.04s
+2026-07-07 13:21:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 13:21:51 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1081] indoor_temp=25.109341368439665°C, total_power=36.7317kW
+2026-07-07 13:21:57 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1081] topic=ac/hospital/device-001/data, indoor_temp=24.724691630525033°C, total_power=33.9518kW
+2026-07-07 13:23:31 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1101] indoor_temp=25.04240274037983°C, total_power=35.1844kW
+2026-07-07 13:23:37 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1101] topic=ac/hospital/device-001/data, indoor_temp=24.971649443686413°C, total_power=34.2641kW
+2026-07-07 13:25:11 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1121] indoor_temp=25.478187176555956°C, total_power=35.7757kW
+2026-07-07 13:25:17 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1121] topic=ac/hospital/device-001/data, indoor_temp=24.547123593799842°C, total_power=35.5719kW
+2026-07-07 13:26:51 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1141] indoor_temp=25.229822927992267°C, total_power=35.4287kW
+2026-07-07 13:26:57 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1141] topic=ac/hospital/device-001/data, indoor_temp=25.369929284877532°C, total_power=34.6661kW
+2026-07-07 13:28:31 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1161] indoor_temp=25.055309503408786°C, total_power=35.3324kW
+2026-07-07 13:28:37 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1161] topic=ac/hospital/device-001/data, indoor_temp=24.949312279961585°C, total_power=36.0548kW
+2026-07-07 13:30:11 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1181] indoor_temp=24.83567445284714°C, total_power=31.6271kW
+2026-07-07 13:30:17 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1181] topic=ac/hospital/device-001/data, indoor_temp=25.777840898862408°C, total_power=36.1421kW
+2026-07-07 13:31:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 13:31:50 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 13:31:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=68.6%, 耗时=0.03s
+2026-07-07 13:31:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 13:31:51 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1201] indoor_temp=25.25763073316538°C, total_power=36.3916kW
+2026-07-07 13:31:57 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1201] topic=ac/hospital/device-001/data, indoor_temp=25.141287285946515°C, total_power=34.8953kW
+2026-07-07 13:33:31 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1221] indoor_temp=24.66665646854106°C, total_power=32.4216kW
+2026-07-07 13:33:37 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1221] topic=ac/hospital/device-001/data, indoor_temp=25.38492259569254°C, total_power=34.121kW
+2026-07-07 13:35:11 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1241] indoor_temp=24.64083631321787°C, total_power=33.5911kW
+2026-07-07 13:35:17 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1241] topic=ac/hospital/device-001/data, indoor_temp=24.706888607694477°C, total_power=32.3906kW
+2026-07-07 13:36:51 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1261] indoor_temp=24.992192845910438°C, total_power=33.5084kW
+2026-07-07 13:36:57 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1261] topic=ac/hospital/device-001/data, indoor_temp=24.73253144305996°C, total_power=36.9519kW
+2026-07-07 13:38:31 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1281] indoor_temp=24.912434799363684°C, total_power=34.8052kW
+2026-07-07 13:38:37 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1281] topic=ac/hospital/device-001/data, indoor_temp=24.76129409582181°C, total_power=32.9235kW
+2026-07-07 13:40:11 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1301] indoor_temp=24.778478906065153°C, total_power=33.9967kW
+2026-07-07 13:40:17 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1301] topic=ac/hospital/device-001/data, indoor_temp=24.771998632386254°C, total_power=34.7015kW
+2026-07-07 13:41:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 13:41:50 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 13:41:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=68.6%, 耗时=0.03s
+2026-07-07 13:41:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 13:41:51 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1321] indoor_temp=25.138294135216082°C, total_power=34.6595kW
+2026-07-07 13:41:57 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1321] topic=ac/hospital/device-001/data, indoor_temp=24.553150404981935°C, total_power=34.0739kW
+2026-07-07 13:43:31 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1341] indoor_temp=25.0898837634061°C, total_power=35.7578kW
+2026-07-07 13:43:37 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1341] topic=ac/hospital/device-001/data, indoor_temp=25.030066415470998°C, total_power=33.7398kW
+2026-07-07 13:45:11 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1361] indoor_temp=25.30029444638114°C, total_power=36.7044kW
+2026-07-07 13:45:17 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1361] topic=ac/hospital/device-001/data, indoor_temp=25.21660139343016°C, total_power=31.1156kW
+2026-07-07 13:46:51 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1381] indoor_temp=24.71008615510355°C, total_power=35.409kW
+2026-07-07 13:46:57 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1381] topic=ac/hospital/device-001/data, indoor_temp=25.037326180484932°C, total_power=36.8111kW
+2026-07-07 13:48:32 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1401] indoor_temp=24.90540972168139°C, total_power=37.9225kW
+2026-07-07 13:48:37 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1401] topic=ac/hospital/device-001/data, indoor_temp=25.187790297536484°C, total_power=34.696kW
+2026-07-07 13:50:12 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1421] indoor_temp=24.496772607336847°C, total_power=34.6076kW
+2026-07-07 13:50:17 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1421] topic=ac/hospital/device-001/data, indoor_temp=25.110803518784156°C, total_power=36.299kW
+2026-07-07 13:51:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 13:51:50 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 13:51:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=68.6%, 耗时=0.03s
+2026-07-07 13:51:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 13:51:52 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1441] indoor_temp=24.35682488532606°C, total_power=34.305kW
+2026-07-07 13:51:57 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1441] topic=ac/hospital/device-001/data, indoor_temp=25.097058389583317°C, total_power=35.4553kW
+2026-07-07 13:53:32 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1461] indoor_temp=24.909655466549623°C, total_power=33.7791kW
+2026-07-07 13:53:37 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1461] topic=ac/hospital/device-001/data, indoor_temp=25.470169355460236°C, total_power=34.8316kW
+2026-07-07 13:55:12 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1481] indoor_temp=25.22110867846182°C, total_power=37.0368kW
+2026-07-07 13:55:17 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1481] topic=ac/hospital/device-001/data, indoor_temp=24.607321941256224°C, total_power=34.4443kW
+2026-07-07 13:56:52 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1501] indoor_temp=24.541329864341208°C, total_power=35.4032kW
+2026-07-07 13:56:57 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1501] topic=ac/hospital/device-001/data, indoor_temp=24.93412107484352°C, total_power=33.3537kW
+2026-07-07 13:58:32 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1521] indoor_temp=24.551499860129077°C, total_power=33.4173kW
+2026-07-07 13:58:37 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1521] topic=ac/hospital/device-001/data, indoor_temp=24.998047866231964°C, total_power=37.7038kW
+2026-07-07 14:00:12 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1541] indoor_temp=25.059770424486835°C, total_power=36.4141kW
+2026-07-07 14:00:17 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1541] topic=ac/hospital/device-001/data, indoor_temp=24.669438016218578°C, total_power=32.8303kW
+2026-07-07 14:01:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 14:01:50 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 14:01:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=68.6%, 耗时=0.03s
+2026-07-07 14:01:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 14:01:52 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1561] indoor_temp=24.825809509371627°C, total_power=35.3232kW
+2026-07-07 14:01:57 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1561] topic=ac/hospital/device-001/data, indoor_temp=24.8559801215356°C, total_power=34.2113kW
+2026-07-07 14:03:32 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1581] indoor_temp=24.604099272060548°C, total_power=35.4877kW
+2026-07-07 14:03:37 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1581] topic=ac/hospital/device-001/data, indoor_temp=24.835275863301792°C, total_power=33.6553kW
+2026-07-07 14:05:12 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1601] indoor_temp=24.847391845883987°C, total_power=31.7973kW
+2026-07-07 14:05:17 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1601] topic=ac/hospital/device-001/data, indoor_temp=25.142138809674712°C, total_power=33.7712kW
+2026-07-07 14:06:52 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1621] indoor_temp=25.19959821779738°C, total_power=35.9673kW
+2026-07-07 14:06:57 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1621] topic=ac/hospital/device-001/data, indoor_temp=25.1541294991196°C, total_power=33.2039kW
+2026-07-07 14:08:32 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1641] indoor_temp=25.00385777870776°C, total_power=35.9424kW
+2026-07-07 14:08:37 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1641] topic=ac/hospital/device-001/data, indoor_temp=25.05971479543393°C, total_power=36.634kW
+2026-07-07 14:10:12 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1661] indoor_temp=24.94580704469031°C, total_power=35.5714kW
+2026-07-07 14:10:17 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1661] topic=ac/hospital/device-001/data, indoor_temp=25.060740458517873°C, total_power=37.1883kW
+2026-07-07 14:11:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 14:11:50 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 14:11:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=68.6%, 耗时=0.03s
+2026-07-07 14:11:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 14:11:52 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1681] indoor_temp=24.97686110338947°C, total_power=34.0432kW
+2026-07-07 14:11:57 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1681] topic=ac/hospital/device-001/data, indoor_temp=25.222984413624513°C, total_power=37.9558kW
+2026-07-07 14:13:32 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1701] indoor_temp=24.749876218947435°C, total_power=32.4812kW
+2026-07-07 14:13:37 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1701] topic=ac/hospital/device-001/data, indoor_temp=25.369956701308283°C, total_power=35.8203kW
+2026-07-07 14:15:12 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1721] indoor_temp=24.48838124666853°C, total_power=36.6621kW
+2026-07-07 14:15:18 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1721] topic=ac/hospital/device-001/data, indoor_temp=24.896811582071525°C, total_power=33.5367kW
+2026-07-07 14:16:52 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1741] indoor_temp=24.984175988430135°C, total_power=34.5958kW
+2026-07-07 14:16:58 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1741] topic=ac/hospital/device-001/data, indoor_temp=1023.889956877832°C, total_power=35.3648kW
+2026-07-07 14:18:32 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1761] indoor_temp=24.84601138001535°C, total_power=35.442kW
+2026-07-07 14:18:38 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1761] topic=ac/hospital/device-001/data, indoor_temp=25.083029886127687°C, total_power=36.2291kW
+2026-07-07 14:20:12 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1781] indoor_temp=25.194137775053°C, total_power=35.1538kW
+2026-07-07 14:20:18 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1781] topic=ac/hospital/device-001/data, indoor_temp=25.687649681400043°C, total_power=35.0365kW
+2026-07-07 14:21:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 14:21:50 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 14:21:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=68.6%, 耗时=0.03s
+2026-07-07 14:21:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 14:21:52 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1801] indoor_temp=24.984743519782143°C, total_power=32.3263kW
+2026-07-07 14:21:58 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1801] topic=ac/hospital/device-001/data, indoor_temp=25.324716767281917°C, total_power=35.5933kW
+2026-07-07 14:23:32 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1821] indoor_temp=24.863934627683157°C, total_power=35.0385kW
+2026-07-07 14:23:38 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1821] topic=ac/hospital/device-001/data, indoor_temp=25.422281626121496°C, total_power=32.3253kW
+2026-07-07 14:25:12 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1841] indoor_temp=25.653657304492576°C, total_power=31.8426kW
+2026-07-07 14:25:18 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1841] topic=ac/hospital/device-001/data, indoor_temp=25.338597925093403°C, total_power=35.5694kW
+2026-07-07 14:26:52 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1861] indoor_temp=25.132756730179437°C, total_power=36.2311kW
+2026-07-07 14:26:58 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1861] topic=ac/hospital/device-001/data, indoor_temp=25.57193580926475°C, total_power=38.0118kW
+2026-07-07 14:28:32 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1881] indoor_temp=25.268332546538915°C, total_power=37.6754kW
+2026-07-07 14:28:38 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1881] topic=ac/hospital/device-001/data, indoor_temp=25.22411048259285°C, total_power=32.6676kW
+2026-07-07 14:30:12 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1901] indoor_temp=24.43488926438114°C, total_power=35.372kW
+2026-07-07 14:30:18 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1901] topic=ac/hospital/device-001/data, indoor_temp=25.372490697037396°C, total_power=35.6957kW
+2026-07-07 14:31:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 14:31:50 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 14:31:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=68.6%, 耗时=0.07s
+2026-07-07 14:31:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 14:31:52 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1921] indoor_temp=25.386790707041058°C, total_power=34.0021kW
+2026-07-07 14:31:58 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1921] topic=ac/hospital/device-001/data, indoor_temp=25.04020490138932°C, total_power=34.5203kW
+2026-07-07 14:33:32 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1941] indoor_temp=25.18590257765048°C, total_power=35.3785kW
+2026-07-07 14:33:38 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1941] topic=ac/hospital/device-001/data, indoor_temp=24.526138132246594°C, total_power=32.4325kW
+2026-07-07 14:35:12 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1961] indoor_temp=25.114199420793504°C, total_power=35.3497kW
+2026-07-07 14:35:18 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1961] topic=ac/hospital/device-001/data, indoor_temp=24.9042075274254°C, total_power=36.6009kW
+2026-07-07 14:36:52 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #1981] indoor_temp=24.5995770998566°C, total_power=35.069kW
+2026-07-07 14:36:58 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #1981] topic=ac/hospital/device-001/data, indoor_temp=24.939104836823905°C, total_power=34.1124kW
+2026-07-07 14:38:32 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #2001] indoor_temp=24.72966246877199°C, total_power=36.0325kW
+2026-07-07 14:38:38 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #2001] topic=ac/hospital/device-001/data, indoor_temp=25.330785784161442°C, total_power=32.947kW
+2026-07-07 14:40:12 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #2021] indoor_temp=24.622867618424728°C, total_power=35.3308kW
+2026-07-07 14:40:18 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #2021] topic=ac/hospital/device-001/data, indoor_temp=25.15319861275435°C, total_power=31.8176kW
+2026-07-07 14:41:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 14:41:50 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 14:41:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=68.6%, 耗时=0.07s
+2026-07-07 14:41:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 14:41:52 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #2041] indoor_temp=25.4048400492886°C, total_power=35.731kW
+2026-07-07 14:41:58 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #2041] topic=ac/hospital/device-001/data, indoor_temp=25.796728601923125°C, total_power=34.5296kW
+2026-07-07 14:43:32 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #2061] indoor_temp=25.07131918595184°C, total_power=34.4767kW
+2026-07-07 14:43:38 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #2061] topic=ac/hospital/device-001/data, indoor_temp=25.391586331269007°C, total_power=36.8362kW
+2026-07-07 14:45:12 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #2081] indoor_temp=25.33226786007366°C, total_power=36.4517kW
+2026-07-07 14:45:18 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #2081] topic=ac/hospital/device-001/data, indoor_temp=24.748012901752816°C, total_power=35.2786kW
+2026-07-07 14:46:52 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #2101] indoor_temp=25.393774908431052°C, total_power=33.6938kW
+2026-07-07 14:46:58 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #2101] topic=ac/hospital/device-001/data, indoor_temp=25.337523023327126°C, total_power=35.404kW
+2026-07-07 14:48:32 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #2121] indoor_temp=24.61662636606038°C, total_power=33.2473kW
+2026-07-07 14:48:38 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #2121] topic=ac/hospital/device-001/data, indoor_temp=25.084307226443126°C, total_power=33.8053kW
+2026-07-07 14:50:12 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #2141] indoor_temp=24.983035980854645°C, total_power=32.1448kW
+2026-07-07 14:50:18 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #2141] topic=ac/hospital/device-001/data, indoor_temp=24.791107986907345°C, total_power=33.1991kW
+2026-07-07 14:51:50 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 14:51:50 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 14:51:51 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=60.1%, 耗时=0.03s
+2026-07-07 14:51:51 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 14:51:53 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #2161] indoor_temp=24.810435600403594°C, total_power=35.345kW
+2026-07-07 14:51:58 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #2161] topic=ac/hospital/device-001/data, indoor_temp=24.63956710204935°C, total_power=32.4912kW
+2026-07-07 14:53:33 | INFO     | app.services.mqtt_simulator:_publish_loop:141 | [MQTT 模拟发布 #2181] indoor_temp=25.281103961616136°C, total_power=34.1115kW
+2026-07-07 14:53:38 | INFO     | app.services.mqtt_subscriber:_on_message:253 | [MQTT 入库 #2181] topic=ac/hospital/device-001/data, indoor_temp=24.910633848094683°C, total_power=35.4366kW
+2026-07-07 14:53:56 | INFO     | __main__:main:247 | 业务配置已加载: 6 个模块
+2026-07-07 14:53:56 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-07 14:53:56 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-07 14:53:56 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-07 14:53:56 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-07 14:53:56 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-07 14:53:56 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-07 14:53:56 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-07 14:53:56 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-07 14:53:56 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-07 14:53:58 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-07 15:03:56 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 15:03:57 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-07 15:03:57 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-07 15:03:57 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-07 15:03:57 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-07 15:03:57 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-07 15:03:57 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-07 15:03:57 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-07 15:03:57 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-07 15:03:58 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=18.2%, 耗时=1.31s
+2026-07-07 15:03:58 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 15:13:56 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 15:13:57 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=26.1%, 耗时=0.73s
+2026-07-07 15:13:57 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 15:14:11 | INFO     | __main__:lifespan:206 | 边缘端服务关闭中...
+2026-07-07 15:14:12 | INFO     | app.services.mqtt_subscriber:stop:190 | MQTT 订阅服务已停止: 收到 0 条，异常 0 条
+2026-07-07 15:14:12 | INFO     | app.scheduler.scheduler:shutdown_scheduler:80 | 定时任务调度器已关闭
+2026-07-07 15:14:12 | INFO     | __main__:lifespan:209 | 边缘端服务已关闭
+2026-07-07 15:14:12 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-07 15:14:12 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-07 15:14:12 | INFO     | __main__:set_optimizer:86 | 寻优算法已注入
+2026-07-07 15:14:12 | INFO     | __main__:set_energy_model:93 | 能耗模型已注入
+2026-07-07 15:14:12 | INFO     | __main__:set_data_cleaner:100 | 数据清洗已注入
+2026-07-07 15:14:12 | INFO     | __main__:set_constraints:107 | 约束校验已注入
+2026-07-07 15:14:12 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-07 15:14:12 | INFO     | __main__:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-07 15:15:01 | INFO     | __main__:main:247 | 业务配置已加载: 6 个模块
+2026-07-07 15:15:01 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-07 15:15:01 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-07 15:15:01 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-07 15:15:01 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-07 15:15:01 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-07 15:15:01 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-07 15:15:01 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-07 15:15:01 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-07 15:15:01 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-07 15:15:03 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-07 15:17:56 | INFO     | app.services.equipment_config:save_config:47 | 设备配置已保存: config\equipment.json
+2026-07-07 15:25:01 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 15:25:02 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-07 15:25:02 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-07 15:25:02 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-07 15:25:02 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-07 15:25:02 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-07 15:25:02 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-07 15:25:02 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-07 15:25:02 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-07 15:25:03 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=0.0%, 耗时=0.90s
+2026-07-07 15:25:03 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 15:30:03 | INFO     | __main__:lifespan:206 | 边缘端服务关闭中...
+2026-07-07 15:30:04 | INFO     | app.services.mqtt_subscriber:stop:190 | MQTT 订阅服务已停止: 收到 0 条，异常 0 条
+2026-07-07 15:30:04 | INFO     | app.scheduler.scheduler:shutdown_scheduler:80 | 定时任务调度器已关闭
+2026-07-07 15:30:04 | INFO     | __main__:lifespan:209 | 边缘端服务已关闭
+2026-07-07 15:30:04 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-07 15:30:04 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-07 15:30:04 | INFO     | __main__:set_optimizer:86 | 寻优算法已注入
+2026-07-07 15:30:04 | INFO     | __main__:set_energy_model:93 | 能耗模型已注入
+2026-07-07 15:30:04 | INFO     | __main__:set_data_cleaner:100 | 数据清洗已注入
+2026-07-07 15:30:04 | INFO     | __main__:set_constraints:107 | 约束校验已注入
+2026-07-07 15:30:04 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-07 15:30:04 | INFO     | __main__:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-07 15:30:08 | INFO     | __main__:main:247 | 业务配置已加载: 6 个模块
+2026-07-07 15:30:08 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-07 15:30:08 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-07 15:30:08 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-07 15:30:08 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-07 15:30:08 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-07 15:30:08 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-07 15:30:08 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-07 15:30:08 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-07 15:30:08 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-07 15:30:10 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-07 15:30:59 | INFO     | __main__:lifespan:206 | 边缘端服务关闭中...
+2026-07-07 15:31:00 | INFO     | app.services.mqtt_subscriber:stop:190 | MQTT 订阅服务已停止: 收到 0 条，异常 0 条
+2026-07-07 15:31:00 | INFO     | app.scheduler.scheduler:shutdown_scheduler:80 | 定时任务调度器已关闭
+2026-07-07 15:31:00 | INFO     | __main__:lifespan:209 | 边缘端服务已关闭
+2026-07-07 15:31:03 | INFO     | __main__:main:247 | 业务配置已加载: 6 个模块
+2026-07-07 15:31:03 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-07 15:31:03 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-07 15:31:03 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-07 15:31:03 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-07 15:31:03 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-07 15:31:03 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-07 15:31:03 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-07 15:31:03 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-07 15:31:03 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-07 15:31:04 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-07 15:33:22 | INFO     | __main__:lifespan:206 | 边缘端服务关闭中...
+2026-07-07 15:33:23 | INFO     | app.services.mqtt_subscriber:stop:190 | MQTT 订阅服务已停止: 收到 0 条，异常 0 条
+2026-07-07 15:33:23 | INFO     | app.scheduler.scheduler:shutdown_scheduler:80 | 定时任务调度器已关闭
+2026-07-07 15:33:23 | INFO     | __main__:lifespan:209 | 边缘端服务已关闭
+2026-07-07 15:33:26 | INFO     | __main__:main:247 | 业务配置已加载: 6 个模块
+2026-07-07 15:33:26 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-07 15:33:26 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-07 15:33:26 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-07 15:33:26 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-07 15:33:26 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-07 15:33:26 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-07 15:33:26 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-07 15:33:26 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-07 15:33:26 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-07 15:33:27 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-07 15:34:33 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-07 15:34:33 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-07 15:34:33 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-07 15:34:33 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-07 15:34:33 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-07 15:34:33 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-07 15:34:33 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-07 15:34:33 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-07 15:34:34 | INFO     | app.services.batch_import:parse_runtime_file:200 | 批量导入解析完成: file=2026-07-07 08_00-2026-07-07 09_00运行趋势.xls, total=7, running=5, skipped_not_running=0, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chilled_water_temp', 'cooling_water_temp']
+2026-07-07 15:35:02 | INFO     | app.services.batch_import:parse_runtime_file:200 | 批量导入解析完成: file=2026-07-07 08_00-2026-07-07 09_00运行趋势.xls, total=7, running=5, skipped_not_running=0, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chilled_water_temp', 'cooling_water_temp']
+2026-07-07 15:43:26 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 15:43:28 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=6.1%, 耗时=1.33s
+2026-07-07 15:43:28 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 15:48:18 | INFO     | __main__:lifespan:206 | 边缘端服务关闭中...
+2026-07-07 15:48:19 | INFO     | app.services.mqtt_subscriber:stop:190 | MQTT 订阅服务已停止: 收到 0 条，异常 0 条
+2026-07-07 15:48:19 | INFO     | app.scheduler.scheduler:shutdown_scheduler:80 | 定时任务调度器已关闭
+2026-07-07 15:48:19 | INFO     | __main__:lifespan:209 | 边缘端服务已关闭
+2026-07-07 15:48:19 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-07 15:48:19 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-07 15:48:19 | INFO     | __main__:set_optimizer:86 | 寻优算法已注入
+2026-07-07 15:48:19 | INFO     | __main__:set_energy_model:93 | 能耗模型已注入
+2026-07-07 15:48:19 | INFO     | __main__:set_data_cleaner:100 | 数据清洗已注入
+2026-07-07 15:48:19 | INFO     | __main__:set_constraints:107 | 约束校验已注入
+2026-07-07 15:48:19 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-07 15:48:19 | INFO     | __main__:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-07 15:48:21 | INFO     | __main__:main:247 | 业务配置已加载: 6 个模块
+2026-07-07 15:48:21 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-07 15:48:21 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-07 15:48:21 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-07 15:48:21 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-07 15:48:21 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-07 15:48:21 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-07 15:48:21 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-07 15:48:21 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-07 15:48:21 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-07 15:48:23 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-07 15:48:42 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-07 15:48:42 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-07 15:48:42 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-07 15:48:42 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-07 15:48:42 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-07 15:48:42 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-07 15:48:42 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-07 15:48:42 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-07 15:48:42 | INFO     | app.services.batch_import:parse_runtime_file:381 | 批量导入解析完成: file=2026-07-07 08_00-2026-07-07 09_00运行趋势.xls, total=7, running=4, skipped_not_running=3, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-07 15:48:43 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 15:48:44 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 15:48:45 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 15:48:46 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 15:58:21 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 15:58:23 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=5.9%, 耗时=1.54s
+2026-07-07 15:58:23 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 16:02:50 | INFO     | __main__:lifespan:206 | 边缘端服务关闭中...
+2026-07-07 16:02:51 | INFO     | app.services.mqtt_subscriber:stop:190 | MQTT 订阅服务已停止: 收到 0 条，异常 0 条
+2026-07-07 16:02:51 | INFO     | app.scheduler.scheduler:shutdown_scheduler:80 | 定时任务调度器已关闭
+2026-07-07 16:02:51 | INFO     | __main__:lifespan:209 | 边缘端服务已关闭
+2026-07-07 16:02:51 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-07 16:02:51 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-07 16:02:51 | INFO     | __main__:set_optimizer:86 | 寻优算法已注入
+2026-07-07 16:02:51 | INFO     | __main__:set_energy_model:93 | 能耗模型已注入
+2026-07-07 16:02:51 | INFO     | __main__:set_data_cleaner:100 | 数据清洗已注入
+2026-07-07 16:02:51 | INFO     | __main__:set_constraints:107 | 约束校验已注入
+2026-07-07 16:02:51 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-07 16:02:51 | INFO     | __main__:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-07 16:02:53 | INFO     | __main__:main:247 | 业务配置已加载: 6 个模块
+2026-07-07 16:02:53 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-07 16:02:53 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-07 16:02:53 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-07 16:02:53 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-07 16:02:53 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-07 16:02:53 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-07 16:02:53 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-07 16:02:53 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-07 16:02:53 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-07 16:02:54 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-07 16:12:53 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 16:12:53 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-07 16:12:53 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-07 16:12:53 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-07 16:12:53 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-07 16:12:53 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-07 16:12:53 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-07 16:12:53 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-07 16:12:53 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-07 16:12:54 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=5.5%, 耗时=0.85s
+2026-07-07 16:12:54 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 16:19:04 | INFO     | __main__:lifespan:206 | 边缘端服务关闭中...
+2026-07-07 16:19:04 | INFO     | app.services.mqtt_subscriber:stop:190 | MQTT 订阅服务已停止: 收到 0 条，异常 0 条
+2026-07-07 16:19:04 | INFO     | app.scheduler.scheduler:shutdown_scheduler:80 | 定时任务调度器已关闭
+2026-07-07 16:19:04 | INFO     | __main__:lifespan:209 | 边缘端服务已关闭
+2026-07-07 16:19:04 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-07 16:19:04 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-07 16:19:04 | INFO     | __main__:set_optimizer:86 | 寻优算法已注入
+2026-07-07 16:19:04 | INFO     | __main__:set_energy_model:93 | 能耗模型已注入
+2026-07-07 16:19:04 | INFO     | __main__:set_data_cleaner:100 | 数据清洗已注入
+2026-07-07 16:19:04 | INFO     | __main__:set_constraints:107 | 约束校验已注入
+2026-07-07 16:19:04 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-07 16:19:04 | INFO     | __main__:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-07 16:19:06 | INFO     | __main__:main:247 | 业务配置已加载: 6 个模块
+2026-07-07 16:19:07 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-07 16:19:07 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-07 16:19:07 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-07 16:19:07 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-07 16:19:07 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-07 16:19:07 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-07 16:19:07 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-07 16:19:07 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-07 16:19:07 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-07 16:19:08 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-07 16:19:53 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-07 16:19:53 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-07 16:19:53 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-07 16:19:53 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-07 16:19:53 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-07 16:19:53 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-07 16:19:53 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-07 16:19:53 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-07 16:19:53 | INFO     | app.services.batch_import:parse_runtime_file:408 | 批量导入解析完成: file=2026-07-07 08_00-2026-07-07 09_00运行趋势.xls, total=7, running=4, skipped_not_running=3, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-07 16:19:54 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 16:19:55 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 16:19:56 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 16:19:57 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 16:19:57 | INFO     | app.services.batch_import:parse_runtime_file:408 | 批量导入解析完成: file=2026-07-07 08_00-2026-07-07 09_00运行趋势.xls, total=7, running=4, skipped_not_running=3, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-07 16:19:58 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 16:19:59 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 16:20:00 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 16:20:02 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 16:20:02 | INFO     | app.services.batch_import:parse_runtime_file:408 | 批量导入解析完成: file=2026-07-07 08_00-2026-07-07 09_00运行趋势.xls, total=7, running=4, skipped_not_running=3, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-07 16:20:03 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 16:20:04 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 16:20:05 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 16:20:06 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 16:20:07 | INFO     | app.services.batch_import:parse_runtime_file:408 | 批量导入解析完成: file=2026-07-07 08_00-2026-07-07 09_00运行趋势.xls, total=7, running=4, skipped_not_running=3, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-07 16:20:08 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 16:20:09 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 16:20:10 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 16:20:11 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 16:29:07 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 16:29:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=5.9%, 耗时=0.95s
+2026-07-07 16:29:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 16:39:07 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 16:39:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=6.2%, 耗时=1.24s
+2026-07-07 16:39:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 16:49:07 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 16:49:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=6.5%, 耗时=1.43s
+2026-07-07 16:49:08 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 16:59:07 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 16:59:09 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:137 | 寻优完成: 节能率=6.8%, 耗时=1.63s
+2026-07-07 16:59:09 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:161 | ===== 寻优任务结束 =====
+2026-07-07 17:06:59 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-07 17:06:59 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-07 17:06:59 | INFO     | __main__:set_optimizer:86 | 寻优算法已注入
+2026-07-07 17:06:59 | INFO     | __main__:set_energy_model:93 | 能耗模型已注入
+2026-07-07 17:06:59 | INFO     | __main__:set_data_cleaner:100 | 数据清洗已注入
+2026-07-07 17:06:59 | INFO     | __main__:set_constraints:107 | 约束校验已注入
+2026-07-07 17:06:59 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-07 17:06:59 | INFO     | __main__:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-07 17:12:10 | INFO     | __main__:main:247 | 业务配置已加载: 6 个模块
+2026-07-07 17:12:11 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-07 17:12:11 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-07 17:12:11 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-07 17:12:11 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-07 17:12:11 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-07 17:12:11 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-07 17:12:11 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-07 17:12:11 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-07 17:12:11 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-07 17:12:13 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-07 17:12:58 | INFO     | __main__:lifespan:206 | 边缘端服务关闭中...
+2026-07-07 17:12:59 | INFO     | app.services.mqtt_subscriber:stop:190 | MQTT 订阅服务已停止: 收到 0 条，异常 0 条
+2026-07-07 17:12:59 | INFO     | app.scheduler.scheduler:shutdown_scheduler:80 | 定时任务调度器已关闭
+2026-07-07 17:12:59 | INFO     | __main__:lifespan:209 | 边缘端服务已关闭
+2026-07-07 17:13:06 | INFO     | __main__:main:247 | 业务配置已加载: 6 个模块
+2026-07-07 17:13:06 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-07 17:13:06 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-07 17:13:06 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-07 17:13:06 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-07 17:13:06 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-07 17:13:06 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-07 17:13:06 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-07 17:13:06 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-07 17:13:06 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-07 17:13:07 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-07 17:13:42 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-07 17:13:42 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-07 17:13:42 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-07 17:13:42 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-07 17:13:42 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-07 17:13:42 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-07 17:13:42 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-07 17:13:42 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-07 17:13:43 | INFO     | app.services.batch_import:parse_runtime_file:408 | 批量导入解析完成: file=2026-07-01 13_51-2026-07-07 00_00运行趋势.xls, total=781, running=536, skipped_not_running=245, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-07 17:14:35 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 17:15:11 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 17:16:08 | ERROR    | app.services.equipment_config:get_config:37 | 读取设备配置失败，使用默认配置: Expecting value: line 1 column 1 (char 0)
+2026-07-07 17:16:08 | ERROR    | app.services.equipment_config:get_config:37 | 读取设备配置失败，使用默认配置: Expecting value: line 1 column 1 (char 0)
+2026-07-07 17:20:23 | INFO     | __main__:main:247 | 业务配置已加载: 6 个模块
+2026-07-07 17:20:23 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-07 17:20:23 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-07 17:20:23 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-07 17:20:23 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-07 17:20:23 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-07 17:20:23 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-07 17:20:23 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-07 17:20:23 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-07 17:20:23 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-07 17:20:25 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-07 17:20:37 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-07 17:20:37 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-07 17:20:37 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-07 17:20:37 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-07 17:20:37 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-07 17:20:37 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-07 17:20:37 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-07 17:20:37 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-07 17:20:37 | INFO     | app.services.batch_import:parse_runtime_file:408 | 批量导入解析完成: file=2026-07-07 08_00-2026-07-07 09_00运行趋势.xls, total=7, running=4, skipped_not_running=3, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-07 17:20:56 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 17:21:15 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 17:21:32 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 17:21:49 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 17:30:23 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 17:30:42 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=41.6%, 耗时=19.02s
+2026-07-07 17:30:42 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-07 17:40:23 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 17:40:36 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=41.9%, 耗时=12.77s
+2026-07-07 17:40:36 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-07 17:50:23 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 17:50:35 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=42.3%, 耗时=11.93s
+2026-07-07 17:50:35 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-07 17:57:38 | INFO     | app.services.equipment_config:save_config:47 | 设备配置已保存: config\equipment.json
+2026-07-07 17:58:39 | INFO     | app.services.batch_import:parse_runtime_file:408 | 批量导入解析完成: file=2026-07-07 08_00-2026-07-07 09_00运行趋势.xls, total=7, running=4, skipped_not_running=3, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-07 17:58:50 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 17:59:03 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 17:59:15 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 17:59:27 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 18:00:23 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 18:00:36 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=57.7%, 耗时=12.88s
+2026-07-07 18:00:36 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-07 18:04:27 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 18:04:40 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 18:04:52 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 18:05:04 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 18:05:16 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 18:05:18 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-07 18:05:18 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-07 18:05:18 | INFO     | __main__:set_optimizer:86 | 寻优算法已注入
+2026-07-07 18:05:18 | INFO     | __main__:set_energy_model:93 | 能耗模型已注入
+2026-07-07 18:05:18 | INFO     | __main__:set_data_cleaner:100 | 数据清洗已注入
+2026-07-07 18:05:18 | INFO     | __main__:set_constraints:107 | 约束校验已注入
+2026-07-07 18:05:18 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-07 18:05:18 | INFO     | __main__:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-07 18:05:46 | INFO     | __main__:main:247 | 业务配置已加载: 6 个模块
+2026-07-07 18:05:46 | INFO     | __main__:main:251 | 数据库已初始化
+2026-07-07 18:05:46 | INFO     | __main__:main:258 | 启动边缘端服务: 0.0.0.0:8000
+2026-07-07 18:05:46 | INFO     | __main__:lifespan:183 | 边缘端服务启动中...
+2026-07-07 18:05:46 | INFO     | app.services.mqtt_subscriber:start:157 | MQTT 正在连接 Broker: test.mosquitto.org:1883
+2026-07-07 18:05:46 | INFO     | app.services.mqtt_subscriber:start:163 | MQTT 订阅服务已启动: broker=test.mosquitto.org:1883, topic=ac/hospital/+/data
+2026-07-07 18:05:46 | INFO     | app.scheduler.scheduler:start_scheduler:42 | 寻优任务已注册，周期: 10 分钟
+2026-07-07 18:05:46 | INFO     | app.scheduler.scheduler:start_scheduler:69 | 数据清理任务已注册，周期: 6 小时
+2026-07-07 18:05:46 | INFO     | app.scheduler.scheduler:start_scheduler:72 | 定时任务调度器已启动
+2026-07-07 18:05:46 | INFO     | __main__:lifespan:201 | 边缘端服务已启动
+2026-07-07 18:05:47 | INFO     | app.services.mqtt_subscriber:_on_connect:214 | MQTT 已连接 Broker 并订阅主题: ac/hospital/+/data
+2026-07-07 18:06:47 | INFO     | app.algorithms.constraints:__init__:84 | 安全约束已加载: {'chilled_water_temp': (6.0, 12.0), 'chilled_pump_freq': (25.0, 50.0), 'cooling_pump_freq': (25.0, 50.0), 'cooling_tower_fan_freq': (20.0, 45.0)}, 舒适温度=(24.0, 26.0)
+2026-07-07 18:06:47 | INFO     | app.algorithms.bootstrap:build_algorithms:59 | Cursor 算法模块装配完成（能耗/约束/清洗/寻优/兜底/仿真）
+2026-07-07 18:06:47 | INFO     | app.main:set_optimizer:86 | 寻优算法已注入
+2026-07-07 18:06:47 | INFO     | app.main:set_energy_model:93 | 能耗模型已注入
+2026-07-07 18:06:47 | INFO     | app.main:set_data_cleaner:100 | 数据清洗已注入
+2026-07-07 18:06:47 | INFO     | app.main:set_constraints:107 | 约束校验已注入
+2026-07-07 18:06:47 | INFO     | app.services.simulator:set_generator:99 | 数据生成器已替换
+2026-07-07 18:06:47 | INFO     | app.main:bootstrap_cursor_algorithms:127 | Cursor 核心算法已全部注入并接管闭环
+2026-07-07 18:06:47 | INFO     | app.services.batch_import:parse_runtime_file:408 | 批量导入解析完成: file=2026-07-06 18-2026-07-07 18运行趋势 (1).xls, total=25, running=12, skipped_not_running=13, missing=['outdoor_temp', 'outdoor_humidity', 'indoor_temp', 'indoor_humidity', 'indoor_load', 'chiller_load', 'chiller_power', 'chilled_water_temp', 'cooling_water_temp', 'chilled_pump_freq', 'chilled_pump_power', 'cooling_pump_freq', 'cooling_pump_power', 'cooling_tower_fan_freq', 'cooling_tower_fan_power', 'terminal_fan_power', 'total_power']
+2026-07-07 18:07:01 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 18:07:39 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 18:07:51 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 18:08:04 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 18:08:17 | WARNING  | app.algorithms.fallback:smooth:89 | 参数平滑进入应急模式（工况突变/舒适度告急），放宽步长快速响应
+2026-07-07 18:15:46 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 18:15:58 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=57.8%, 耗时=12.42s
+2026-07-07 18:15:58 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====
+2026-07-07 18:25:46 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:29 | ===== 寻优任务开始 =====
+2026-07-07 18:25:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:143 | 寻优完成: 节能率=58.0%, 耗时=12.76s
+2026-07-07 18:25:59 | INFO     | app.scheduler.tasks.optimize_task:run_optimize:167 | ===== 寻优任务结束 =====

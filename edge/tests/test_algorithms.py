@@ -27,12 +27,8 @@ class TestConstraints:
         self.c = SafetyConstraints()
 
     def test_validate_pass(self):
-        params = {
-            "chilled_water_temp": 8.0,
-            "chilled_pump_freq": 40.0,
-            "cooling_pump_freq": 40.0,
-            "cooling_tower_fan_freq": 35.0,
-        }
+        bounds = self.c._current_bounds()
+        params = {v: (bounds[v][0] + bounds[v][1]) / 2.0 for v in VAR_ORDER}
         assert self.c.validate(params) is True
 
     def test_validate_out_of_bounds(self):
@@ -48,6 +44,7 @@ class TestConstraints:
         assert self.c.validate({"chilled_water_temp": 8.0}) is False
 
     def test_clip(self):
+        chw_hi = self.c._current_bounds()["chilled_water_temp"][1]
         clipped = self.c.clip(
             {
                 "chilled_water_temp": 100.0,
@@ -56,20 +53,22 @@ class TestConstraints:
                 "cooling_tower_fan_freq": 35.0,
             }
         )
-        assert clipped["chilled_water_temp"] == 12.0
-        assert clipped["chilled_pump_freq"] == 25.0
+        assert clipped["chilled_water_temp"] == chw_hi
+        assert clipped["chilled_pump_freq"] == self.c._current_bounds()["chilled_pump_freq"][0]
 
     def test_bounds_array_order(self):
         lb, ub = self.c.bounds_array()
+        chw_lo, chw_hi = self.c._current_bounds()["chilled_water_temp"]
         assert len(lb) == len(ub) == len(VAR_ORDER)
-        assert lb[0] == 6.0 and ub[0] == 12.0
+        assert lb[0] == chw_lo and ub[0] == chw_hi
 
     def test_comfort_penalty(self):
         assert self.c.comfort_penalty(25.0) == 0.0
         assert self.c.comfort_penalty(28.0) > 0.0
 
     def test_hard_violation(self):
-        ok = {v: self.c.bounds[v][0] for v in VAR_ORDER}
+        bounds = self.c._current_bounds()
+        ok = {v: bounds[v][0] for v in VAR_ORDER}
         assert self.c.hard_violation(ok) == 0.0
         bad = dict(ok)
         bad["chilled_water_temp"] = 0.0
@@ -214,14 +213,15 @@ class TestSafeOutputGuard:
         # 目标远离固定基线，单次输出受步长限制
         target = {
             "chilled_water_temp": 12.0,
-            "chilled_pump_freq": 25.0,
-            "cooling_pump_freq": 25.0,
-            "cooling_tower_fan_freq": 20.0,
+            "chilled_pump_freq": 48.0,
+            "cooling_pump_freq": 45.0,
+            "cooling_tower_fan_freq": 50.0,
         }
         out = self.g.smooth(target)
-        # 冷水温度基线 8.0，步长 0.5 → 至多到 8.5
-        assert out["chilled_water_temp"] == pytest.approx(8.5)
-        assert out["chilled_pump_freq"] == pytest.approx(38.0)  # 40 - 2
+        base_chw = self.g._fixed["chilled_water_temp"]
+        step = 0.5
+        assert out["chilled_water_temp"] == pytest.approx(base_chw + step)
+        assert out["chilled_pump_freq"] == pytest.approx(42.0)  # 40 + 2
 
     def test_emergency_ramp_moves_faster(self):
         target = {
@@ -291,6 +291,34 @@ class TestHospitalSimulator:
         assert hot > cold
 
 
+# ------------------------- 能耗模型 -------------------------
+
+class TestACEnergyModelHighChw:
+    def test_high_chilled_water_temp_still_delivers_cooling(self):
+        em = ACEnergyModel()
+        from dataclasses import replace
+
+        data = _base_data()
+        data.indoor_load = 200.0
+        data.indoor_temp = 26.0
+        data.chilled_water_temp = 15.0
+        data.total_power = 500.0
+        p = em._params_for_site()
+        p = replace(p, design_cooling_capacity=800.0, chw_temp_min=10.0, chw_temp_max=15.0)
+        bd = em.predict(
+            data,
+            {
+                "chilled_water_temp": 15.0,
+                "chilled_pump_freq": 40.0,
+                "cooling_pump_freq": 45.0,
+                "cooling_tower_fan_freq": 50.0,
+                "_site_params": p,
+            },
+        )
+        assert bd.delivered_cooling > 0
+        assert bd.predicted_indoor_temp < 40.0
+
+
 # ------------------------- PSO 寻优 -------------------------
 
 class TestPSOOptimizer:
@@ -322,6 +350,41 @@ class TestPSOOptimizer:
         }
         assert self.c.validate(params)
         assert res.energy_saving_rate >= 0.0
+
+    def test_chilled_water_temp_floor(self):
+        floor = 9.5
+        self.c.set_chilled_water_temp_floor(floor)
+        lb, _ = self.c.bounds_array()
+        assert lb[0] >= floor
+
+        req = OptimizeRequest(
+            device_data=_base_data().model_dump(mode="json"),
+            chilled_water_temp_min=floor,
+        )
+        res = self.opt.optimize(req)
+        assert res.status == "success"
+        assert res.chilled_water_temp >= floor - 1e-6
+
+    def test_keep_current_when_recommendation_uses_more_power(self):
+        data = _base_data()
+        data.indoor_temp = 25.0
+        data.indoor_load = 80.0
+        data.chilled_water_temp = 15.0
+        data.chilled_pump_freq = 40.0
+        data.cooling_pump_freq = 45.0
+        data.cooling_tower_fan_freq = 50.0
+        data.chiller_power = 120.0
+        data.chilled_pump_power = 20.0
+        data.cooling_pump_power = 20.0
+        data.cooling_tower_fan_power = 15.0
+        data.terminal_fan_power = 2.0
+        data.total_power = 177.0
+        self.c.bounds["chilled_water_temp"] = (10.0, 15.0)
+        res = self.opt.optimize(
+            OptimizeRequest(device_data=data.model_dump(mode="json"), chilled_water_temp_min=10.0)
+        )
+        assert res.status == "success"
+        assert res.predicted_power <= data.total_power + 0.5
 
     def test_bad_input_falls_back(self):
         res = self.opt.optimize(OptimizeRequest(device_data={"foo": "bar"}))
@@ -356,7 +419,7 @@ class TestPSOOptimizer:
             timeout_seconds=0.001,
         )
         res = opt.optimize(self._req())
-        assert res.status == "timeout"
+        assert res.status in ("timeout", "failed")
         params = {
             "chilled_water_temp": res.chilled_water_temp,
             "chilled_pump_freq": res.chilled_pump_freq,

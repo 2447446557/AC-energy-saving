@@ -120,6 +120,13 @@ class SafeOutputGuard:
         logger.warning(f"触发兜底[{reason}]，采用{which}: {source}")
         return self.smooth(source)
 
+    def set_baseline(self, params: dict[str, Any]) -> None:
+        """将平滑基准重置为指定控制参数（通常为当前实测工况）。"""
+        baseline = self._constraints.clip(
+            {var: float(params.get(var, self._fixed[var])) for var in VAR_ORDER}
+        )
+        self._last_output = dict(baseline)
+
     @property
     def last_output(self) -> dict[str, float]:
         """最近一次实际下发的控制参数。"""

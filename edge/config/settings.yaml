@@ -1,71 +1,46 @@
-# ============ 边缘端业务配置 ============
-# 此文件配置寻优周期、约束阈值等业务参数
-# Trae 仅加载与透传，不实现约束校验逻辑（由 Cursor 实现）
-
-# 寻优任务配置
 optimize:
-  # 寻优执行周期（分钟），贴合空调热惰性特性
+  enabled: false
   interval_minutes: 10
-  # 寻优超时（秒），超时触发熔断兜底（Cursor 实现）
   timeout_seconds: 60
-  # 是否启用寻优任务
-  enabled: true
-
-# 模拟数据配置（前期开发专用，仅在 MQTT 未启用时生效）
+batch_defaults:
+  outdoor_temp: 30.0
+  outdoor_humidity: 60.0
+  indoor_temp: 27.0
+  indoor_humidity: 55.0
+  terminal_fan_power: 0.0
+energy_model:
+  eta_chiller: 0.5
+  terminal_fan_default: 2.0
+  indoor_base_temp: 24.5
+  indoor_gain: 25.0
 simulator:
-  # 是否启用模拟数据生成（无现场设备时设为 true）
-  enabled: true
-  # 数据生成周期（秒）
+  enabled: false
   interval_seconds: 30
-
-# MQTT 对接真实设备（需同时在 .env 中设置 MQTT_ENABLED=true）
 mqtt:
-  # 订阅主题（+ 为通配符，匹配任意设备 ID）
-  topic: "ac/hospital/+/data"
-  # 主题前缀（仅用于模拟发布器，生成完整 topic = <topic_prefix>/<device_id>/data）
-  topic_prefix: "ac/hospital"
-  # 模拟发布器：是否启动虚拟设备（开发调试时开启；接入真实硬件后关闭）
-  simulator_publisher: true
-  # 模拟发布器的虚拟设备 ID
-  simulator_device_id: "device-001"
-  # 模拟发布器发布间隔（秒）
+  topic: ac/hospital/+/data
+  topic_prefix: ac/hospital
+  simulator_publisher: false
+  simulator_device_id: device-001
   publish_interval_seconds: 5
-
-# 设备安全约束阈值（仅配置，校验逻辑由 Cursor 实现）
 constraints:
-  # 冷水出水温度（℃）
   chilled_water_temp:
-    min: 6.0
-    max: 12.0
-  # 水泵运行频率（Hz）
+    min: 10.0
+    max: 10.0
   pump_frequency:
     min: 25.0
     max: 50.0
-  # 冷却塔风机频率（Hz）
   cooling_tower_fan_frequency:
     min: 20.0
     max: 45.0
-  # 室内舒适温度（℃）
   indoor_temp:
     min: 24.0
     max: 26.0
-
-# 本地数据清理
 cleanup:
-  # 运行数据保留天数
   runtime_data_keep_days: 30
-  # 寻优记录保留天数
   optimize_record_keep_days: 90
-  # 告警日志保留天数
   alarm_log_keep_days: 180
-  # 清理任务执行周期（小时）
   interval_hours: 6
-
-# 云端同步配置
 sync:
-  # 上报批次大小
   batch_size: 100
-  # 失败重试次数
   max_retries: 5
-  # 重试初始间隔（秒）
   retry_backoff: 2

@@ -28,8 +28,14 @@ class OptimizeRecord(TimestampModel, table=True):
     # 最优参数
     chilled_water_temp: float = Field(default=7.0, description="冷水出水温度")
     chilled_pump_freq: float = Field(default=35.0, description="冷冻泵频率")
+    chilled_pump_count: int = Field(default=0, description="冷冻泵开启台数")
+    chilled_pump_power: float = Field(default=0.0, description="冷冻泵总功率")
     cooling_pump_freq: float = Field(default=35.0, description="冷却泵频率")
+    cooling_pump_count: int = Field(default=0, description="冷却泵开启台数")
+    cooling_pump_power: float = Field(default=0.0, description="冷却泵总功率")
     cooling_tower_fan_freq: float = Field(default=30.0, description="冷却塔风机频率")
+    cooling_tower_count: int = Field(default=0, description="冷却塔开启台数")
+    cooling_tower_power: float = Field(default=0.0, description="冷却塔总功率")
 
     # 预测能耗与节能率
     predicted_power: float = Field(default=0.0, description="预测能耗")

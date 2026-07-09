@@ -7,6 +7,7 @@ from apscheduler.triggers.interval import IntervalTrigger
 from loguru import logger
 
 from app.core.config import get_business_config
+from app.services.settings_config import get_merged_business_config
 from app.core.constants import TaskName
 from app.scheduler.tasks.cleanup_task import run_cleanup
 from app.scheduler.tasks.optimize_task import run_optimize
@@ -26,20 +27,10 @@ def get_scheduler() -> BackgroundScheduler:
 def start_scheduler() -> None:
     """启动定时任务"""
     scheduler = get_scheduler()
-    config = get_business_config()
+    config = get_merged_business_config()
 
     # 寻优任务
-    optimize_config = config.get("optimize", {})
-    if optimize_config.get("enabled", True):
-        interval = optimize_config.get("interval_minutes", 10)
-        scheduler.add_job(
-            run_optimize,
-            trigger=IntervalTrigger(minutes=interval),
-            id=TaskName.OPTIMIZE,
-            name="寻优任务",
-            replace_existing=True,
-        )
-        logger.info(f"寻优任务已注册，周期: {interval} 分钟")
+    reschedule_optimize_job(config)
 
     # 云端同步任务
     from app.core.config import get_settings
@@ -70,6 +61,43 @@ def start_scheduler() -> None:
 
     scheduler.start()
     logger.info("定时任务调度器已启动")
+
+
+def reschedule_optimize_job(config: dict | None = None) -> None:
+    """按当前系统配置注册或停用寻优定时任务（保存配置后可热更新）。"""
+    scheduler = get_scheduler()
+    if config is None:
+        config = get_merged_business_config()
+    optimize_config = config.get("optimize", {}) or {}
+    enabled = bool(optimize_config.get("enabled", True))
+    if not scheduler.running:
+        if enabled:
+            interval = int(optimize_config.get("interval_minutes", 10))
+            scheduler.add_job(
+                run_optimize,
+                trigger=IntervalTrigger(minutes=interval),
+                id=TaskName.OPTIMIZE,
+                name="寻优任务",
+                replace_existing=True,
+            )
+            logger.info(f"寻优任务已注册，周期: {interval} 分钟")
+        return
+    if enabled:
+        interval = int(optimize_config.get("interval_minutes", 10))
+        scheduler.add_job(
+            run_optimize,
+            trigger=IntervalTrigger(minutes=interval),
+            id=TaskName.OPTIMIZE,
+            name="寻优任务",
+            replace_existing=True,
+        )
+        logger.info(f"寻优任务已更新，周期: {interval} 分钟")
+    else:
+        try:
+            scheduler.remove_job(TaskName.OPTIMIZE)
+            logger.info("寻优定时任务已停用")
+        except Exception:
+            logger.debug("寻优定时任务未注册，跳过停用")
 
 
 def shutdown_scheduler() -> None:

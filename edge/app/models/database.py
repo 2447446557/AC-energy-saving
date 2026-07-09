@@ -15,7 +15,7 @@ from sqlmodel import Session, SQLModel, create_engine
 from app.core.config import get_settings
 
 # 导入所有模型，确保 SQLModel.metadata 能注册
-from app.models import alarm_log, operation_log, optimize_record, runtime_data  # noqa: F401
+from app.models import alarm_log, config_store, operation_log, optimize_record, runtime_data  # noqa: F401
 
 
 def _get_engine_kwargs() -> dict:
@@ -45,6 +45,7 @@ def init_db() -> None:
     engine = get_engine()
     SQLModel.metadata.create_all(engine)
     _migrate_runtime_data_columns(engine)
+    _migrate_optimize_record_columns(engine)
 
 
 def _migrate_runtime_data_columns(engine) -> None:
@@ -114,6 +115,25 @@ def _backfill_runtime_data_columns(conn, field_names) -> None:
             text(f"UPDATE runtime_data SET {assignments} WHERE id = :id"),
             {**values, "id": item["id"]},
         )
+
+
+def _migrate_optimize_record_columns(engine) -> None:
+    """为既有寻优记录补齐冷却塔离散方案字段。"""
+    columns = {
+        "chilled_pump_count": "INTEGER DEFAULT 0",
+        "chilled_pump_power": "REAL DEFAULT 0.0",
+        "cooling_pump_count": "INTEGER DEFAULT 0",
+        "cooling_pump_power": "REAL DEFAULT 0.0",
+        "cooling_tower_count": "INTEGER DEFAULT 0",
+        "cooling_tower_power": "REAL DEFAULT 0.0",
+    }
+    with engine.begin() as conn:
+        existing = {
+            row[1] for row in conn.execute(text("PRAGMA table_info(optimize_record)"))
+        }
+        for name, ddl in columns.items():
+            if name not in existing:
+                conn.execute(text(f"ALTER TABLE optimize_record ADD COLUMN {name} {ddl}"))
 
 
 @contextmanager

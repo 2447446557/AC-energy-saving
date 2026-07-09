@@ -124,6 +124,12 @@ def bootstrap_cursor_algorithms() -> None:
         set_data_cleaner(bundle.data_cleaner)
         set_constraints(bundle.constraints)
         simulator.set_generator(bundle.generator)
+        try:
+            from app.services.settings_config import reload_runtime_settings
+
+            reload_runtime_settings()
+        except Exception as e:
+            logger.warning(f"启动时同步数据库系统配置失败，使用 YAML 配置: {e}")
         logger.info("Cursor 核心算法已全部注入并接管闭环")
     except Exception as e:
         # 装配失败不影响服务启动：退化为 stub，保证边缘端可用

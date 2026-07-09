@@ -30,6 +30,7 @@ from typing import Any
 from loguru import logger
 
 from app.core.config import get_business_config
+from app.services.settings_config import get_merged_business_config
 
 # 控制变量的规范顺序（寻优向量维度顺序，全项目统一，不可随意调整）
 VAR_ORDER: tuple[str, ...] = (
@@ -56,7 +57,7 @@ class SafetyConstraints:
     """
 
     def __init__(self, config: dict[str, Any] | None = None) -> None:
-        cfg = config if config is not None else get_business_config()
+        cfg = config if config is not None else get_merged_business_config()
         c = cfg.get("constraints", {}) or {}
 
         # 逐项加载硬约束边界，缺失时回退到设计文档默认值
@@ -80,8 +81,54 @@ class SafetyConstraints:
         self.indoor_temp_range: tuple[float, float] = self._pair(
             c.get("indoor_temp"), _DEFAULT_INDOOR_TEMP
         )
+        # 单次寻优可临时抬高冷水温度下限（由前端「最低出水温度」传入）
+        self._chilled_water_temp_floor: float | None = None
 
         logger.info(f"安全约束已加载: {self.bounds}, 舒适温度={self.indoor_temp_range}")
+
+    def set_chilled_water_temp_floor(self, floor: float | None) -> None:
+        """设置本次寻优的冷水出水温度下限（不低于系统配置下限）。"""
+        if floor is None:
+            self._chilled_water_temp_floor = None
+            return
+        try:
+            value = float(floor)
+        except (TypeError, ValueError):
+            self._chilled_water_temp_floor = None
+            return
+        self._chilled_water_temp_floor = value if math.isfinite(value) else None
+
+    def _current_bounds(self) -> dict[str, tuple[float, float]]:
+        """返回当前硬约束边界，叠加本地设备配置。
+
+        设备配置由前端页面动态修改后，下一次寻优即可生效，无需重启服务。
+        """
+        bounds = dict(self.bounds)
+        try:
+            from app.services.equipment_config import equipment_config_service
+
+            eq = equipment_config_service.get_config()
+            bounds["chilled_pump_freq"] = self._normalize_pair(
+                eq.chilled_pump.min_freq,
+                eq.chilled_pump.max_freq,
+                bounds["chilled_pump_freq"],
+            )
+            bounds["cooling_pump_freq"] = self._normalize_pair(
+                eq.cooling_pump.min_freq,
+                eq.cooling_pump.max_freq,
+                bounds["cooling_pump_freq"],
+            )
+            enabled_towers = [tower for tower in eq.cooling_towers if tower.enabled]
+            if enabled_towers:
+                fixed_freq = enabled_towers[0].fixed_freq
+                bounds["cooling_tower_fan_freq"] = (fixed_freq, fixed_freq)
+        except Exception as e:
+            logger.debug(f"读取设备配置失败，使用默认约束: {e}")
+        floor = self._chilled_water_temp_floor
+        if floor is not None:
+            lo, hi = bounds["chilled_water_temp"]
+            bounds["chilled_water_temp"] = (min(max(lo, floor), hi), hi)
+        return bounds
 
     @staticmethod
     def _pair(
@@ -97,6 +144,21 @@ class SafetyConstraints:
         except (TypeError, ValueError):
             return default
         # 防呆：min > max 时自动交换，保证边界合法
+        if lo_f > hi_f:
+            lo_f, hi_f = hi_f, lo_f
+        return (lo_f, hi_f)
+
+    @staticmethod
+    def _normalize_pair(
+        lo: float, hi: float, default: tuple[float, float]
+    ) -> tuple[float, float]:
+        """归一化配置边界，非法时回退默认。"""
+        try:
+            lo_f, hi_f = float(lo), float(hi)
+        except (TypeError, ValueError):
+            return default
+        if not math.isfinite(lo_f) or not math.isfinite(hi_f):
+            return default
         if lo_f > hi_f:
             lo_f, hi_f = hi_f, lo_f
         return (lo_f, hi_f)
@@ -121,7 +183,7 @@ class SafetyConstraints:
                 # NaN/Inf 与任何边界比较均为 False，若不显式拦截会被误判为“合法”
                 logger.warning(f"约束校验失败: {var} 非有限值 ({value!r})")
                 return False
-            lo, hi = self.bounds[var]
+            lo, hi = self._current_bounds()[var]
             # 容忍浮点误差，避免边界值被误判越界
             if value < lo - 1e-9 or value > hi + 1e-9:
                 logger.warning(
@@ -139,7 +201,7 @@ class SafetyConstraints:
         """
         clipped = dict(params)
         for var in VAR_ORDER:
-            lo, hi = self.bounds[var]
+            lo, hi = self._current_bounds()[var]
             value = clipped.get(var)
             if not isinstance(value, (int, float)) or isinstance(value, bool) or (
                 not math.isfinite(value)
@@ -152,8 +214,9 @@ class SafetyConstraints:
 
     def bounds_array(self) -> tuple[list[float], list[float]]:
         """返回按 VAR_ORDER 排列的 (lb, ub)，供 scikit-opt PSO 使用。"""
-        lb = [self.bounds[v][0] for v in VAR_ORDER]
-        ub = [self.bounds[v][1] for v in VAR_ORDER]
+        bounds = self._current_bounds()
+        lb = [bounds[v][0] for v in VAR_ORDER]
+        ub = [bounds[v][1] for v in VAR_ORDER]
         return lb, ub
 
     def comfort_penalty(self, indoor_temp: float) -> float:
@@ -186,7 +249,7 @@ class SafetyConstraints:
                 # 缺失/非数值/非有限一律记为强违反，确保被目标函数抛弃
                 total += 1.0e6
                 continue
-            lo, hi = self.bounds[var]
+            lo, hi = self._current_bounds()[var]
             if value < lo:
                 total += (lo - value) ** 2
             elif value > hi:

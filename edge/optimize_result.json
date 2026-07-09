@@ -1,0 +1,346 @@
+{
+  "generated_at": "2026-07-07 13:28:19",
+  "total": 10,
+  "records": [
+    {
+      "generated_at": "2026-07-07 13:28:19",
+      "input": {
+        "timestamp": "2026-07-17 00:22:24",
+        "record_id": 12923,
+        "outdoor_temp": 27.34,
+        "indoor_temp": 24.71607700531818,
+        "indoor_load": 50.8,
+        "chilled_water_temp": 7.0,
+        "chilled_pump_freq": 40.84,
+        "cooling_pump_freq": 40.91,
+        "cooling_tower_fan_freq": 38.51,
+        "total_power": 22.2317,
+        "source": "device_mqtt"
+      },
+      "output": {
+        "chilled_water_temp": 8.5,
+        "chilled_pump_freq": 38.0,
+        "cooling_pump_freq": 38.0,
+        "cooling_tower_fan_freq": 33.0,
+        "predicted_power": 14.67,
+        "energy_saving_rate": 13.86,
+        "status": "success",
+        "duration": 0.03,
+        "optimized_at": "2026-07-07 13:28:19.207190"
+      },
+      "changes": {
+        "delta_cwt": 1.5,
+        "delta_chilled_pump": -2.84,
+        "delta_cooling_pump": -2.91,
+        "delta_cooling_tower": -5.51,
+        "delta_power_kwh": 7.56
+      }
+    },
+    {
+      "generated_at": "2026-07-07 13:28:19",
+      "input": {
+        "timestamp": "2026-07-17 00:19:50",
+        "record_id": 13165,
+        "outdoor_temp": 27.38,
+        "indoor_temp": 24.71607700531818,
+        "indoor_load": 50.96,
+        "chilled_water_temp": 7.0,
+        "chilled_pump_freq": 40.84,
+        "cooling_pump_freq": 40.91,
+        "cooling_tower_fan_freq": 38.51,
+        "total_power": 22.2845,
+        "source": "device_modbus"
+      },
+      "output": {
+        "chilled_water_temp": 9.0,
+        "chilled_pump_freq": 36.0,
+        "cooling_pump_freq": 36.0,
+        "cooling_tower_fan_freq": 31.0,
+        "predicted_power": 12.61,
+        "energy_saving_rate": 26.05,
+        "status": "success",
+        "duration": 0.04,
+        "optimized_at": "2026-07-07 13:28:19.247360"
+      },
+      "changes": {
+        "delta_cwt": 2.0,
+        "delta_chilled_pump": -4.84,
+        "delta_cooling_pump": -4.91,
+        "delta_cooling_tower": -7.51,
+        "delta_power_kwh": 9.67
+      }
+    },
+    {
+      "generated_at": "2026-07-07 13:28:19",
+      "input": {
+        "timestamp": "2026-07-17 00:17:24",
+        "record_id": 12922,
+        "outdoor_temp": 27.42,
+        "indoor_temp": 24.827708084015363,
+        "indoor_load": 50.55,
+        "chilled_water_temp": 7.01,
+        "chilled_pump_freq": 40.92,
+        "cooling_pump_freq": 41.43,
+        "cooling_tower_fan_freq": 36.29,
+        "total_power": 22.2202,
+        "source": "simulator"
+      },
+      "output": {
+        "chilled_water_temp": 9.5,
+        "chilled_pump_freq": 34.0,
+        "cooling_pump_freq": 34.0,
+        "cooling_tower_fan_freq": 29.0,
+        "predicted_power": 10.54,
+        "energy_saving_rate": 38.0,
+        "status": "success",
+        "duration": 0.06,
+        "optimized_at": "2026-07-07 13:28:19.335437"
+      },
+      "changes": {
+        "delta_cwt": 2.49,
+        "delta_chilled_pump": -6.92,
+        "delta_cooling_pump": -7.43,
+        "delta_cooling_tower": -7.29,
+        "delta_power_kwh": 11.68
+      }
+    },
+    {
+      "generated_at": "2026-07-07 13:28:19",
+      "input": {
+        "timestamp": "2026-07-17 00:14:50",
+        "record_id": 13164,
+        "outdoor_temp": 27.46,
+        "indoor_temp": 24.827708084015363,
+        "indoor_load": 50.76,
+        "chilled_water_temp": 7.01,
+        "chilled_pump_freq": 40.92,
+        "cooling_pump_freq": 41.43,
+        "cooling_tower_fan_freq": 36.29,
+        "total_power": 22.2805,
+        "source": "device_mqtt"
+      },
+      "output": {
+        "chilled_water_temp": 10.0,
+        "chilled_pump_freq": 32.0,
+        "cooling_pump_freq": 32.0,
+        "cooling_tower_fan_freq": 27.0,
+        "predicted_power": 8.73,
+        "energy_saving_rate": 48.75,
+        "status": "success",
+        "duration": 0.04,
+        "optimized_at": "2026-07-07 13:28:19.373152"
+      },
+      "changes": {
+        "delta_cwt": 2.99,
+        "delta_chilled_pump": -8.92,
+        "delta_cooling_pump": -9.43,
+        "delta_cooling_tower": -9.29,
+        "delta_power_kwh": 13.55
+      }
+    },
+    {
+      "generated_at": "2026-07-07 13:28:19",
+      "input": {
+        "timestamp": "2026-07-17 00:12:24",
+        "record_id": 12921,
+        "outdoor_temp": 27.53,
+        "indoor_temp": 25.2301999168597,
+        "indoor_load": 51.13,
+        "chilled_water_temp": 7.05,
+        "chilled_pump_freq": 42.18,
+        "cooling_pump_freq": 43.2,
+        "cooling_tower_fan_freq": 39.33,
+        "total_power": 23.637,
+        "source": "device_modbus"
+      },
+      "output": {
+        "chilled_water_temp": 10.5,
+        "chilled_pump_freq": 30.0,
+        "cooling_pump_freq": 30.0,
+        "cooling_tower_fan_freq": 25.0,
+        "predicted_power": 7.17,
+        "energy_saving_rate": 60.55,
+        "status": "success",
+        "duration": 0.03,
+        "optimized_at": "2026-07-07 13:28:19.400931"
+      },
+      "changes": {
+        "delta_cwt": 3.45,
+        "delta_chilled_pump": -12.18,
+        "delta_cooling_pump": -13.2,
+        "delta_cooling_tower": -14.33,
+        "delta_power_kwh": 16.47
+      }
+    },
+    {
+      "generated_at": "2026-07-07 13:28:19",
+      "input": {
+        "timestamp": "2026-07-17 00:09:50",
+        "record_id": 13163,
+        "outdoor_temp": 27.57,
+        "indoor_temp": 25.2301999168597,
+        "indoor_load": 51.38,
+        "chilled_water_temp": 7.05,
+        "chilled_pump_freq": 42.18,
+        "cooling_pump_freq": 43.2,
+        "cooling_tower_fan_freq": 39.33,
+        "total_power": 23.7002,
+        "source": "simulator"
+      },
+      "output": {
+        "chilled_water_temp": 10.62,
+        "chilled_pump_freq": 28.0,
+        "cooling_pump_freq": 28.0,
+        "cooling_tower_fan_freq": 23.0,
+        "predicted_power": 6.28,
+        "energy_saving_rate": 65.54,
+        "status": "success",
+        "duration": 0.04,
+        "optimized_at": "2026-07-07 13:28:19.436825"
+      },
+      "changes": {
+        "delta_cwt": 3.57,
+        "delta_chilled_pump": -14.18,
+        "delta_cooling_pump": -15.2,
+        "delta_cooling_tower": -16.33,
+        "delta_power_kwh": 17.42
+      }
+    },
+    {
+      "generated_at": "2026-07-07 13:28:19",
+      "input": {
+        "timestamp": "2026-07-17 00:08:34",
+        "record_id": 7457,
+        "outdoor_temp": 27.52,
+        "indoor_temp": 24.71607700531818,
+        "indoor_load": 51.43,
+        "chilled_water_temp": 7.0,
+        "chilled_pump_freq": 40.84,
+        "cooling_pump_freq": 40.91,
+        "cooling_tower_fan_freq": 38.51,
+        "total_power": 22.4354,
+        "source": "device_mqtt"
+      },
+      "output": {
+        "chilled_water_temp": 10.62,
+        "chilled_pump_freq": 26.0,
+        "cooling_pump_freq": 26.0,
+        "cooling_tower_fan_freq": 21.0,
+        "predicted_power": 5.63,
+        "energy_saving_rate": 67.18,
+        "status": "success",
+        "duration": 0.03,
+        "optimized_at": "2026-07-07 13:28:19.467573"
+      },
+      "changes": {
+        "delta_cwt": 3.62,
+        "delta_chilled_pump": -14.84,
+        "delta_cooling_pump": -14.91,
+        "delta_cooling_tower": -17.51,
+        "delta_power_kwh": 16.81
+      }
+    },
+    {
+      "generated_at": "2026-07-07 13:28:19",
+      "input": {
+        "timestamp": "2026-07-17 00:07:24",
+        "record_id": 12920,
+        "outdoor_temp": 27.55,
+        "indoor_temp": 24.68623800164646,
+        "indoor_load": 51.75,
+        "chilled_water_temp": 6.92,
+        "chilled_pump_freq": 41.58,
+        "cooling_pump_freq": 41.53,
+        "cooling_tower_fan_freq": 36.12,
+        "total_power": 23.3398,
+        "source": "manual"
+      },
+      "output": {
+        "chilled_water_temp": 10.58,
+        "chilled_pump_freq": 25.0,
+        "cooling_pump_freq": 25.0,
+        "cooling_tower_fan_freq": 20.0,
+        "predicted_power": 5.37,
+        "energy_saving_rate": 69.17,
+        "status": "success",
+        "duration": 0.03,
+        "optimized_at": "2026-07-07 13:28:19.497919"
+      },
+      "changes": {
+        "delta_cwt": 3.66,
+        "delta_chilled_pump": -16.58,
+        "delta_cooling_pump": -16.53,
+        "delta_cooling_tower": -16.12,
+        "delta_power_kwh": 17.97
+      }
+    },
+    {
+      "generated_at": "2026-07-07 13:28:19",
+      "input": {
+        "timestamp": "2026-07-17 00:04:50",
+        "record_id": 13162,
+        "outdoor_temp": 27.59,
+        "indoor_temp": 24.68623800164646,
+        "indoor_load": 52.06,
+        "chilled_water_temp": 6.92,
+        "chilled_pump_freq": 41.58,
+        "cooling_pump_freq": 41.53,
+        "cooling_tower_fan_freq": 36.12,
+        "total_power": 23.4375,
+        "source": "device_mqtt"
+      },
+      "output": {
+        "chilled_water_temp": 10.55,
+        "chilled_pump_freq": 25.0,
+        "cooling_pump_freq": 25.0,
+        "cooling_tower_fan_freq": 20.0,
+        "predicted_power": 5.41,
+        "energy_saving_rate": 69.04,
+        "status": "success",
+        "duration": 0.03,
+        "optimized_at": "2026-07-07 13:28:19.526860"
+      },
+      "changes": {
+        "delta_cwt": 3.63,
+        "delta_chilled_pump": -16.58,
+        "delta_cooling_pump": -16.53,
+        "delta_cooling_tower": -16.12,
+        "delta_power_kwh": 18.03
+      }
+    },
+    {
+      "generated_at": "2026-07-07 13:28:19",
+      "input": {
+        "timestamp": "2026-07-17 00:03:34",
+        "record_id": 7456,
+        "outdoor_temp": 27.61,
+        "indoor_temp": 24.827708084015363,
+        "indoor_load": 51.34,
+        "chilled_water_temp": 7.01,
+        "chilled_pump_freq": 40.92,
+        "cooling_pump_freq": 41.43,
+        "cooling_tower_fan_freq": 36.29,
+        "total_power": 22.4654,
+        "source": "simulator"
+      },
+      "output": {
+        "chilled_water_temp": 10.62,
+        "chilled_pump_freq": 25.0,
+        "cooling_pump_freq": 25.0,
+        "cooling_tower_fan_freq": 20.0,
+        "predicted_power": 5.33,
+        "energy_saving_rate": 68.92,
+        "status": "success",
+        "duration": 0.03,
+        "optimized_at": "2026-07-07 13:28:19.557796"
+      },
+      "changes": {
+        "delta_cwt": 3.61,
+        "delta_chilled_pump": -15.92,
+        "delta_cooling_pump": -16.43,
+        "delta_cooling_tower": -16.29,
+        "delta_power_kwh": 17.14
+      }
+    }
+  ]
+}

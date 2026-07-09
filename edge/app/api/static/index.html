@@ -12,7 +12,7 @@
             color: #333;
             padding: 20px;
         }
-        .container { max-width: 960px; margin: 0 auto; }
+        .container { max-width: 1180px; margin: 0 auto; }
         h1 {
             color: #1890ff;
             margin-bottom: 20px;
@@ -92,6 +92,121 @@
             border-radius: 50%;
             margin-right: 6px;
         }
+        .section-title {
+            font-size: 16px;
+            color: #666;
+            margin: 20px 0 12px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+        label {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input[readonly] {
+            background: #f5f5f5;
+            color: #888;
+            cursor: not-allowed;
+        }
+        input[type="checkbox"] {
+            width: auto;
+        }
+        button {
+            border: none;
+            border-radius: 4px;
+            background: #1890ff;
+            color: #fff;
+            padding: 9px 16px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button.secondary { background: #52c41a; }
+        button.ghost { background: #fff; color: #1890ff; border: 1px solid #1890ff; }
+        button.danger { background: #ff4d4f; }
+        .actions { margin-top: 14px; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+        .action-status {
+            margin-top: 12px;
+            padding: 10px 12px;
+            border-radius: 6px;
+            background: #e6f7ff;
+            border: 1px solid #91d5ff;
+            color: #0050b3;
+            font-size: 13px;
+            min-height: 20px;
+        }
+        .action-status.error {
+            background: #fff2f0;
+            border-color: #ffccc7;
+            color: #cf1322;
+        }
+        .action-status.success {
+            background: #f6ffed;
+            border-color: #b7eb8f;
+            color: #389e0d;
+        }
+        button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .result-box {
+            background: #001529;
+            color: #d6f7ff;
+            border-radius: 6px;
+            padding: 12px;
+            overflow: auto;
+            min-height: 120px;
+            font-family: Consolas, Monaco, monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+        }
+        .scroll-table { overflow-x: auto; margin-top: 12px; }
+        .scroll-table table { min-width: 1200px; }
+        tr.clickable { cursor: pointer; }
+        tr.clickable:hover { background: #e6f7ff; }
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-top: 12px;
+        }
+        .detail-grid.two-col {
+            grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+        }
+        .result-box.tall { min-height: 280px; max-height: 520px; }
+        .hint { color: #999; font-size: 12px; margin-top: 8px; line-height: 1.6; }
+        .collapsible-header {
+            cursor: pointer;
+            user-select: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .collapsible-header::before {
+            content: '▸';
+            display: inline-block;
+            font-size: 12px;
+            color: #999;
+            transition: transform 0.2s ease;
+            flex-shrink: 0;
+        }
+        .collapsible-header.expanded::before { transform: rotate(90deg); }
+        .collapsible-header:hover { color: #1890ff; }
+        .collapsible-body.collapsed { display: none; }
+        .collapsible-card-title {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -121,7 +236,485 @@
             </div>
         </div>
 
-        <h2 style="font-size:16px; color:#666; margin: 20px 0 12px;">最近告警</h2>
+        <h2 class="section-title">现场设备配置（数据库保存）</h2>
+        <div class="card">
+            <h2 class="section-title">站点级开启方案</h2>
+            <div class="form-grid">
+                <div>
+                    <label>冷冻泵开启方案（逗号分隔）</label>
+                    <input id="chilled-schemes" value="1,2">
+                </div>
+                <div>
+                    <label>冷却泵开启方案（逗号分隔）</label>
+                    <input id="cooling-schemes" value="1,2">
+                </div>
+                <div>
+                    <label>冷却塔开启方案（逗号分隔）</label>
+                    <input id="tower-schemes" value="0,3,5">
+                </div>
+            </div>
+
+            <h2 class="section-title">批量设置（对选中类型全部设备生效）</h2>
+            <div class="form-grid">
+                <div>
+                    <label>设备类型</label>
+                    <select id="batch-unit-type">
+                        <option value="chilled_pump">冷冻泵</option>
+                        <option value="cooling_pump">冷却泵</option>
+                        <option value="chiller">冷水机组</option>
+                        <option value="cooling_tower">冷却塔</option>
+                    </select>
+                </div>
+                <div>
+                    <label>批量字段</label>
+                    <select id="batch-field">
+                        <option value="min_freq">最小频率 Hz</option>
+                        <option value="max_freq">最大频率 Hz</option>
+                        <option value="motor_power_kw">电机功率 kW</option>
+                        <option value="fixed_freq">定频 Hz</option>
+                        <option value="rated_capacity_kw">额定制冷量 kW</option>
+                        <option value="rated_power_kw">满负荷电功率 kW</option>
+                        <option value="max_load_rate">负荷上限(0~1)</option>
+                        <option value="enabled">启用(true/false)</option>
+                    </select>
+                </div>
+                <div>
+                    <label>批量值</label>
+                    <input id="batch-value" placeholder="输入数值或 true/false">
+                </div>
+                <div style="display:flex; align-items:flex-end;">
+                    <button type="button" class="secondary" onclick="applyBatchUnitSetting()">应用到该类型全部设备</button>
+                </div>
+            </div>
+
+            <h2 class="section-title">冷水机组（逐台）</h2>
+            <div class="scroll-table">
+                <table>
+                    <thead>
+                        <tr><th>启用</th><th>名称</th><th>额定制冷量 kW</th><th>满负荷电功率 kW</th><th>负荷上限</th><th>设计COP</th><th>操作</th></tr>
+                    </thead>
+                    <tbody id="chiller-units-table"></tbody>
+                </table>
+            </div>
+            <div class="actions"><button type="button" class="ghost" onclick="addEquipmentUnit('chiller')">添加冷水机组</button></div>
+
+            <h2 class="section-title">冷冻泵（逐台）</h2>
+            <div class="scroll-table">
+                <table>
+                    <thead>
+                        <tr><th>启用</th><th>名称</th><th>最小Hz</th><th>最大Hz</th><th>电机kW</th><th>操作</th></tr>
+                    </thead>
+                    <tbody id="chilled-units-table"></tbody>
+                </table>
+            </div>
+            <div class="actions"><button type="button" class="ghost" onclick="addEquipmentUnit('chilled_pump')">添加冷冻泵</button></div>
+
+            <h2 class="section-title">冷却泵（逐台）</h2>
+            <div class="scroll-table">
+                <table>
+                    <thead>
+                        <tr><th>启用</th><th>名称</th><th>最小Hz</th><th>最大Hz</th><th>电机kW</th><th>操作</th></tr>
+                    </thead>
+                    <tbody id="cooling-units-table"></tbody>
+                </table>
+            </div>
+            <div class="actions"><button type="button" class="ghost" onclick="addEquipmentUnit('cooling_pump')">添加冷却泵</button></div>
+
+            <h2 class="section-title">冷却塔（逐台）</h2>
+            <div class="scroll-table">
+                <table>
+                    <thead>
+                        <tr><th>启用</th><th>名称</th><th>电机kW</th><th>定频Hz</th><th>操作</th></tr>
+                    </thead>
+                    <tbody id="tower-units-table"></tbody>
+                </table>
+            </div>
+            <div class="actions"><button type="button" class="ghost" onclick="addEquipmentUnit('cooling_tower')">添加冷却塔</button></div>
+
+            <div class="actions">
+                <button type="button" onclick="saveEquipmentConfig()">保存设备配置到数据库</button>
+                <button type="button" class="secondary" onclick="loadEquipmentConfig()">重新读取配置</button>
+            </div>
+            <div class="hint" id="config-message">支持逐台增删改；配置持久化在 SQLite，并同步 equipment.json 备份。</div>
+        </div>
+
+        <h2 class="section-title">系统配置</h2>
+        <div class="card">
+            <h2 class="section-title">舒适度与寻优约束</h2>
+            <div class="form-grid">
+                <div>
+                    <label>室内舒适温度下限 ℃</label>
+                    <input id="comfort-temp-min" type="number" step="0.1" value="24">
+                </div>
+                <div>
+                    <label>室内舒适温度上限 ℃</label>
+                    <input id="comfort-temp-max" type="number" step="0.1" value="26">
+                </div>
+                <div>
+                    <label>冷水出水温度下限 ℃</label>
+                    <input id="constraint-chw-min" type="number" step="0.1" value="10">
+                </div>
+                <div>
+                    <label>冷水出水温度上限 ℃</label>
+                    <input id="constraint-chw-max" type="number" step="0.1" value="15">
+                </div>
+                <div>
+                    <label>水泵频率下限 Hz（全局）</label>
+                    <input id="constraint-pump-min" type="number" step="0.1" value="25">
+                </div>
+                <div>
+                    <label>水泵频率上限 Hz（全局）</label>
+                    <input id="constraint-pump-max" type="number" step="0.1" value="50">
+                </div>
+                <div>
+                    <label>冷却塔频率下限 Hz</label>
+                    <input id="constraint-tower-min" type="number" step="0.1" value="20">
+                </div>
+                <div>
+                    <label>冷却塔频率上限 Hz</label>
+                    <input id="constraint-tower-max" type="number" step="0.1" value="45">
+                </div>
+            </div>
+            <div class="hint">泵/塔实际寻优边界还会与上方「设备配置」中的频率范围取交集；定频冷却塔会锁定为 fixed_freq。</div>
+
+            <h2 class="section-title">Excel 批量导入缺省值</h2>
+            <div class="form-grid">
+                <div>
+                    <label>缺省室外温度 ℃</label>
+                    <input id="default-outdoor-temp" type="number" step="0.1" value="30">
+                </div>
+                <div>
+                    <label>缺省室外湿度 %</label>
+                    <input id="default-outdoor-humidity" type="number" step="0.1" value="60">
+                </div>
+                <div>
+                    <label>缺省室内温度 ℃</label>
+                    <input id="default-indoor-temp" type="number" step="0.1" value="27">
+                </div>
+                <div>
+                    <label>缺省室内湿度 %</label>
+                    <input id="default-indoor-humidity" type="number" step="0.1" value="55">
+                </div>
+                <div>
+                    <label>缺省末端风机功率 kW</label>
+                    <input id="default-terminal-fan" type="number" step="0.1" value="0">
+                </div>
+            </div>
+            <div class="hint">Excel 缺少对应列时使用以上值；末端风机填 0 表示未知，模型将使用下方「缺省末端功率」。</div>
+
+            <h2 class="section-title">寻优任务</h2>
+            <div class="form-grid">
+                <div>
+                    <label>启用定时寻优</label>
+                    <input id="optimize-enabled" type="checkbox" checked>
+                </div>
+                <div>
+                    <label>寻优间隔（分钟）</label>
+                    <input id="optimize-interval" type="number" min="1" max="1440" step="1" value="10">
+                </div>
+                <div>
+                    <label>单次寻优超时（秒）</label>
+                    <input id="optimize-timeout" type="number" min="5" max="600" step="1" value="60">
+                </div>
+            </div>
+
+            <h2 class="section-title">能耗模型参数</h2>
+            <div class="form-grid">
+                <div>
+                    <label>机组卡诺效率系数 η</label>
+                    <input id="model-eta-chiller" type="number" min="0.1" max="1" step="0.01" value="0.5">
+                </div>
+                <div>
+                    <label>缺省末端功率 kW（Excel 为 0 时）</label>
+                    <input id="model-terminal-default" type="number" min="0" step="0.1" value="2">
+                </div>
+                <div>
+                    <label>室内基准温度 ℃</label>
+                    <input id="model-indoor-base" type="number" step="0.1" value="24.5">
+                </div>
+                <div>
+                    <label>供冷缺口温度增益</label>
+                    <input id="model-indoor-gain" type="number" min="1" step="0.1" value="25">
+                </div>
+            </div>
+
+            <div class="actions">
+                <button onclick="saveAppSettings()">保存系统配置</button>
+                <button class="secondary" onclick="loadAppSettings()">重新读取系统配置</button>
+            </div>
+            <div class="hint" id="settings-message">包含舒适度、安全约束、Excel 缺省值、定时寻优与能耗模型参数。</div>
+        </div>
+
+        <h2 class="section-title collapsible-header expanded" id="optimize-input-header" onclick="toggleCollapse('optimize-input-body', 'optimize-input-header')">寻优输入参数</h2>
+        <div class="card collapsible-body" id="optimize-input-body">
+            <div class="actions" style="margin-top:0;">
+                <label>从 Excel/CSV 自动填充（默认取最后一条运行数据）</label>
+                <input id="optimize-input-file" type="file" accept=".xls,.xlsx,.csv">
+                <button type="button" class="secondary" id="btn-fill-from-excel" onclick="fillOptimizeInputsFromExcel()">上传并填充输入框</button>
+            </div>
+            <div id="optimize-import-summary" class="hint">支持现场多级表头趋势文件；将解析「运行状态=运行」的最后一行，并逐台填充冷水机组/冷冻泵/冷却泵/冷却塔。</div>
+
+            <h2 class="section-title">环境与负荷</h2>
+            <div class="form-grid">
+                <div><label>室外温度 ℃</label><input id="in-outdoor-temp" type="number" step="0.1" value="32"></div>
+                <div><label>室外湿度 %</label><input id="in-outdoor-humidity" type="number" step="0.1" value="60"></div>
+                <div><label>室内温度 ℃</label><input id="in-indoor-temp" type="number" step="0.1" value="25"></div>
+                <div><label>室内湿度 %</label><input id="in-indoor-humidity" type="number" step="0.1" value="55"></div>
+                <div><label>室内负荷 kW</label><input id="in-indoor-load" type="number" step="0.1" value="300"></div>
+            </div>
+
+            <h2 class="section-title">冷水机组（逐台）</h2>
+            <div class="scroll-table">
+                <table>
+                    <thead>
+                        <tr><th>设备</th><th>负载 %</th><th>功率 kW</th></tr>
+                    </thead>
+                    <tbody id="optimize-chillers-table">
+                        <tr><td colspan="3" style="text-align:center; color:#999;">加载设备配置中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="form-grid" style="margin-top:12px;">
+                <div><label>冷水出水温度 ℃</label><input id="in-chilled-water-temp" type="number" step="0.1" value="12.5"></div>
+                <div><label>冷水最低出水温度 ℃</label><input id="in-chilled-water-min" type="number" step="0.1" value="10" title="寻优推荐值不会低于此温度"></div>
+                <div><label>冷却水出水温度 ℃</label><input id="in-cooling-water-temp" type="number" step="0.1" value="32"></div>
+            </div>
+
+            <h2 class="section-title">冷冻泵（逐台）</h2>
+            <div class="scroll-table">
+                <table>
+                    <thead>
+                        <tr><th>设备</th><th>频率 Hz</th><th>功率 kW</th><th>电流 A</th></tr>
+                    </thead>
+                    <tbody id="optimize-chilled-pumps-table">
+                        <tr><td colspan="4" style="text-align:center; color:#999;">加载设备配置中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 class="section-title">冷却泵（逐台）</h2>
+            <div class="scroll-table">
+                <table>
+                    <thead>
+                        <tr><th>设备</th><th>频率 Hz</th><th>功率 kW</th><th>电流 A</th></tr>
+                    </thead>
+                    <tbody id="optimize-cooling-pumps-table">
+                        <tr><td colspan="4" style="text-align:center; color:#999;">加载设备配置中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 class="section-title">冷却塔（逐台）</h2>
+            <div class="scroll-table">
+                <table>
+                    <thead>
+                        <tr><th>设备</th><th>频率 Hz</th><th>功率 kW</th><th>电流 A</th></tr>
+                    </thead>
+                    <tbody id="optimize-cooling-towers-table">
+                        <tr><td colspan="4" style="text-align:center; color:#999;">加载设备配置中...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h2 class="section-title">末端与汇总</h2>
+            <div class="form-grid">
+                <div><label>末端风机功率 kW（各楼层空调箱/风机盘管）</label><input id="in-terminal-fan-power" type="number" step="0.1" value="5"></div>
+                <div><label>系统总功率 kW（自动汇总）</label><input id="in-total-power" type="number" step="0.1" value="377" readonly></div>
+            </div>
+            <div class="hint" id="optimize-unit-summary">冷水机组/冷冻泵/冷却泵/冷却塔汇总将用于寻优计算。</div>
+            <div class="actions">
+                <button type="button" id="btn-run-optimize" onclick="runOptimizeFromInputs()">使用当前输入执行寻优</button>
+                <button type="button" class="secondary" id="btn-load-realtime" onclick="loadRealtimeToInputs()">读取最新实时数据到输入框</button>
+                <button type="button" id="btn-run-optimize-multi" onclick="runOptimizeMultipleFromInputs()">使用当前输入执行寻优多次</button>
+                <label style="display:inline-flex; align-items:center; gap:8px; margin-left:8px;">
+                    <span>次数</span>
+                    <input id="optimize-repeat-count" type="number" min="1" max="50" step="1" value="5" style="width:72px;">
+                </label>
+            </div>
+            <div id="optimize-action-status" class="action-status">填写参数后点击上方按钮；单次寻优约 3~10 秒，结果在下方「寻优输出结果」区域展示。</div>
+            <div class="hint">现场 CSV/Excel 数据可先按字段填入这里，也可以直接在下面上传批量寻优。多次寻优会将每轮推荐值与预测工况作为下一轮输入，模拟逐步执行推荐后的闭环过程。</div>
+        </div>
+
+        <h2 class="section-title" id="optimize-output-section">寻优输出结果</h2>
+        <div class="grid">
+            <div class="card">
+                <h2>推荐冷水出水温度</h2>
+                <div class="value" id="out-chilled-temp">--</div>
+                <div class="sub">℃</div>
+            </div>
+            <div class="card">
+                <h2>推荐冷冻泵开启</h2>
+                <div class="value" id="out-chilled-count">--</div>
+                <div class="sub">台</div>
+            </div>
+            <div class="card">
+                <h2>推荐冷冻泵频率</h2>
+                <div class="value" id="out-chilled-pump">--</div>
+                <div class="sub">Hz</div>
+            </div>
+            <div class="card">
+                <h2>推荐冷却泵开启</h2>
+                <div class="value" id="out-cooling-count">--</div>
+                <div class="sub">台</div>
+            </div>
+            <div class="card">
+                <h2>推荐冷却泵频率</h2>
+                <div class="value" id="out-cooling-pump">--</div>
+                <div class="sub">Hz</div>
+            </div>
+            <div class="card">
+                <h2>推荐冷却塔开启</h2>
+                <div class="value" id="out-tower-count">--</div>
+                <div class="sub">台</div>
+            </div>
+            <div class="card">
+                <h2>冷却塔频率</h2>
+                <div class="value" id="out-tower">--</div>
+                <div class="sub">定频 Hz</div>
+            </div>
+        </div>
+
+        <h2 class="section-title">预测工况（推荐参数下的模型推算）</h2>
+        <div class="grid">
+            <div class="card">
+                <h2>预测系统总功率</h2>
+                <div class="value" id="out-predicted-power">--</div>
+                <div class="sub">kW</div>
+            </div>
+            <div class="card">
+                <h2>当前基线功率</h2>
+                <div class="value" id="out-baseline-power">--</div>
+                <div class="sub">kW（输入工况）</div>
+            </div>
+            <div class="card">
+                <h2>预测室内温度</h2>
+                <div class="value" id="out-predicted-indoor">--</div>
+                <div class="sub">℃</div>
+            </div>
+            <div class="card">
+                <h2>预测主机功率</h2>
+                <div class="value" id="out-predicted-chiller">--</div>
+                <div class="sub">kW</div>
+            </div>
+            <div class="card">
+                <h2>预测冷却水温度</h2>
+                <div class="value" id="out-predicted-cooling-water">--</div>
+                <div class="sub">℃</div>
+            </div>
+            <div class="card">
+                <h2>预测 COP</h2>
+                <div class="value" id="out-predicted-cop">--</div>
+                <div class="sub">--</div>
+            </div>
+            <div class="card">
+                <h2>预测节能率</h2>
+                <div class="value" id="out-saving-rate">--</div>
+                <div class="sub">%（相对基线）</div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="collapsible-card-title collapsible-header expanded" id="optimize-result-header" onclick="toggleCollapse('optimize-result-body', 'optimize-result-header')">寻优原始结果（JSON）</div>
+            <div class="collapsible-body" id="optimize-result-body">
+                <div class="result-box" id="optimize-result">尚未执行寻优。</div>
+            </div>
+        </div>
+
+        <h2 class="section-title collapsible-header expanded" id="multi-run-section" onclick="toggleCollapse('multi-run-body', 'multi-run-section')">多次寻优过程</h2>
+        <div class="card collapsible-body" id="multi-run-body">
+            <div class="scroll-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>轮次</th>
+                            <th>输入冷水℃</th>
+                            <th>输入冷冻泵Hz</th>
+                            <th>输入冷却泵Hz</th>
+                            <th>输入总功率kW</th>
+                            <th>推荐冷水℃</th>
+                            <th>推荐冷冻泵Hz</th>
+                            <th>推荐冷却泵Hz</th>
+                            <th>预测总功率kW</th>
+                            <th>预测室内℃</th>
+                            <th>节能率%</th>
+                            <th>耗时s</th>
+                        </tr>
+                    </thead>
+                    <tbody id="multi-run-table">
+                        <tr><td colspan="12" style="text-align:center; color:#999;">尚未执行多次寻优</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <h2 class="section-title">Excel/CSV 批量寻优</h2>
+        <div class="card">
+            <div class="form-grid">
+                <div>
+                    <label>运行趋势文件（.xls / .xlsx / .csv）</label>
+                    <input id="batch-file" type="file" accept=".xls,.xlsx,.csv">
+                </div>
+                <div>
+                    <label>最多处理运行行数</label>
+                    <input id="batch-max-rows" type="number" min="1" max="10000" step="1" value="1000">
+                </div>
+                <div>
+                    <label>页面最多显示结果数</label>
+                    <input id="batch-max-results" type="number" min="1" max="1000" step="1" value="200">
+                </div>
+            </div>
+            <div class="actions">
+                <button type="button" onclick="uploadBatchOptimize()">上传并批量寻优</button>
+            </div>
+            <div class="hint">只会处理 Excel 中“运行状态/寻优运行状态/状态”等字段值包含“运行”的行；其他行自动跳过。</div>
+            <div id="batch-summary" class="hint">尚未上传文件。</div>
+            <div class="scroll-table">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>行号</th>
+                            <th>时间</th>
+                            <th>机组负载%</th>
+                            <th>Excel汇总功率</th>
+                            <th>模型基线功率</th>
+                            <th>当前冷冻泵Hz</th>
+                            <th>当前冷却泵Hz</th>
+                            <th>推荐冷水℃</th>
+                            <th>冷冻泵台数</th>
+                            <th>推荐冷冻泵Hz</th>
+                            <th>冷却泵台数</th>
+                            <th>推荐冷却泵Hz</th>
+                            <th>推荐冷却塔台数</th>
+                            <th>预测总功率</th>
+                            <th>预测室内℃</th>
+                            <th>预测主机kW</th>
+                            <th>相对模型基线节能%</th>
+                            <th>数据质量</th>
+                        </tr>
+                    </thead>
+                    <tbody id="batch-table">
+                        <tr><td colspan="18" style="text-align:center; color:#999;">暂无批量结果</td></tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="detail-grid">
+                <div>
+                    <h2 class="section-title">选中行：Excel 原始数据（全部列）</h2>
+                    <div class="result-box tall" id="batch-raw-detail">点击表格某一行查看。</div>
+                </div>
+            </div>
+            <div class="detail-grid two-col">
+                <div>
+                    <h2 class="section-title">选中行：寻优输入溯源（含缺省/替换/近似）</h2>
+                    <div class="result-box tall" id="batch-input-detail">点击表格某一行查看。</div>
+                </div>
+                <div>
+                    <h2 class="section-title">选中行：寻优输出与计算审计</h2>
+                    <div class="result-box tall" id="batch-output-detail">点击表格某一行查看。</div>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="section-title">最近告警</h2>
         <table>
             <thead>
                 <tr>
@@ -179,8 +772,1486 @@
             }
         }
 
+        function num(id) {
+            const value = Number(document.getElementById(id).value);
+            return Number.isFinite(value) ? value : 0;
+        }
+
+        let batchResultsCache = [];
+        let optimizeEquipmentConfig = null;
+        let equipmentDocument = null;
+        let optimizeInputDefaults = null;
+
+        function isEmptyInputValue(value) {
+            if (value === undefined || value === null || value === '') {
+                return true;
+            }
+            const number = Number(value);
+            return !Number.isFinite(number);
+        }
+
+        function buildOptimizeInputDefaultsFromConfig(cfg, settings) {
+            const batch = (settings && settings.batch_defaults) || {};
+            const constraints = (settings && settings.constraints) || {};
+            const chw = constraints.chilled_water_temp || {min: 10, max: 15};
+            const defaults = {
+                outdoor_temp: batch.outdoor_temp ?? 30,
+                outdoor_humidity: batch.outdoor_humidity ?? 60,
+                indoor_temp: batch.indoor_temp ?? 27,
+                indoor_humidity: batch.indoor_humidity ?? 55,
+                terminal_fan_power: batch.terminal_fan_power || (settings && settings.energy_model && settings.energy_model.terminal_fan_default) || 2,
+                chilled_water_temp: (Number(chw.min) + Number(chw.max)) / 2,
+                cooling_water_temp: 32
+            };
+            if (cfg && cfg.chiller) {
+                const loadPct = Math.max(10, Math.min(100, (cfg.chiller.max_load_rate || 1) * 100 * 0.8));
+                const thermal = cfg.chiller.rated_capacity_kw * (cfg.chiller.max_load_rate || 1) * loadPct / 100;
+                const cop = cfg.chiller.rated_cop > 0 ? cfg.chiller.rated_cop : 6.47;
+                defaults.chiller_load = loadPct;
+                defaults.chiller_power = thermal / cop;
+                defaults.indoor_load = thermal;
+            }
+            if (cfg && cfg.chilled_pump) {
+                defaults.chilled_pump_freq = cfg.chilled_pump.min_freq || 40;
+                const ratio = defaults.chilled_pump_freq / 50;
+                defaults.chilled_pump_power = (cfg.chilled_pump.count || 1) * (cfg.chilled_pump.motor_power_kw || 0) * ratio * ratio * ratio;
+            }
+            if (cfg && cfg.cooling_pump) {
+                defaults.cooling_pump_freq = cfg.cooling_pump.min_freq || 35;
+                const ratio = defaults.cooling_pump_freq / 50;
+                defaults.cooling_pump_power = (cfg.cooling_pump.count || 1) * (cfg.cooling_pump.motor_power_kw || 0) * ratio * ratio * ratio;
+            }
+            if (cfg && cfg.cooling_towers) {
+                const enabled = cfg.cooling_towers.filter(t => t.enabled);
+                defaults.cooling_tower_fan_freq = enabled.length ? enabled[0].fixed_freq : 50;
+                defaults.cooling_tower_fan_power = enabled.reduce((sum, t) => sum + (t.motor_power_kw || 0), 0);
+            }
+            defaults.total_power = (defaults.chiller_power || 0) + (defaults.chilled_pump_power || 0) +
+                (defaults.cooling_pump_power || 0) + (defaults.cooling_tower_fan_power || 0) + (defaults.terminal_fan_power || 0);
+            return defaults;
+        }
+
+        function mergeInputWithConfigDefaults(data, equipmentUnits) {
+            data = Object.assign({}, data || {});
+            const defaults = optimizeInputDefaults || {};
+            Object.keys(defaults).forEach(key => {
+                if (isEmptyInputValue(data[key])) {
+                    data[key] = defaults[key];
+                }
+            });
+            let units = equipmentUnits;
+            if (!units || (!(units.chillers || []).length && !(units.chilled_pumps || []).length)) {
+                units = optimizeEquipmentConfig
+                    ? defaultOptimizeUnitsFromConfig(optimizeEquipmentConfig, data, true, equipmentDocument && equipmentDocument.units)
+                    : units;
+            } else {
+                units = fillUnitsWithConfigDefaults(units, data);
+            }
+            return {data: data, units: units};
+        }
+
+        function fillUnitsWithConfigDefaults(units, data) {
+            units = {
+                chillers: (units.chillers || []).map(u => Object.assign({}, u)),
+                chilled_pumps: (units.chilled_pumps || []).map(u => Object.assign({}, u)),
+                cooling_pumps: (units.cooling_pumps || []).map(u => Object.assign({}, u)),
+                cooling_towers: (units.cooling_towers || []).map(u => Object.assign({}, u))
+            };
+            const cfg = optimizeEquipmentConfig;
+            if (!cfg) return units;
+            const pumpPower = (motorKw, freq) => {
+                const ratio = Math.max(Number(freq) || 0, 0) / 50;
+                return Number(motorKw || 0) * ratio * ratio * ratio;
+            };
+            const estimateChillerPower = (loadPct, chCfg) => {
+                const cap = Number(chCfg && chCfg.rated_capacity_kw) || Number(cfg.chiller.rated_capacity_kw) || 0;
+                const mlr = Number(chCfg && chCfg.max_load_rate) || Number(cfg.chiller.max_load_rate) || 0.8;
+                const cop = Number(chCfg && chCfg.rated_cop) || calcChillerCop(cfg.chiller.rated_capacity_kw, cfg.chiller.rated_power_kw) || 5.5;
+                return cap > 0 && loadPct > 0 ? (cap * mlr * loadPct / 100) / Math.max(cop, 2) : 0;
+            };
+            const chillerCfgUnits = (equipmentDocument && equipmentDocument.units || [])
+                .filter(u => u.unit_type === 'chiller' && u.enabled !== false);
+            units.chillers = units.chillers.map((unit, index) => {
+                const chCfg = chillerCfgUnits[index] || cfg.chiller;
+                const load = isEmptyInputValue(unit.load) ? (data.chiller_load || 0) : unit.load;
+                const power = isEmptyInputValue(unit.power)
+                    ? estimateChillerPower(load, chCfg)
+                    : unit.power;
+                return Object.assign({}, unit, {load: load, power: power});
+            });
+            units.chilled_pumps = units.chilled_pumps.map((unit, index) => {
+                const freq = isEmptyInputValue(unit.freq) ? (data.chilled_pump_freq || cfg.chilled_pump.min_freq) : unit.freq;
+                const power = isEmptyInputValue(unit.power) ? pumpPower(cfg.chilled_pump.motor_power_kw, freq) : unit.power;
+                return Object.assign({}, unit, {freq: freq, power: power});
+            });
+            units.cooling_pumps = units.cooling_pumps.map(unit => {
+                const freq = isEmptyInputValue(unit.freq) ? (data.cooling_pump_freq || cfg.cooling_pump.min_freq) : unit.freq;
+                const power = isEmptyInputValue(unit.power) ? pumpPower(cfg.cooling_pump.motor_power_kw, freq) : unit.power;
+                return Object.assign({}, unit, {freq: freq, power: power});
+            });
+            const enabledTowers = (cfg.cooling_towers || []).filter(t => t.enabled);
+            units.cooling_towers = units.cooling_towers.map((unit, index) => {
+                const towerCfg = enabledTowers[index] || null;
+                const freq = isEmptyInputValue(unit.freq) ? ((towerCfg && towerCfg.fixed_freq) || 50) : unit.freq;
+                const power = isEmptyInputValue(unit.power) ? ((towerCfg && towerCfg.motor_power_kw) || 0) : unit.power;
+                return Object.assign({}, unit, {freq: freq, power: power});
+            });
+            return units;
+        }
+
+        function avgNonZero(values) {
+            const nums = values.map(v => Number(v)).filter(v => Number.isFinite(v) && v > 0);
+            if (!nums.length) return 0;
+            return nums.reduce((a, b) => a + b, 0) / nums.length;
+        }
+
+        function sumValues(values) {
+            return values.map(v => Number(v)).filter(v => Number.isFinite(v)).reduce((a, b) => a + b, 0);
+        }
+
+        function renderOptimizeChillerTable(units) {
+            const tbody = document.getElementById('optimize-chillers-table');
+            if (!tbody) return;
+            if (!units || !units.length) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#999;">暂无冷水机组</td></tr>';
+                return;
+            }
+            tbody.innerHTML = units.map((unit, index) =>
+                '<tr>' +
+                '<td><input id="unit-chiller-name-' + index + '" value="' + escapeHtml(unit.label || unit.name || ('冷水机组' + (index + 1))) + '"></td>' +
+                '<td><input type="number" step="0.1" id="unit-chiller-load-' + index + '" value="' + (unit.load ?? 0) + '" oninput="recalculateSystemTotalPower()"></td>' +
+                '<td><input type="number" step="0.1" id="unit-chiller-power-' + index + '" value="' + (unit.power ?? 0) + '" oninput="recalculateSystemTotalPower()"></td>' +
+                '</tr>'
+            ).join('');
+        }
+
+        function renderOptimizeUnitTable(tableId, kind, units) {
+            const tbody = document.getElementById(tableId);
+            if (!tbody) return;
+            if (!units || !units.length) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999;">暂无设备</td></tr>';
+                return;
+            }
+            tbody.innerHTML = units.map((unit, index) =>
+                '<tr>' +
+                '<td><input id="unit-' + kind + '-name-' + index + '" value="' + escapeHtml(unit.label || unit.name || (kind + (index + 1))) + '"></td>' +
+                '<td><input type="number" step="0.1" id="unit-' + kind + '-freq-' + index + '" value="' + (unit.freq ?? 0) + '"></td>' +
+                '<td><input type="number" step="0.1" id="unit-' + kind + '-power-' + index + '" value="' + (unit.power ?? 0) + '"></td>' +
+                '<td><input type="number" step="0.1" id="unit-' + kind + '-current-' + index + '" value="' + (unit.current ?? 0) + '"></td>' +
+                '</tr>'
+            ).join('');
+        }
+
+        function defaultOptimizeUnitsFromConfig(cfg, deviceData, useRatedWhenMissing, documentUnits) {
+            const data = deviceData || {};
+            const chilledLabels = ['东', '西', '3', '4'];
+            const coolingLabels = ['东', '西', '3', '4'];
+            const pumpPower = (motorKw, freq) => {
+                const ratio = Math.max(Number(freq) || 0, 0) / 50;
+                return Number(motorKw || 0) * ratio * ratio * ratio;
+            };
+            const estimateChillerUnitPower = (loadPct, chCfg) => {
+                const cap = Number(chCfg && chCfg.rated_capacity_kw) || Number(cfg.chiller.rated_capacity_kw) || 0;
+                const mlr = Number(chCfg && chCfg.max_load_rate) || Number(cfg.chiller.max_load_rate) || 0.8;
+                const cop = Number(chCfg && chCfg.rated_cop) || calcChillerCop(cfg.chiller.rated_capacity_kw, cfg.chiller.rated_power_kw) || 5.5;
+                return cap > 0 && loadPct > 0 ? (cap * mlr * loadPct / 100) / Math.max(cop, 2) : 0;
+            };
+
+            if (documentUnits && documentUnits.length) {
+                const enabledChillers = documentUnits.filter(u => u.unit_type === 'chiller' && u.enabled !== false);
+                const enabledChilled = documentUnits.filter(u => u.unit_type === 'chilled_pump' && u.enabled !== false);
+                let chillerLoad = Number(data.chiller_load || 0);
+                let chillerPower = Number(data.chiller_power || 0);
+                if (useRatedWhenMissing && isEmptyInputValue(chillerLoad) && enabledChillers.length) {
+                    chillerLoad = (cfg.chiller.max_load_rate || 0.8) * 100 * 0.8;
+                }
+                const chillers = enabledChillers.map(unit => {
+                    let load = chillerLoad;
+                    let power = enabledChillers.length ? chillerPower / enabledChillers.length : chillerPower;
+                    if (useRatedWhenMissing && isEmptyInputValue(power)) {
+                        power = estimateChillerUnitPower(load, unit);
+                    }
+                    return {name: unit.name, label: unit.name, load: load, power: power};
+                });
+                const enabledCooling = documentUnits.filter(u => u.unit_type === 'cooling_pump' && u.enabled !== false);
+                const enabledTowers = documentUnits.filter(u => u.unit_type === 'cooling_tower' && u.enabled !== false);
+                let chilledFreq = Number(data.chilled_pump_freq || 0);
+                let chilledPower = Number(data.chilled_pump_power || 0);
+                let coolingFreq = Number(data.cooling_pump_freq || 0);
+                let coolingPower = Number(data.cooling_pump_power || 0);
+                if (useRatedWhenMissing && isEmptyInputValue(chilledFreq)) {
+                    chilledFreq = enabledChilled.length ? enabledChilled[0].min_freq : cfg.chilled_pump.min_freq;
+                }
+                if (useRatedWhenMissing && isEmptyInputValue(coolingFreq)) {
+                    coolingFreq = enabledCooling.length ? enabledCooling[0].min_freq : cfg.cooling_pump.min_freq;
+                }
+                const chilled = enabledChilled.map(unit => {
+                    let power = enabledChilled.length ? chilledPower / enabledChilled.length : chilledPower;
+                    if (useRatedWhenMissing && isEmptyInputValue(power)) {
+                        power = pumpPower(unit.motor_power_kw, chilledFreq);
+                    }
+                    return {
+                        name: unit.name,
+                        label: unit.name,
+                        freq: chilledFreq,
+                        power: power,
+                        current: 0
+                    };
+                });
+                const cooling = enabledCooling.map(unit => {
+                    let power = enabledCooling.length ? coolingPower / enabledCooling.length : coolingPower;
+                    if (useRatedWhenMissing && isEmptyInputValue(power)) {
+                        power = pumpPower(unit.motor_power_kw, coolingFreq);
+                    }
+                    return {
+                        name: unit.name,
+                        label: unit.name,
+                        freq: coolingFreq,
+                        power: power,
+                        current: 0
+                    };
+                });
+                const towers = enabledTowers.map(unit => ({
+                    name: unit.name,
+                    label: unit.name,
+                    freq: unit.fixed_freq || 50,
+                    power: unit.motor_power_kw || 0,
+                    current: 0
+                }));
+                let towerPower = Number(data.cooling_tower_fan_power || 0);
+                if (towerPower > 0 && towers.length) {
+                    const each = towerPower / towers.length;
+                    towers.forEach(t => { t.power = each; });
+                }
+                return {chillers: chillers, chilled_pumps: chilled, cooling_pumps: cooling, cooling_towers: towers};
+            }
+
+            const chillers = [];
+            const chilled = [];
+            const cooling = [];
+            const towers = [];
+            const chillerCount = Math.max(0, Math.round(cfg.chiller.count || 0));
+            let chillerLoad = Number(data.chiller_load || 0);
+            let chillerPower = Number(data.chiller_power || 0);
+            if (useRatedWhenMissing && isEmptyInputValue(chillerLoad)) {
+                chillerLoad = (cfg.chiller.max_load_rate || 0.8) * 100 * 0.8;
+            }
+            for (let i = 0; i < chillerCount; i += 1) {
+                const name = chillerCount === 1 ? cfg.chiller.name : cfg.chiller.name + '_' + (i + 1);
+                let power = chillerCount ? chillerPower / chillerCount : chillerPower;
+                if (useRatedWhenMissing && isEmptyInputValue(power)) {
+                    power = estimateChillerUnitPower(chillerLoad, cfg.chiller);
+                }
+                chillers.push({name: name, label: name, load: chillerLoad, power: power});
+            }
+            const chilledCount = Math.max(0, Math.round(cfg.chilled_pump.count || 0));
+            const coolingCount = Math.max(0, Math.round(cfg.cooling_pump.count || 0));
+            let chilledFreq = Number(data.chilled_pump_freq || 0);
+            let chilledPower = Number(data.chilled_pump_power || 0);
+            let coolingFreq = Number(data.cooling_pump_freq || 0);
+            let coolingPower = Number(data.cooling_pump_power || 0);
+            if (useRatedWhenMissing && isEmptyInputValue(chilledFreq)) chilledFreq = cfg.chilled_pump.min_freq;
+            if (useRatedWhenMissing && isEmptyInputValue(coolingFreq)) coolingFreq = cfg.cooling_pump.min_freq;
+            for (let i = 0; i < chilledCount; i += 1) {
+                const suffix = chilledLabels[i] || String(i + 1);
+                let power = chilledCount ? chilledPower / chilledCount : chilledPower;
+                if (useRatedWhenMissing && isEmptyInputValue(power)) {
+                    power = pumpPower(cfg.chilled_pump.motor_power_kw, chilledFreq);
+                }
+                chilled.push({
+                    name: cfg.chilled_pump.name + '_' + suffix,
+                    label: cfg.chilled_pump.name + '_' + suffix,
+                    freq: chilledFreq,
+                    power: power,
+                    current: 0
+                });
+            }
+            for (let i = 0; i < coolingCount; i += 1) {
+                const suffix = coolingLabels[i] || String(i + 1);
+                let power = coolingCount ? coolingPower / coolingCount : coolingPower;
+                if (useRatedWhenMissing && isEmptyInputValue(power)) {
+                    power = pumpPower(cfg.cooling_pump.motor_power_kw, coolingFreq);
+                }
+                cooling.push({
+                    name: cfg.cooling_pump.name + '_' + suffix,
+                    label: cfg.cooling_pump.name + '_' + suffix,
+                    freq: coolingFreq,
+                    power: power,
+                    current: 0
+                });
+            }
+            (cfg.cooling_towers || []).filter(t => t.enabled).forEach(tower => {
+                towers.push({
+                    name: tower.name,
+                    label: tower.name,
+                    freq: tower.fixed_freq || 50,
+                    power: tower.motor_power_kw || 0,
+                    current: 0
+                });
+            });
+            let towerPower = Number(data.cooling_tower_fan_power || 0);
+            if (towerPower > 0 && towers.length) {
+                const each = towerPower / towers.length;
+                towers.forEach(t => { t.power = each; });
+            }
+            return {chillers: chillers, chilled_pumps: chilled, cooling_pumps: cooling, cooling_towers: towers};
+        }
+
+        const OPTIMIZE_UNIT_TABLE_IDS = {
+            chiller: 'optimize-chillers-table',
+            chilled: 'optimize-chilled-pumps-table',
+            cooling: 'optimize-cooling-pumps-table',
+            tower: 'optimize-cooling-towers-table'
+        };
+
+        function collectOptimizeUnits(kind) {
+            if (kind === 'chiller') {
+                const tbody = document.getElementById('optimize-chillers-table');
+                if (!tbody) return [];
+                const rows = Array.from(tbody.querySelectorAll('tr'));
+                return rows.map((_, index) => ({
+                    name: document.getElementById('unit-chiller-name-' + index)?.value || '',
+                    label: document.getElementById('unit-chiller-name-' + index)?.value || '',
+                    load: num('unit-chiller-load-' + index),
+                    power: num('unit-chiller-power-' + index)
+                })).filter(item => item.name);
+            }
+            const tbody = document.getElementById(OPTIMIZE_UNIT_TABLE_IDS[kind]);
+            if (!tbody) return [];
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            return rows.map((_, index) => ({
+                name: document.getElementById('unit-' + kind + '-name-' + index)?.value || '',
+                label: document.getElementById('unit-' + kind + '-name-' + index)?.value || '',
+                freq: num('unit-' + kind + '-freq-' + index),
+                power: num('unit-' + kind + '-power-' + index),
+                current: num('unit-' + kind + '-current-' + index)
+            })).filter(item => item.name);
+        }
+
+        function syncUnitsToDeviceScalars(units, data) {
+            units = units || {};
+            data = data || {};
+            const scaleGroup = (items, totalKey, freqKey) => {
+                const list = (items || []).map(item => Object.assign({}, item));
+                const target = Number(data[totalKey] || 0);
+                if (!list.length || target <= 0) return list;
+                const current = sumValues(list.map(u => u.power));
+                const avgFreq = Number(data[freqKey] || 0);
+                if (current <= 0 || Math.abs(current - target) / target > 0.05) {
+                    const each = target / list.length;
+                    return list.map(item => Object.assign({}, item, {
+                        power: each,
+                        freq: item.freq > 0 ? item.freq : avgFreq
+                    }));
+                }
+                return list;
+            };
+            const scaleChillerGroup = (items, loadKey, powerKey) => {
+                const list = (items || []).map(item => Object.assign({}, item));
+                const targetPower = Number(data[powerKey] || 0);
+                const targetLoad = Number(data[loadKey] || 0);
+                if (!list.length) return list;
+                if (targetPower > 0) {
+                    const currentPower = sumValues(list.map(u => u.power));
+                    if (currentPower <= 0 || Math.abs(currentPower - targetPower) / targetPower > 0.05) {
+                        const each = targetPower / list.length;
+                        list.forEach(item => { item.power = each; });
+                    }
+                }
+                if (targetLoad > 0) {
+                    const loads = list.map(u => Number(u.load) || 0).filter(v => v > 0);
+                    if (!loads.length) {
+                        list.forEach(item => { item.load = targetLoad; });
+                    }
+                }
+                return list;
+            };
+            return {
+                chillers: scaleChillerGroup(units.chillers, 'chiller_load', 'chiller_power'),
+                chilled_pumps: scaleGroup(units.chilled_pumps, 'chilled_pump_power', 'chilled_pump_freq'),
+                cooling_pumps: scaleGroup(units.cooling_pumps, 'cooling_pump_power', 'cooling_pump_freq'),
+                cooling_towers: scaleGroup(units.cooling_towers, 'cooling_tower_fan_power', 'cooling_tower_fan_freq')
+            };
+        }
+
+        function renderOptimizeEquipmentUnits(units) {
+            units = units || {};
+            renderOptimizeChillerTable(units.chillers || []);
+            renderOptimizeUnitTable('optimize-chilled-pumps-table', 'chilled', units.chilled_pumps || []);
+            renderOptimizeUnitTable('optimize-cooling-pumps-table', 'cooling', units.cooling_pumps || []);
+            renderOptimizeUnitTable('optimize-cooling-towers-table', 'tower', units.cooling_towers || []);
+            updateOptimizeUnitSummary();
+        }
+
+        function recalculateSystemTotalPower() {
+            const chillers = collectOptimizeUnits('chiller');
+            const chilled = collectOptimizeUnits('chilled');
+            const cooling = collectOptimizeUnits('cooling');
+            const towers = collectOptimizeUnits('tower');
+            const chillerLoad = avgNonZero(chillers.map(u => u.load));
+            let chillerPower = sumValues(chillers.map(u => u.power));
+            const chilledFreq = avgNonZero(chilled.map(u => u.freq));
+            let chilledPower = sumValues(chilled.map(u => u.power));
+            const coolingFreq = avgNonZero(cooling.map(u => u.freq));
+            let coolingPower = sumValues(cooling.map(u => u.power));
+            const towerFreq = avgNonZero(towers.map(u => u.freq));
+            let towerPower = sumValues(towers.map(u => u.power));
+            const terminalPower = num('in-terminal-fan-power');
+            let total = chillerPower + chilledPower + coolingPower + towerPower + terminalPower;
+            const totalInput = document.getElementById('in-total-power');
+            if (totalInput) totalInput.value = total.toFixed(2);
+            const summary = document.getElementById('optimize-unit-summary');
+            if (summary) {
+                summary.textContent =
+                    '汇总：冷水机组平均负载 ' + fmt(chillerLoad, 2) + ' % / 合计 ' + fmt(chillerPower, 2) + ' kW；' +
+                    '冷冻泵平均 ' + fmt(chilledFreq, 2) + ' Hz / ' + fmt(chilledPower, 2) + ' kW；' +
+                    '冷却泵平均 ' + fmt(coolingFreq, 2) + ' Hz / ' + fmt(coolingPower, 2) + ' kW；' +
+                    '冷却塔平均 ' + fmt(towerFreq, 2) + ' Hz / 合计 ' + fmt(towerPower, 2) + ' kW；' +
+                    '系统总功率 = ' + fmt(total, 2) + ' kW（自动计算）';
+            }
+            return total;
+        }
+
+        function updateOptimizeUnitSummary() {
+            recalculateSystemTotalPower();
+        }
+
+        function fmt(value, digits = 2) {
+            const number = Number(value);
+            return Number.isFinite(number) ? number.toFixed(digits) : '--';
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, ch => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[ch]));
+        }
+
+        function sortedObject(obj) {
+            if (!obj || typeof obj !== 'object') return obj;
+            const sorted = {};
+            Object.keys(obj).sort().forEach(k => { sorted[k] = obj[k]; });
+            return sorted;
+        }
+
+        function showBatchDetail(index) {
+            const item = batchResultsCache[index];
+            if (!item) return;
+
+            document.getElementById('batch-raw-detail').textContent =
+                JSON.stringify(sortedObject(item.raw || {}), null, 2);
+
+            const audit = item.input_audit || {};
+            document.getElementById('batch-input-detail').textContent = JSON.stringify({
+                row_number: item.row_number,
+                resolved_input: item.input || {},
+                field_provenance: (audit.fields || []).map(f => ({
+                    字段: f.label,
+                    最终值: f.value,
+                    来源: f.source_label,
+                    Excel列: f.excel_column || '—',
+                    说明: f.detail || '—',
+                    是否替换缺省: f.substituted ? '是' : '否',
+                    可用缺省值: f.default_available ?? '—',
+                    标记为缺省: f.in_defaulted_list ? '是' : '否'
+                })),
+                来自Excel: audit.from_excel || [],
+                被替换或推算: audit.substituted_or_derived || [],
+                缺失字段: audit.missing_in_excel || [],
+                缺省字段列表: audit.defaulted_fields || [],
+                总功率分解: audit.total_power_parts || {},
+                总功率公式: audit.total_power_formula || '',
+                总功率合计: audit.total_power_sum
+            }, null, 2);
+
+            document.getElementById('batch-output-detail').textContent = JSON.stringify({
+                一_推荐控制参数: item.result || {},
+                二_预测工况: {
+                    predicted_power: item.result && item.result.predicted_power,
+                    baseline_power: item.result && item.result.baseline_power,
+                    predicted_indoor_temp: item.result && item.result.predicted_indoor_temp,
+                    predicted_chiller_power: item.result && item.result.predicted_chiller_power,
+                    predicted_cooling_water_temp: item.result && item.result.predicted_cooling_water_temp,
+                    predicted_cop: item.result && item.result.predicted_cop,
+                    energy_saving_rate: item.result && item.result.energy_saving_rate,
+                    optimize_duration_sec: item.result && item.result.duration
+                },
+                三_功率对比: item.pipeline_audit ? item.pipeline_audit.power_comparison : {
+                    excel_total: item.measured_total_power,
+                    display_baseline: item.model_baseline_power,
+                    physics_baseline: item.physics_baseline_power,
+                    predicted_optimized: item.result && item.result.predicted_power,
+                    saving_vs_excel_baseline_pct: item.saving_rate,
+                    saving_vs_measured_pct: item.saving_rate_vs_measured,
+                    optimizer_internal_saving_pct: item.optimizer_internal_saving_rate
+                },
+                四_当前工况参数: item.baseline_params || {},
+                五_推荐工况参数: item.optimized_params || {},
+                六_基线功率分解: item.baseline_breakdown || {},
+                七_优化功率分解: item.optimized_breakdown || {},
+                八_链路自检: item.pipeline_audit || {},
+                九_数据质量警告: (item.data_quality && item.data_quality.warnings) || [],
+                十_是否可用于控制: item.data_quality && item.data_quality.reliable_for_control,
+                十一_计算说明: {
+                    Excel汇总: '机组+冷冻泵+冷却泵+冷却塔+末端(Excel实测/推算)',
+                    模型基线: '优先Excel各部件加总+末端缺省2kW',
+                    优化预测: '自研物理模型(PSO)；泵/塔/机组有Excel实测时按实测锚定缩放',
+                    表格节能率: '相对Excel对齐基线 (model_baseline - predicted) / model_baseline',
+                    寻优器内部节能率: 'result.energy_saving_rate，相对物理模型基线'
+                }
+            }, null, 2);
+        }
+
+        function renderOptimizeOutputs(r) {
+            if (!r) return;
+            document.getElementById('out-chilled-temp').textContent = Number(r.chilled_water_temp).toFixed(2);
+            document.getElementById('out-chilled-count').textContent = r.chilled_pump_count ?? '--';
+            document.getElementById('out-chilled-pump').textContent = Number(r.chilled_pump_freq).toFixed(2);
+            document.getElementById('out-cooling-count').textContent = r.cooling_pump_count ?? '--';
+            document.getElementById('out-cooling-pump').textContent = Number(r.cooling_pump_freq).toFixed(2);
+            document.getElementById('out-tower-count').textContent = r.cooling_tower_count ?? '--';
+            document.getElementById('out-tower').textContent = Number(r.cooling_tower_fan_freq).toFixed(2);
+            document.getElementById('out-predicted-power').textContent = fmt(r.predicted_power, 2);
+            document.getElementById('out-baseline-power').textContent = fmt(r.baseline_power, 2);
+            document.getElementById('out-predicted-indoor').textContent = fmt(r.predicted_indoor_temp, 2);
+            document.getElementById('out-predicted-chiller').textContent = fmt(r.predicted_chiller_power, 2);
+            document.getElementById('out-predicted-cooling-water').textContent = fmt(r.predicted_cooling_water_temp, 2);
+            document.getElementById('out-predicted-cop').textContent = fmt(r.predicted_cop, 2);
+            document.getElementById('out-saving-rate').textContent = fmt(r.energy_saving_rate, 2);
+        }
+
+        function renderBatchTable(results) {
+            batchResultsCache = results || [];
+            const tbody = document.getElementById('batch-table');
+            if (!batchResultsCache.length) {
+                tbody.innerHTML = '<tr><td colspan="18" style="text-align:center; color:#999;">无可展示结果</td></tr>';
+                return;
+            }
+            tbody.innerHTML = batchResultsCache.map((item, index) => {
+                const input = item.input || {};
+                const result = item.result || {};
+                const quality = item.data_quality || {};
+                const qualityText = quality.reliable_for_control ? '完整' : '有默认/近似';
+                return '<tr class="clickable" onclick="showBatchDetail(' + index + ')">' +
+                    '<td>' + item.row_number + '</td>' +
+                    '<td>' + escapeHtml(input.timestamp || '') + '</td>' +
+                    '<td>' + fmt(input.chiller_load, 1) + '</td>' +
+                    '<td>' + fmt(item.measured_total_power, 2) + '</td>' +
+                    '<td>' + fmt(item.model_baseline_power, 2) + '</td>' +
+                    '<td>' + fmt(input.chilled_pump_freq, 2) + '</td>' +
+                    '<td>' + fmt(input.cooling_pump_freq, 2) + '</td>' +
+                    '<td>' + fmt(result.chilled_water_temp, 2) + '</td>' +
+                    '<td>' + (result.chilled_pump_count ?? '--') + '</td>' +
+                    '<td>' + fmt(result.chilled_pump_freq, 2) + '</td>' +
+                    '<td>' + (result.cooling_pump_count ?? '--') + '</td>' +
+                    '<td>' + fmt(result.cooling_pump_freq, 2) + '</td>' +
+                    '<td>' + (result.cooling_tower_count ?? '--') + '</td>' +
+                    '<td>' + fmt(result.predicted_power, 2) + '</td>' +
+                    '<td>' + fmt(result.predicted_indoor_temp, 2) + '</td>' +
+                    '<td>' + fmt(result.predicted_chiller_power, 2) + '</td>' +
+                    '<td>' + fmt(item.saving_rate ?? result.energy_saving_rate, 2) + '</td>' +
+                    '<td>' + qualityText + '</td>' +
+                    '</tr>';
+            }).join('');
+            showBatchDetail(0);
+        }
+
+        function calcChillerCop(capacity, power) {
+            if (power > 0 && capacity > 0) {
+                return Math.round((capacity / power) * 100) / 100;
+            }
+            return 0;
+        }
+
+        function parseSchemesInput(id) {
+            return document.getElementById(id).value
+                .split(',')
+                .map(v => Number(v.trim()))
+                .filter(v => Number.isFinite(v));
+        }
+
+        function newEquipmentUnitId(unitType) {
+            return unitType + '_' + Math.random().toString(36).slice(2, 10);
+        }
+
+        function createDefaultEquipmentUnit(unitType, index) {
+            if (unitType === 'chilled_pump') {
+                return {
+                    id: newEquipmentUnitId(unitType),
+                    unit_type: 'chilled_pump',
+                    name: '冷冻泵_' + index,
+                    enabled: true,
+                    min_freq: 40,
+                    max_freq: 48,
+                    motor_power_kw: 7.5
+                };
+            }
+            if (unitType === 'cooling_pump') {
+                return {
+                    id: newEquipmentUnitId(unitType),
+                    unit_type: 'cooling_pump',
+                    name: '冷却泵_' + index,
+                    enabled: true,
+                    min_freq: 35,
+                    max_freq: 45,
+                    motor_power_kw: 7.5
+                };
+            }
+            if (unitType === 'chiller') {
+                return {
+                    id: newEquipmentUnitId(unitType),
+                    unit_type: 'chiller',
+                    name: '1#约克离心机_' + index,
+                    enabled: true,
+                    rated_capacity_kw: 516.2,
+                    rated_power_kw: 94,
+                    rated_cop: calcChillerCop(516.2, 94),
+                    max_load_rate: 0.8
+                };
+            }
+            return {
+                id: newEquipmentUnitId(unitType),
+                unit_type: 'cooling_tower',
+                name: index + '号冷却塔',
+                enabled: true,
+                motor_power_kw: 11,
+                fixed_freq: 50
+            };
+        }
+
+        function updateChillerUnitCop(index) {
+            const cap = num('eq-chiller-capacity-' + index);
+            const pwr = num('eq-chiller-power-' + index);
+            const cop = calcChillerCop(cap, pwr);
+            const el = document.getElementById('eq-chiller-cop-' + index);
+            if (el) el.textContent = cop > 0 ? cop.toFixed(2) : '--';
+        }
+
+        function renderChillerUnitsTable(units) {
+            const tbody = document.getElementById('chiller-units-table');
+            if (!tbody) return;
+            if (!units.length) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">暂无冷水机组</td></tr>';
+                return;
+            }
+            tbody.innerHTML = units.map((unit, index) => {
+                const cap = unit.rated_capacity_kw ?? 0;
+                const pwr = unit.rated_power_kw ?? 0;
+                const cop = calcChillerCop(cap, pwr);
+                return '<tr>' +
+                    '<input type="hidden" id="eq-chiller-id-' + index + '" value="' + escapeHtml(unit.id) + '">' +
+                    '<td><input type="checkbox" id="eq-chiller-enabled-' + index + '" ' + (unit.enabled ? 'checked' : '') + '></td>' +
+                    '<td><input id="eq-chiller-name-' + index + '" value="' + escapeHtml(unit.name) + '"></td>' +
+                    '<td><input type="number" step="0.1" id="eq-chiller-capacity-' + index + '" value="' + cap + '" oninput="updateChillerUnitCop(' + index + ')"></td>' +
+                    '<td><input type="number" step="0.1" id="eq-chiller-power-' + index + '" value="' + pwr + '" oninput="updateChillerUnitCop(' + index + ')"></td>' +
+                    '<td><input type="number" min="0" max="1" step="0.01" id="eq-chiller-load-' + index + '" value="' + (unit.max_load_rate ?? 0.8) + '"></td>' +
+                    '<td id="eq-chiller-cop-' + index + '">' + (cop > 0 ? cop.toFixed(2) : '--') + '</td>' +
+                    '<td><button type="button" class="danger" onclick="removeEquipmentUnit(\'chiller\',' + index + ')">删除</button></td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        function renderPumpUnitsTable(type, units) {
+            const tableId = type === 'chilled_pump' ? 'chilled-units-table' : 'cooling-units-table';
+            const prefix = type === 'chilled_pump' ? 'eq-chilled' : 'eq-cooling';
+            const tbody = document.getElementById(tableId);
+            if (!tbody) return;
+            const label = type === 'chilled_pump' ? '冷冻泵' : '冷却泵';
+            if (!units.length) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">暂无' + label + '</td></tr>';
+                return;
+            }
+            tbody.innerHTML = units.map((unit, index) =>
+                '<tr>' +
+                '<input type="hidden" id="' + prefix + '-id-' + index + '" value="' + escapeHtml(unit.id) + '">' +
+                '<td><input type="checkbox" id="' + prefix + '-enabled-' + index + '" ' + (unit.enabled ? 'checked' : '') + '></td>' +
+                '<td><input id="' + prefix + '-name-' + index + '" value="' + escapeHtml(unit.name) + '"></td>' +
+                '<td><input type="number" step="0.1" id="' + prefix + '-min-' + index + '" value="' + (unit.min_freq ?? 0) + '"></td>' +
+                '<td><input type="number" step="0.1" id="' + prefix + '-max-' + index + '" value="' + (unit.max_freq ?? 0) + '"></td>' +
+                '<td><input type="number" step="0.1" id="' + prefix + '-power-' + index + '" value="' + (unit.motor_power_kw ?? 0) + '"></td>' +
+                '<td><button type="button" class="danger" onclick="removeEquipmentUnit(\'' + type + '\',' + index + ')">删除</button></td>' +
+                '</tr>'
+            ).join('');
+        }
+
+        function renderTowerUnitsTable(units) {
+            const tbody = document.getElementById('tower-units-table');
+            if (!tbody) return;
+            if (!units.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;">暂无冷却塔</td></tr>';
+                return;
+            }
+            tbody.innerHTML = units.map((unit, index) =>
+                '<tr>' +
+                '<input type="hidden" id="eq-tower-id-' + index + '" value="' + escapeHtml(unit.id) + '">' +
+                '<td><input type="checkbox" id="eq-tower-enabled-' + index + '" ' + (unit.enabled ? 'checked' : '') + '></td>' +
+                '<td><input id="eq-tower-name-' + index + '" value="' + escapeHtml(unit.name) + '"></td>' +
+                '<td><input type="number" step="0.1" id="eq-tower-power-' + index + '" value="' + (unit.motor_power_kw ?? 0) + '"></td>' +
+                '<td><input type="number" step="0.1" id="eq-tower-freq-' + index + '" value="' + (unit.fixed_freq ?? 50) + '"></td>' +
+                '<td><button type="button" class="danger" onclick="removeEquipmentUnit(\'cooling_tower\',' + index + ')">删除</button></td>' +
+                '</tr>'
+            ).join('');
+        }
+
+        function renderEquipmentUnitTables(units) {
+            units = units || [];
+            renderChillerUnitsTable(units.filter(u => u.unit_type === 'chiller'));
+            renderPumpUnitsTable('chilled_pump', units.filter(u => u.unit_type === 'chilled_pump'));
+            renderPumpUnitsTable('cooling_pump', units.filter(u => u.unit_type === 'cooling_pump'));
+            renderTowerUnitsTable(units.filter(u => u.unit_type === 'cooling_tower'));
+        }
+
+        function collectUnitsOfType(unitType) {
+            if (unitType === 'chiller') {
+                const rows = Array.from(document.querySelectorAll('#chiller-units-table tr'));
+                if (!rows.length || rows[0].querySelector('td[colspan]')) return [];
+                return rows.map((_, index) => {
+                    const cap = num('eq-chiller-capacity-' + index);
+                    const pwr = num('eq-chiller-power-' + index);
+                    return {
+                        id: document.getElementById('eq-chiller-id-' + index).value,
+                        unit_type: 'chiller',
+                        name: document.getElementById('eq-chiller-name-' + index).value,
+                        enabled: document.getElementById('eq-chiller-enabled-' + index).checked,
+                        rated_capacity_kw: cap,
+                        rated_power_kw: pwr,
+                        rated_cop: calcChillerCop(cap, pwr),
+                        max_load_rate: num('eq-chiller-load-' + index)
+                    };
+                });
+            }
+            if (unitType === 'chilled_pump' || unitType === 'cooling_pump') {
+                const tableId = unitType === 'chilled_pump' ? 'chilled-units-table' : 'cooling-units-table';
+                const prefix = unitType === 'chilled_pump' ? 'eq-chilled' : 'eq-cooling';
+                const rows = Array.from(document.querySelectorAll('#' + tableId + ' tr'));
+                if (!rows.length || rows[0].querySelector('td[colspan]')) return [];
+                return rows.map((_, index) => ({
+                    id: document.getElementById(prefix + '-id-' + index).value,
+                    unit_type: unitType,
+                    name: document.getElementById(prefix + '-name-' + index).value,
+                    enabled: document.getElementById(prefix + '-enabled-' + index).checked,
+                    min_freq: num(prefix + '-min-' + index),
+                    max_freq: num(prefix + '-max-' + index),
+                    motor_power_kw: num(prefix + '-power-' + index)
+                }));
+            }
+            const rows = Array.from(document.querySelectorAll('#tower-units-table tr'));
+            if (!rows.length || rows[0].querySelector('td[colspan]')) return [];
+            return rows.map((_, index) => ({
+                id: document.getElementById('eq-tower-id-' + index).value,
+                unit_type: 'cooling_tower',
+                name: document.getElementById('eq-tower-name-' + index).value,
+                enabled: document.getElementById('eq-tower-enabled-' + index).checked,
+                motor_power_kw: num('eq-tower-power-' + index),
+                fixed_freq: num('eq-tower-freq-' + index)
+            }));
+        }
+
+        function collectEquipmentDocument() {
+            return {
+                units: [
+                    ...collectUnitsOfType('chiller'),
+                    ...collectUnitsOfType('chilled_pump'),
+                    ...collectUnitsOfType('cooling_pump'),
+                    ...collectUnitsOfType('cooling_tower')
+                ],
+                chilled_pump_schemes: parseSchemesInput('chilled-schemes'),
+                cooling_pump_schemes: parseSchemesInput('cooling-schemes'),
+                cooling_tower_schemes: parseSchemesInput('tower-schemes')
+            };
+        }
+
+        function addEquipmentUnit(unitType) {
+            const doc = collectEquipmentDocument();
+            const sameType = doc.units.filter(u => u.unit_type === unitType);
+            const newUnit = createDefaultEquipmentUnit(unitType, sameType.length + 1);
+            doc.units.push(newUnit);
+            renderEquipmentUnitTables(doc.units);
+            document.getElementById('config-message').textContent =
+                '已添加设备「' + newUnit.name + '」（尚未保存，请点击「保存设备配置到数据库」）';
+        }
+
+        function removeEquipmentUnit(unitType, index) {
+            const units = collectUnitsOfType(unitType);
+            const unit = units[index];
+            if (!unit) return;
+            if (!confirm('确定删除设备「' + unit.name + '」？')) return;
+            const doc = collectEquipmentDocument();
+            doc.units = doc.units.filter(u => u.id !== unit.id);
+            renderEquipmentUnitTables(doc.units);
+            document.getElementById('config-message').textContent =
+                '已移除设备「' + unit.name + '」（尚未保存，请点击「保存设备配置到数据库」）';
+        }
+
+        function applyBatchUnitSetting() {
+            const unitType = document.getElementById('batch-unit-type').value;
+            const field = document.getElementById('batch-field').value;
+            const raw = document.getElementById('batch-value').value.trim();
+            if (!raw) {
+                document.getElementById('config-message').textContent = '请输入批量值';
+                return;
+            }
+            let value;
+            if (field === 'enabled') {
+                value = raw === 'true' || raw === '1' || raw === '是';
+            } else {
+                value = Number(raw);
+                if (!Number.isFinite(value)) {
+                    document.getElementById('config-message').textContent = '批量值必须是数字或 true/false';
+                    return;
+                }
+            }
+            const doc = collectEquipmentDocument();
+            let touched = 0;
+            doc.units.forEach(unit => {
+                if (unit.unit_type !== unitType) return;
+                unit[field] = value;
+                if (unit.unit_type === 'chiller' && (field === 'rated_capacity_kw' || field === 'rated_power_kw')) {
+                    unit.rated_cop = calcChillerCop(unit.rated_capacity_kw, unit.rated_power_kw);
+                }
+                touched += 1;
+            });
+            if (!touched) {
+                document.getElementById('config-message').textContent = '当前没有可批量设置的该类型设备';
+                return;
+            }
+            renderEquipmentUnitTables(doc.units);
+            document.getElementById('config-message').textContent =
+                '批量设置已应用到 ' + touched + ' 台设备（尚未保存，请点击「保存设备配置到数据库」）';
+        }
+
+        async function loadEquipmentConfig() {
+            const res = await fetch('/api/v1/equipment/config');
+            const json = await res.json();
+            if (json.code !== 0 || !json.data) return;
+            const cfg = json.data.config;
+            const doc = json.data.document || {units: json.data.units || []};
+            optimizeEquipmentConfig = cfg;
+            equipmentDocument = doc;
+            if (optimizeAppSettings) {
+                optimizeInputDefaults = buildOptimizeInputDefaultsFromConfig(cfg, optimizeAppSettings);
+            }
+            document.getElementById('chilled-schemes').value =
+                (doc.chilled_pump_schemes || cfg.chilled_pump.active_count_schemes || [1, 2]).join(',');
+            document.getElementById('cooling-schemes').value =
+                (doc.cooling_pump_schemes || cfg.cooling_pump.active_count_schemes || [1, 2]).join(',');
+            document.getElementById('tower-schemes').value =
+                (doc.cooling_tower_schemes || cfg.cooling_tower_schemes || [0, 3, 5]).join(',');
+            renderEquipmentUnitTables(doc.units || []);
+            renderOptimizeEquipmentUnits(defaultOptimizeUnitsFromConfig(cfg, {}, true, doc.units));
+            recalculateSystemTotalPower();
+            const storage = json.data.storage || {};
+            document.getElementById('config-message').textContent =
+                '设备配置已读取（' + (storage.storage === 'database' ? '数据库' : '文件') +
+                '，备份：' + (json.data.path || '--') + '）';
+        }
+
+        function collectEquipmentConfig() {
+            const doc = collectEquipmentDocument();
+            const units = doc.units;
+            const chilled = units.filter(u => u.unit_type === 'chilled_pump' && u.enabled);
+            const cooling = units.filter(u => u.unit_type === 'cooling_pump' && u.enabled);
+            const chillers = units.filter(u => u.unit_type === 'chiller' && u.enabled);
+            const towers = units.filter(u => u.unit_type === 'cooling_tower');
+            const avg = (list, key, fallback) => {
+                const vals = list.map(u => Number(u[key])).filter(v => Number.isFinite(v));
+                return vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : fallback;
+            };
+            const minOf = (list, key, fallback) => {
+                const vals = list.map(u => Number(u[key])).filter(v => Number.isFinite(v));
+                return vals.length ? Math.min(...vals) : fallback;
+            };
+            const maxOf = (list, key, fallback) => {
+                const vals = list.map(u => Number(u[key])).filter(v => Number.isFinite(v));
+                return vals.length ? Math.max(...vals) : fallback;
+            };
+            const ch = chillers[0] || {};
+            return {
+                chilled_pump: {
+                    name: chilled[0] ? chilled[0].name.split('_')[0] : '冷冻泵',
+                    count: chilled.length,
+                    min_freq: minOf(chilled, 'min_freq', 40),
+                    max_freq: maxOf(chilled, 'max_freq', 48),
+                    motor_power_kw: avg(chilled, 'motor_power_kw', 7.5),
+                    active_count_schemes: doc.chilled_pump_schemes
+                },
+                cooling_pump: {
+                    name: cooling[0] ? cooling[0].name.split('_')[0] : '冷却泵',
+                    count: cooling.length,
+                    min_freq: minOf(cooling, 'min_freq', 35),
+                    max_freq: maxOf(cooling, 'max_freq', 45),
+                    motor_power_kw: avg(cooling, 'motor_power_kw', 7.5),
+                    active_count_schemes: doc.cooling_pump_schemes
+                },
+                chiller: {
+                    name: ch.name || 'chiller-1',
+                    count: chillers.length,
+                    rated_capacity_kw: ch.rated_capacity_kw || 516.2,
+                    rated_power_kw: ch.rated_power_kw || 94,
+                    rated_cop: calcChillerCop(ch.rated_capacity_kw, ch.rated_power_kw),
+                    max_load_rate: ch.max_load_rate || 0.8
+                },
+                cooling_tower_schemes: doc.cooling_tower_schemes,
+                cooling_towers: towers.map(t => ({
+                    id: t.id,
+                    name: t.name,
+                    motor_power_kw: t.motor_power_kw,
+                    fixed_freq: t.fixed_freq,
+                    enabled: t.enabled
+                }))
+            };
+        }
+
+        async function saveEquipmentConfig() {
+            const documentPayload = collectEquipmentDocument();
+            const res = await fetch('/api/v1/equipment/units', {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(documentPayload)
+            });
+            const json = await res.json();
+            document.getElementById('config-message').textContent =
+                json.code === 0 ? '设备配置已保存到数据库，下一次寻优立即生效。' : '保存失败：' + json.message;
+            if (json.code === 0 && json.data) {
+                optimizeEquipmentConfig = json.data.config;
+                equipmentDocument = json.data.document;
+                if (optimizeAppSettings) {
+                    optimizeInputDefaults = buildOptimizeInputDefaultsFromConfig(optimizeEquipmentConfig, optimizeAppSettings);
+                }
+                renderEquipmentUnitTables(equipmentDocument.units || []);
+                renderOptimizeEquipmentUnits(
+                    defaultOptimizeUnitsFromConfig(optimizeEquipmentConfig, {}, true, equipmentDocument.units)
+                );
+            }
+        }
+
+        const INPUT_FIELD_MAP = {
+            'in-outdoor-temp': 'outdoor_temp',
+            'in-outdoor-humidity': 'outdoor_humidity',
+            'in-indoor-temp': 'indoor_temp',
+            'in-indoor-humidity': 'indoor_humidity',
+            'in-indoor-load': 'indoor_load',
+            'in-chilled-water-temp': 'chilled_water_temp',
+            'in-cooling-water-temp': 'cooling_water_temp',
+            'in-terminal-fan-power': 'terminal_fan_power',
+            'in-total-power': 'total_power'
+        };
+
+        function applyDeviceDataToInputs(data, equipmentUnits) {
+            const merged = mergeInputWithConfigDefaults(data, equipmentUnits);
+            data = merged.data;
+            equipmentUnits = syncUnitsToDeviceScalars(merged.units, data);
+            Object.keys(INPUT_FIELD_MAP).forEach(id => {
+                const key = INPUT_FIELD_MAP[id];
+                if (data[key] !== undefined && data[key] !== null) {
+                    document.getElementById(id).value = data[key];
+                }
+            });
+            renderOptimizeEquipmentUnits(equipmentUnits);
+            recalculateSystemTotalPower();
+        }
+
+        function collectDeviceData() {
+            const chillerUnits = collectOptimizeUnits('chiller');
+            const chilledUnits = collectOptimizeUnits('chilled');
+            const coolingUnits = collectOptimizeUnits('cooling');
+            const towerUnits = collectOptimizeUnits('tower');
+            const chillerLoad = avgNonZero(chillerUnits.map(u => u.load));
+            const chillerPower = sumValues(chillerUnits.map(u => u.power));
+            const chilledPumpFreq = avgNonZero(chilledUnits.map(u => u.freq));
+            const chilledPumpPower = sumValues(chilledUnits.map(u => u.power));
+            const coolingPumpFreq = avgNonZero(coolingUnits.map(u => u.freq));
+            const coolingPumpPower = sumValues(coolingUnits.map(u => u.power));
+            const towerFreq = avgNonZero(towerUnits.map(u => u.freq));
+            const towerPower = sumValues(towerUnits.map(u => u.power));
+            const terminalPower = num('in-terminal-fan-power');
+            const totalPower = chillerPower + chilledPumpPower + coolingPumpPower + towerPower + terminalPower;
+            return {
+                timestamp: new Date().toISOString(),
+                outdoor_temp: num('in-outdoor-temp'),
+                outdoor_humidity: num('in-outdoor-humidity'),
+                indoor_temp: num('in-indoor-temp'),
+                indoor_humidity: num('in-indoor-humidity'),
+                indoor_load: num('in-indoor-load'),
+                chiller_load: chillerLoad,
+                chiller_power: chillerPower,
+                chilled_water_temp: num('in-chilled-water-temp'),
+                cooling_water_temp: num('in-cooling-water-temp'),
+                chilled_pump_freq: chilledPumpFreq,
+                chilled_pump_power: chilledPumpPower,
+                cooling_pump_freq: coolingPumpFreq,
+                cooling_pump_power: coolingPumpPower,
+                cooling_tower_fan_freq: towerFreq,
+                cooling_tower_fan_power: towerPower,
+                terminal_fan_power: terminalPower,
+                total_power: totalPower,
+                equipment_units: {
+                    chillers: chillerUnits,
+                    chilled_pumps: chilledUnits,
+                    cooling_pumps: coolingUnits,
+                    cooling_towers: towerUnits
+                }
+            };
+        }
+
+        function applyOptimizeResultToDeviceData(prev, result) {
+            const next = Object.assign({}, prev, {
+                timestamp: new Date().toISOString(),
+                chilled_water_temp: result.chilled_water_temp,
+                chilled_pump_freq: result.chilled_pump_freq,
+                cooling_pump_freq: result.cooling_pump_freq,
+                cooling_tower_fan_freq: result.cooling_tower_fan_freq
+            });
+            if (prev.chiller_power > 0 && result.predicted_chiller_power > 0) {
+                next.chiller_load = Math.max(
+                    0,
+                    Math.min(100, prev.chiller_load * result.predicted_chiller_power / prev.chiller_power)
+                );
+            }
+            const units = prev.equipment_units || {};
+            next.equipment_units = {
+                chillers: (units.chillers || []).map(u => Object.assign({}, u)),
+                chilled_pumps: (units.chilled_pumps || []).map(u => Object.assign({}, u, {freq: result.chilled_pump_freq})),
+                cooling_pumps: (units.cooling_pumps || []).map(u => Object.assign({}, u, {freq: result.cooling_pump_freq})),
+                cooling_towers: (units.cooling_towers || []).map(u => Object.assign({}, u, {freq: result.cooling_tower_fan_freq}))
+            };
+            return next;
+        }
+
+        async function fillOptimizeInputsFromExcel() {
+            const fileInput = document.getElementById('optimize-input-file');
+            if (!fileInput || !fileInput.files || !fileInput.files.length) {
+                setOptimizeActionStatus('请先选择 Excel/CSV 文件。', 'error');
+                return;
+            }
+            setOptimizeButtonsDisabled(true);
+            setOptimizeActionStatus('正在解析 Excel 并填充最后一行运行数据...');
+            try {
+                const form = new FormData();
+                form.append('file', fileInput.files[0]);
+                const res = await fetch('/api/v1/optimize/import-preview', {method: 'POST', body: form});
+                const json = await res.json();
+                if (json.code !== 0 || !json.data || !json.data.device_data) {
+                    throw new Error(json.message || '未能解析有效运行行');
+                }
+                if (json.data.config_defaults) {
+                    optimizeInputDefaults = json.data.config_defaults;
+                }
+                applyDeviceDataToInputs(json.data.device_data, json.data.equipment_units);
+                const filled = (json.data.config_filled_fields || []).concat(json.data.defaulted_fields || []);
+                document.getElementById('optimize-import-summary').textContent =
+                    (json.data.message || '填充完成') +
+                    '；运行行数 ' + (json.data.running_rows || 0) +
+                    (filled.length ? '；缺省/配置补齐字段：' + Array.from(new Set(filled)).join('、') : '');
+                setOptimizeActionStatus('Excel 最后一行运行数据已填入输入框。', 'success');
+            } catch (e) {
+                setOptimizeActionStatus('Excel 填充失败：' + e, 'error');
+            } finally {
+                setOptimizeButtonsDisabled(false);
+            }
+        }
+
+        function setOptimizeActionStatus(message, kind) {
+            const box = document.getElementById('optimize-action-status');
+            if (!box) return;
+            box.textContent = message;
+            box.className = 'action-status' + (kind ? ' ' + kind : '');
+        }
+
+        function setOptimizeButtonsDisabled(disabled) {
+            ['btn-run-optimize', 'btn-load-realtime', 'btn-run-optimize-multi', 'btn-fill-from-excel'].forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) btn.disabled = disabled;
+            });
+        }
+
+        function toggleCollapse(bodyId, headerId) {
+            const body = document.getElementById(bodyId);
+            const header = document.getElementById(headerId);
+            if (!body || !header) return;
+            const collapsed = body.classList.toggle('collapsed');
+            header.classList.toggle('expanded', !collapsed);
+        }
+
+        function ensureExpanded(bodyId, headerId) {
+            const body = document.getElementById(bodyId);
+            const header = document.getElementById(headerId);
+            if (!body || !header) return;
+            body.classList.remove('collapsed');
+            header.classList.add('expanded');
+        }
+
+        function scrollToElement(elementId) {
+            const target = document.getElementById(elementId);
+            if (target) {
+                target.scrollIntoView({behavior: 'smooth', block: 'start'});
+            }
+        }
+
+        function scrollToOptimizeOutput(isMultiRun) {
+            if (isMultiRun) {
+                ensureExpanded('multi-run-body', 'multi-run-section');
+                scrollToElement('multi-run-section');
+            } else {
+                scrollToElement('optimize-output-section');
+            }
+        }
+
+        async function callOptimizeApi(deviceData) {
+            const minEl = document.getElementById('in-chilled-water-min');
+            const chilledWaterTempMin = minEl ? parseFloat(minEl.value) : NaN;
+            const payload = {device_data: deviceData, force: true};
+            if (!Number.isNaN(chilledWaterTempMin)) {
+                payload.chilled_water_temp_min = chilledWaterTempMin;
+            }
+            const res = await fetch('/api/v1/optimize/run', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            return res.json();
+        }
+
+        function renderMultiRunTable(history) {
+            const tbody = document.getElementById('multi-run-table');
+            if (!tbody) return;
+            if (!history || !history.length) {
+                tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; color:#999;">尚未执行多次寻优</td></tr>';
+                return;
+            }
+            tbody.innerHTML = history.map(item => {
+                const input = item.input || {};
+                const result = item.result || {};
+                const baseline = item.measured_total_power || input.total_power || result.baseline_power || 0;
+                const predicted = result.predicted_power || 0;
+                const saving = baseline > 0 && predicted > 0
+                    ? Math.max(0, (baseline - predicted) / baseline * 100)
+                    : (result.energy_saving_rate || 0);
+                return '<tr>' +
+                    '<td>' + item.round + '</td>' +
+                    '<td>' + fmt(input.chilled_water_temp, 2) + '</td>' +
+                    '<td>' + fmt(input.chilled_pump_freq, 2) + '</td>' +
+                    '<td>' + fmt(input.cooling_pump_freq, 2) + '</td>' +
+                    '<td>' + fmt(input.total_power, 2) + '</td>' +
+                    '<td>' + fmt(result.chilled_water_temp, 2) + '</td>' +
+                    '<td>' + fmt(result.chilled_pump_freq, 2) + '</td>' +
+                    '<td>' + fmt(result.cooling_pump_freq, 2) + '</td>' +
+                    '<td>' + fmt(result.predicted_power, 2) + '</td>' +
+                    '<td>' + fmt(result.predicted_indoor_temp, 2) + '</td>' +
+                    '<td>' + fmt(saving, 2) + '</td>' +
+                    '<td>' + fmt(result.duration, 2) + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        async function runOptimizeFromInputs() {
+            const box = document.getElementById('optimize-result');
+            setOptimizeButtonsDisabled(true);
+            setOptimizeActionStatus('寻优计算中，请稍候（约 3~10 秒）...');
+            box.textContent = '寻优计算中...';
+            try {
+                const json = await callOptimizeApi(collectDeviceData());
+                if (json.code === 0 && json.data) {
+                    const r = json.data;
+                    renderOptimizeOutputs(r);
+                    box.textContent = JSON.stringify(r, null, 2);
+                    setOptimizeActionStatus('寻优完成。推荐值与预测工况已更新，详见下方结果。', 'success');
+                    scrollToOptimizeOutput(false);
+                    fetchStatus();
+                } else {
+                    box.textContent = '寻优失败：' + JSON.stringify(json, null, 2);
+                    setOptimizeActionStatus('寻优失败：' + (json.message || '未知错误'), 'error');
+                }
+            } catch (e) {
+                box.textContent = '请求失败：' + e;
+                setOptimizeActionStatus('请求失败：' + e, 'error');
+            } finally {
+                setOptimizeButtonsDisabled(false);
+            }
+        }
+
+        async function runOptimizeMultipleFromInputs() {
+            const rounds = Math.max(1, Math.min(50, Math.round(num('optimize-repeat-count') || 1)));
+            const box = document.getElementById('optimize-result');
+            const history = [];
+            let deviceData = collectDeviceData();
+            const measuredTotalPower = deviceData.total_power || 0;
+            setOptimizeButtonsDisabled(true);
+            setOptimizeActionStatus('开始 ' + rounds + ' 次闭环寻优，请稍候...');
+            box.textContent = '多次寻优进行中...';
+            renderMultiRunTable([]);
+
+            try {
+                for (let round = 1; round <= rounds; round += 1) {
+                    setOptimizeActionStatus('第 ' + round + '/' + rounds + ' 次寻优计算中...');
+                    const json = await callOptimizeApi(deviceData);
+                    if (json.code !== 0 || !json.data) {
+                        throw new Error(json.message || ('第 ' + round + ' 次寻优失败'));
+                    }
+                    const result = json.data;
+                    const nextData = applyOptimizeResultToDeviceData(deviceData, result);
+                    history.push({
+                        round: round,
+                        input: Object.assign({}, deviceData),
+                        result: result,
+                        next_input: Object.assign({}, nextData),
+                        measured_total_power: measuredTotalPower
+                    });
+                    deviceData = nextData;
+                    applyDeviceDataToInputs(deviceData, deviceData.equipment_units);
+                    renderMultiRunTable(history);
+                }
+                const last = history[history.length - 1].result;
+                renderOptimizeOutputs(last);
+                box.textContent = JSON.stringify({
+                    rounds: rounds,
+                    description: '每轮将推荐控制值与预测功率/温度作为下一轮输入，模拟逐步执行推荐',
+                    history: history
+                }, null, 2);
+                setOptimizeActionStatus(
+                    rounds + ' 次闭环寻优全部完成。输入框已更新为最后一轮预测工况。',
+                    'success'
+                );
+                scrollToOptimizeOutput(true);
+                fetchStatus();
+            } catch (e) {
+                box.textContent = JSON.stringify({error: String(e), completed: history}, null, 2);
+                renderMultiRunTable(history);
+                if (history.length) {
+                    scrollToOptimizeOutput(true);
+                }
+                setOptimizeActionStatus('多次寻优中断：' + e + (history.length ? '（已完成 ' + history.length + ' 轮）' : ''), 'error');
+            } finally {
+                setOptimizeButtonsDisabled(false);
+            }
+        }
+
+        async function loadRealtimeToInputs() {
+            setOptimizeButtonsDisabled(true);
+            setOptimizeActionStatus('正在读取最新实时数据...');
+            try {
+                let res = await fetch('/api/v1/data/realtime');
+                let json = await res.json();
+                if (json.code !== 0 || !json.data) {
+                    setOptimizeActionStatus('暂无实时数据，正在生成一条模拟工况...');
+                    await fetch('/api/v1/data/simulate', {method: 'POST'});
+                    res = await fetch('/api/v1/data/realtime');
+                    json = await res.json();
+                }
+                if (json.code !== 0 || !json.data) {
+                    setOptimizeActionStatus('读取失败：暂无可用工况数据', 'error');
+                    return;
+                }
+                const d = json.data.raw_data || json.data;
+                applyDeviceDataToInputs(d, null);
+                if (optimizeEquipmentConfig) {
+                    renderOptimizeEquipmentUnits(
+                        defaultOptimizeUnitsFromConfig(optimizeEquipmentConfig, d, false, equipmentDocument && equipmentDocument.units)
+                    );
+                }
+                setOptimizeActionStatus('已读取最新实时数据并填入输入框。', 'success');
+            } catch (e) {
+                setOptimizeActionStatus('读取实时数据失败：' + e, 'error');
+            } finally {
+                setOptimizeButtonsDisabled(false);
+            }
+        }
+
+        window.runOptimizeFromInputs = runOptimizeFromInputs;
+        window.loadRealtimeToInputs = loadRealtimeToInputs;
+        window.runOptimizeMultipleFromInputs = runOptimizeMultipleFromInputs;
+        window.fillOptimizeInputsFromExcel = fillOptimizeInputsFromExcel;
+
+        document.addEventListener('input', (event) => {
+            if (!event.target || !event.target.id) return;
+            if (event.target.id.startsWith('unit-') || event.target.id.startsWith('in-')) {
+                recalculateSystemTotalPower();
+            }
+        });
+        document.addEventListener('change', (event) => {
+            if (!event.target || !event.target.id) return;
+            if (event.target.id.startsWith('unit-') || event.target.id.startsWith('in-')) {
+                recalculateSystemTotalPower();
+            }
+        });
+
+        async function uploadBatchOptimize() {
+            const fileInput = document.getElementById('batch-file');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                document.getElementById('batch-summary').textContent = '请先选择 Excel/CSV 文件。';
+                return;
+            }
+            const maxRows = Number(document.getElementById('batch-max-rows').value || 1000);
+            const maxResults = Number(document.getElementById('batch-max-results').value || 200);
+            const form = new FormData();
+            form.append('file', fileInput.files[0]);
+            document.getElementById('batch-summary').textContent = '批量寻优运行中，请稍候...';
+            try {
+                const res = await fetch('/api/v1/optimize/batch-upload?max_rows=' + maxRows + '&max_results=' + maxResults, {
+                    method: 'POST',
+                    body: form
+                });
+                const json = await res.json();
+                if (json.code === 0 && json.data) {
+                    const d = json.data;
+                    if (d.results && d.results.length > 0) {
+                        const first = d.results[0];
+                        const r = first.result;
+                        renderOptimizeOutputs(r);
+                        document.getElementById('optimize-result').textContent = JSON.stringify({
+                            result: r,
+                            measured_total_power: first.measured_total_power,
+                            model_baseline_power: first.model_baseline_power,
+                            saving_rate: first.saving_rate,
+                            saving_rate_vs_measured: first.saving_rate_vs_measured,
+                            baseline_breakdown: first.baseline_breakdown,
+                            optimized_breakdown: first.optimized_breakdown,
+                            data_quality: first.data_quality
+                        }, null, 2);
+                    }
+                    const lines = [
+                        '文件: ' + d.filename,
+                        '总行数: ' + d.total_rows,
+                        '运行行数: ' + d.running_rows,
+                        '实际处理: ' + d.processed_rows,
+                        '成功/失败/超时: ' + d.success_count + ' / ' + d.failed_count + ' / ' + d.timeout_count,
+                        '非运行跳过: ' + d.skipped_not_running,
+                        '无效跳过: ' + d.skipped_invalid,
+                        '缺失字段: ' + (d.missing_fields || []).join(', '),
+                        '使用默认值字段: ' + (d.defaulted_fields || []).join(', ')
+                    ];
+                    document.getElementById('batch-summary').textContent = lines.join(' | ');
+                    renderBatchTable(d.results || []);
+                    fetchStatus();
+                } else {
+                    document.getElementById('batch-summary').textContent = '批量寻优失败：' + JSON.stringify(json, null, 2);
+                }
+            } catch (e) {
+                document.getElementById('batch-summary').textContent = '上传失败：' + e;
+            }
+        }
+
+        let optimizeAppSettings = null;
+
+        function applyAppSettingsToPage(s) {
+            if (!s) return;
+            optimizeAppSettings = s;
+            if (optimizeEquipmentConfig) {
+                optimizeInputDefaults = buildOptimizeInputDefaultsFromConfig(optimizeEquipmentConfig, s);
+            }
+            document.getElementById('comfort-temp-min').value = s.strategy.indoor_temp.min;
+            document.getElementById('comfort-temp-max').value = s.strategy.indoor_temp.max;
+            document.getElementById('constraint-chw-min').value = s.constraints.chilled_water_temp.min;
+            document.getElementById('constraint-chw-max').value = s.constraints.chilled_water_temp.max;
+            document.getElementById('constraint-pump-min').value = s.constraints.pump_frequency.min;
+            document.getElementById('constraint-pump-max').value = s.constraints.pump_frequency.max;
+            document.getElementById('constraint-tower-min').value = s.constraints.cooling_tower_fan_frequency.min;
+            document.getElementById('constraint-tower-max').value = s.constraints.cooling_tower_fan_frequency.max;
+            document.getElementById('default-outdoor-temp').value = s.batch_defaults.outdoor_temp;
+            document.getElementById('default-outdoor-humidity').value = s.batch_defaults.outdoor_humidity;
+            document.getElementById('default-indoor-temp').value = s.batch_defaults.indoor_temp;
+            document.getElementById('default-indoor-humidity').value = s.batch_defaults.indoor_humidity;
+            document.getElementById('default-terminal-fan').value = s.batch_defaults.terminal_fan_power;
+            document.getElementById('optimize-enabled').checked = !!s.optimize.enabled;
+            document.getElementById('optimize-interval').value = s.optimize.interval_minutes;
+            document.getElementById('optimize-timeout').value = s.optimize.timeout_seconds;
+            document.getElementById('model-eta-chiller').value = s.energy_model.eta_chiller;
+            document.getElementById('model-terminal-default').value = s.energy_model.terminal_fan_default;
+            document.getElementById('model-indoor-base').value = s.energy_model.indoor_base_temp;
+            document.getElementById('model-indoor-gain').value = s.energy_model.indoor_gain;
+            const chwMinInput = document.getElementById('in-chilled-water-min');
+            if (chwMinInput) {
+                chwMinInput.value = s.constraints.chilled_water_temp.min;
+            }
+            if (optimizeInputDefaults) {
+                const chwTempInput = document.getElementById('in-chilled-water-temp');
+                if (chwTempInput && isEmptyInputValue(chwTempInput.value)) {
+                    chwTempInput.value = optimizeInputDefaults.chilled_water_temp;
+                }
+            }
+        }
+
+        async function loadAppSettings() {
+            const res = await fetch('/api/v1/settings/config');
+            const json = await res.json();
+            if (json.code !== 0 || !json.data) return;
+            applyAppSettingsToPage(json.data.settings);
+            const storage = json.data.storage || {};
+            document.getElementById('settings-message').textContent =
+                '系统配置已读取（' + (storage.storage === 'database' ? '数据库' : 'YAML') +
+                '，备份：' + json.data.path + '）';
+        }
+
+        function collectAppSettings() {
+            return {
+                strategy: {
+                    indoor_temp: {
+                        min: num('comfort-temp-min'),
+                        max: num('comfort-temp-max')
+                    }
+                },
+                batch_defaults: {
+                    outdoor_temp: num('default-outdoor-temp'),
+                    outdoor_humidity: num('default-outdoor-humidity'),
+                    indoor_temp: num('default-indoor-temp'),
+                    indoor_humidity: num('default-indoor-humidity'),
+                    terminal_fan_power: num('default-terminal-fan')
+                },
+                constraints: {
+                    chilled_water_temp: {
+                        min: num('constraint-chw-min'),
+                        max: num('constraint-chw-max')
+                    },
+                    pump_frequency: {
+                        min: num('constraint-pump-min'),
+                        max: num('constraint-pump-max')
+                    },
+                    cooling_tower_fan_frequency: {
+                        min: num('constraint-tower-min'),
+                        max: num('constraint-tower-max')
+                    }
+                },
+                optimize: {
+                    enabled: document.getElementById('optimize-enabled').checked,
+                    interval_minutes: Math.round(num('optimize-interval')),
+                    timeout_seconds: Math.round(num('optimize-timeout'))
+                },
+                energy_model: {
+                    eta_chiller: num('model-eta-chiller'),
+                    terminal_fan_default: num('model-terminal-default'),
+                    indoor_base_temp: num('model-indoor-base'),
+                    indoor_gain: num('model-indoor-gain')
+                }
+            };
+        }
+
+        async function saveAppSettings() {
+            const payload = collectAppSettings();
+            const res = await fetch('/api/v1/settings/config', {
+                method: 'PUT',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            const json = await res.json();
+            if (json.code === 0) {
+                applyAppSettingsToPage(payload);
+            }
+            document.getElementById('settings-message').textContent =
+                json.code === 0 ? '系统配置已保存，下一次寻优立即生效。' : '保存失败：' + json.message;
+        }
+
         fetchStatus();
+        loadEquipmentConfig();
+        loadAppSettings();
         setInterval(fetchStatus, 5000);
+        (function initCollapsibleSections() {
+            const jsonBody = document.getElementById('optimize-result-body');
+            const jsonHeader = document.getElementById('optimize-result-header');
+            if (jsonBody && jsonHeader) {
+                jsonBody.classList.add('collapsed');
+                jsonHeader.classList.remove('expanded');
+            }
+        })();
     </script>
 </body>
 </html>
