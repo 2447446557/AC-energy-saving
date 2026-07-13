@@ -22,9 +22,6 @@ class OptimizeRequest(BaseModel):
     # 是否强制重新寻优（忽略缓存）
     force: bool = False
 
-    # 本次寻优冷水出水温度下限（℃）；不低于系统安全下限，且推荐值不会低于该值
-    chilled_water_temp_min: float | None = None
-
 
 class OptimizeResult(BaseModel):
     """寻优结果
@@ -40,12 +37,14 @@ class OptimizeResult(BaseModel):
 
     # 最优控制参数
     chilled_water_temp: float = 7.0  # 冷水出水温度（℃）
+    chilled_water_temp_offset: float = 0.0  # 相对查表/实测的微调量（℃）
+    chiller_load_pct: float = 80.0  # 推荐主机负荷率（%）
     chilled_pump_freq: float = 35.0  # 冷冻泵频率（Hz）
     chilled_pump_count: int = 0  # 推荐开启冷冻泵台数
-    chilled_pump_power: float = 0.0  # 推荐冷冻泵总功率（kW）
+    chilled_pump_power: float = 0.0  # 预测冷冻泵单台功率（kW，展示用）
     cooling_pump_freq: float = 35.0  # 冷却泵频率（Hz）
     cooling_pump_count: int = 0  # 推荐开启冷却泵台数
-    cooling_pump_power: float = 0.0  # 推荐冷却泵总功率（kW）
+    cooling_pump_power: float = 0.0  # 预测冷却泵单台功率（kW，展示用）
     cooling_tower_fan_freq: float = 30.0  # 冷却塔风机频率（Hz）
     cooling_tower_count: int = 0  # 推荐开启冷却塔台数
     cooling_tower_power: float = 0.0  # 推荐冷却塔总功率（kW）
@@ -54,7 +53,7 @@ class OptimizeResult(BaseModel):
     predicted_power: float = 0.0
 
     # 当前工况基线功率（kW，寻优输入对应控制参数下的模型预测）
-    baseline_power: float = 0.0
+    baseline_power: float = 0.0  # 节能率基线（kW，优先为输入实测总功率）
 
     # 推荐方案下的预测工况（由能耗模型推算，非直接下发）
     predicted_indoor_temp: float = 0.0  # 预测室内温度（℃）

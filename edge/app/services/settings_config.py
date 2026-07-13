@@ -2,6 +2,10 @@
 
 from __future__ import annotations
 
+import math
+import os
+import tempfile
+import threading
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +26,128 @@ class MinMaxRange(BaseModel):
 
     min: float
     max: float
+
+
+class OperatingFloorBand(BaseModel):
+    """室外温度区间对应的设备能力下限（Hz / 主机负荷%）。"""
+
+    chilled_pump_freq: float = Field(default=35.0, ge=0.0, le=50.0)
+    cooling_pump_freq: float = Field(default=35.0, ge=0.0, le=50.0)
+    chiller_load_pct: float = Field(default=40.0, ge=0.0, le=100.0)
+
+
+class OutdoorOperatingFloors(BaseModel):
+    """按室外温度分档的设备频率/主机负荷下限。"""
+
+    below_25: OperatingFloorBand = Field(
+        default_factory=lambda: OperatingFloorBand(
+            chilled_pump_freq=35.0, cooling_pump_freq=35.0, chiller_load_pct=40.0
+        )
+    )
+    range_25_29: OperatingFloorBand = Field(
+        default_factory=lambda: OperatingFloorBand(
+            chilled_pump_freq=38.0, cooling_pump_freq=38.0, chiller_load_pct=50.0
+        )
+    )
+    range_29_33: OperatingFloorBand = Field(
+        default_factory=lambda: OperatingFloorBand(
+            chilled_pump_freq=40.0, cooling_pump_freq=42.0, chiller_load_pct=65.0
+        )
+    )
+    range_33_37: OperatingFloorBand = Field(
+        default_factory=lambda: OperatingFloorBand(
+            chilled_pump_freq=40.0, cooling_pump_freq=45.0, chiller_load_pct=75.0
+        )
+    )
+    above_37: OperatingFloorBand = Field(
+        default_factory=lambda: OperatingFloorBand(
+            chilled_pump_freq=42.0, cooling_pump_freq=45.0, chiller_load_pct=85.0
+        )
+    )
+
+    def resolve(self, outdoor_temp: float) -> OperatingFloorBand:
+        try:
+            t = float(outdoor_temp)
+        except (TypeError, ValueError):
+            t = 30.0
+        if not math.isfinite(t):
+            t = 30.0
+        if t < 25.0:
+            return self.below_25
+        if t < 29.0:
+            return self.range_25_29
+        if t < 33.0:
+            return self.range_29_33
+        if t < 37.0:
+            return self.range_33_37
+        return self.above_37
+
+
+class ComfortMarginConfig(BaseModel):
+    """舒适区预防性裕量：预测室温不得过于接近上限或下限。"""
+
+    base_from_ceiling: float = Field(default=0.5, ge=0.0, le=2.0)
+    base_from_floor: float = Field(default=0.3, ge=0.0, le=2.0)
+    outdoor_ref_temp: float = Field(default=29.0, ge=0.0, le=50.0)
+    outdoor_extra_per_degree: float = Field(default=0.1, ge=0.0, le=1.0)
+    indoor_proximity_threshold: float = Field(default=0.3, ge=0.0, le=2.0)
+    indoor_proximity_extra: float = Field(default=0.15, ge=0.0, le=1.0)
+
+
+class ChilledWaterFinetune(BaseModel):
+    """相对查表冷水的微调幅度（℃）。
+
+    设为 0 时冷水温度严格按室外温度查表确定，PSO 不做微调。
+    """
+
+    max_delta: float = Field(default=0.5, ge=0.0, le=3.0)
+
+
+class ChilledWaterTempTable(BaseModel):
+    """基于室外温度区间的冷水出水温度查表配置。
+
+    冷水出水温度不再由 PSO 优化，而是按室外温度落入以下区间直接确定：
+        室外温度 < 25℃            → below_25（默认 14℃）
+        25℃ ≤ 室外温度 < 29℃      → range_25_29（默认 12℃）
+        29℃ ≤ 室外温度 < 33℃      → range_29_33（默认 10℃）
+        33℃ ≤ 室外温度 < 37℃      → range_33_37（默认 9℃）
+        室外温度 ≥ 37℃            → above_37（默认 8℃）
+    """
+
+    below_25: float = Field(default=14.0, ge=0.0, le=30.0)
+    range_25_29: float = Field(default=12.0, ge=0.0, le=30.0)
+    range_29_33: float = Field(default=10.0, ge=0.0, le=30.0)
+    range_33_37: float = Field(default=9.0, ge=0.0, le=30.0)
+    above_37: float = Field(default=8.0, ge=0.0, le=30.0)
+
+    def resolve(self, outdoor_temp: float) -> float:
+        """根据室外温度（℃）查表返回冷水出水温度（℃）。"""
+        try:
+            t = float(outdoor_temp)
+        except (TypeError, ValueError):
+            t = 30.0
+        if not math.isfinite(t):
+            t = 30.0
+        if t < 25.0:
+            return self.below_25
+        if t < 29.0:
+            return self.range_25_29
+        if t < 33.0:
+            return self.range_29_33
+        if t < 37.0:
+            return self.range_33_37
+        return self.above_37
+
+    def range(self) -> tuple[float, float]:
+        """返回查表配置的最小/最大冷水温度（供能耗模型归一化使用）。"""
+        values = (
+            self.below_25,
+            self.range_25_29,
+            self.range_29_33,
+            self.range_33_37,
+            self.above_37,
+        )
+        return (min(values), max(values))
 
 
 class IndoorTempConstraint(BaseModel):
@@ -54,9 +180,16 @@ class BatchDefaultsConfig(BaseModel):
 class HardConstraintsConfig(BaseModel):
     """寻优硬约束边界（设备配置会进一步收窄泵/塔频率）"""
 
-    chilled_water_temp: MinMaxRange = Field(
-        default_factory=lambda: MinMaxRange(min=6.0, max=12.0)
+    chilled_water_temp_table: ChilledWaterTempTable = Field(
+        default_factory=ChilledWaterTempTable
     )
+    chilled_water_finetune: ChilledWaterFinetune = Field(
+        default_factory=ChilledWaterFinetune
+    )
+    outdoor_operating_floors: OutdoorOperatingFloors = Field(
+        default_factory=OutdoorOperatingFloors
+    )
+    comfort_margin: ComfortMarginConfig = Field(default_factory=ComfortMarginConfig)
     pump_frequency: MinMaxRange = Field(
         default_factory=lambda: MinMaxRange(min=25.0, max=50.0)
     )
@@ -80,6 +213,9 @@ class EnergyModelConfig(BaseModel):
     terminal_fan_default: float = Field(default=2.0, ge=0.0)
     indoor_base_temp: float = Field(default=24.5, ge=10.0, le=40.0)
     indoor_gain: float = Field(default=25.0, ge=1.0)
+    outdoor_indoor_coupling: float = Field(default=0.06, ge=0.0, le=1.0)
+    outdoor_stress_ref: float = Field(default=29.0, ge=0.0, le=50.0)
+    max_component_power_rise_pct: float = Field(default=0.15, ge=0.0, le=1.0)
 
 
 class AppSettingsConfig(BaseModel):
@@ -97,6 +233,8 @@ SETTINGS_NAMESPACE = "app_settings"
 
 class SettingsConfigService:
     """读写 config/settings.yaml 中的可编辑参数。"""
+
+    _lock = threading.RLock()
 
     def __init__(self, path: str | None = None) -> None:
         self._path = Path(path or get_settings().settings_yaml)
@@ -122,7 +260,9 @@ class SettingsConfigService:
     def get_app_settings(self) -> AppSettingsConfig:
         db_raw = load_config_document(SETTINGS_NAMESPACE)
         if db_raw is not None:
-            return AppSettingsConfig(**db_raw)
+            settings = AppSettingsConfig(**db_raw)
+            settings.constraints = self._normalize_constraints(settings.constraints)
+            return settings
 
         cfg = get_business_config()
         constraints = cfg.get("constraints", {}) or {}
@@ -131,7 +271,7 @@ class SettingsConfigService:
         optimize_raw = cfg.get("optimize", {}) or {}
         energy_raw = cfg.get("energy_model", {}) or {}
 
-        return AppSettingsConfig(
+        settings = AppSettingsConfig(
             strategy=StrategyConfig(
                 indoor_temp=IndoorTempConstraint(
                     min=float(indoor_raw.get("min", 24.0)),
@@ -146,8 +286,17 @@ class SettingsConfigService:
                 terminal_fan_power=float(batch_raw.get("terminal_fan_power", 0.0)),
             ),
             constraints=HardConstraintsConfig(
-                chilled_water_temp=self._min_max(
-                    constraints.get("chilled_water_temp"), 6.0, 12.0
+                chilled_water_temp_table=self._load_chw_table(
+                    constraints.get("chilled_water_temp_table")
+                ),
+                chilled_water_finetune=self._load_chw_finetune(
+                    constraints.get("chilled_water_finetune")
+                ),
+                outdoor_operating_floors=self._load_operating_floors(
+                    constraints.get("outdoor_operating_floors")
+                ),
+                comfort_margin=self._load_comfort_margin(
+                    constraints.get("comfort_margin")
                 ),
                 pump_frequency=self._min_max(
                     constraints.get("pump_frequency"), 25.0, 50.0
@@ -166,8 +315,17 @@ class SettingsConfigService:
                 terminal_fan_default=float(energy_raw.get("terminal_fan_default", 2.0)),
                 indoor_base_temp=float(energy_raw.get("indoor_base_temp", 24.5)),
                 indoor_gain=float(energy_raw.get("indoor_gain", 25.0)),
+                outdoor_indoor_coupling=float(
+                    energy_raw.get("outdoor_indoor_coupling", 0.06)
+                ),
+                outdoor_stress_ref=float(energy_raw.get("outdoor_stress_ref", 29.0)),
+                max_component_power_rise_pct=float(
+                    energy_raw.get("max_component_power_rise_pct", 0.15)
+                ),
             ),
         )
+        settings.constraints = self._normalize_constraints(settings.constraints)
+        return settings
 
     def save_strategy(self, strategy: StrategyConfig) -> StrategyConfig:
         current = self.get_app_settings()
@@ -176,6 +334,10 @@ class SettingsConfigService:
         return current.strategy
 
     def save_app_settings(self, settings: AppSettingsConfig) -> AppSettingsConfig:
+        with self._lock:
+            return self._save_app_settings_impl(settings)
+
+    def _save_app_settings_impl(self, settings: AppSettingsConfig) -> AppSettingsConfig:
         settings.strategy = self._normalize_indoor(settings.strategy)
         settings.constraints = self._normalize_constraints(settings.constraints)
 
@@ -190,8 +352,24 @@ class SettingsConfigService:
             "min": round(indoor.min, 2),
             "max": round(indoor.max, 2),
         }
-        constraints["chilled_water_temp"] = self._dump_min_max(
-            settings.constraints.chilled_water_temp
+        constraints["chilled_water_temp_table"] = (
+            settings.constraints.chilled_water_temp_table.model_dump()
+        )
+        constraints["chilled_water_finetune"] = (
+            settings.constraints.chilled_water_finetune.model_dump()
+        )
+        constraints["outdoor_operating_floors"] = {
+            band: settings.constraints.outdoor_operating_floors.model_dump()[band]
+            for band in (
+                "below_25",
+                "range_25_29",
+                "range_29_33",
+                "range_33_37",
+                "above_37",
+            )
+        }
+        constraints["comfort_margin"] = (
+            settings.constraints.comfort_margin.model_dump()
         )
         constraints["pump_frequency"] = self._dump_min_max(
             settings.constraints.pump_frequency
@@ -211,11 +389,30 @@ class SettingsConfigService:
             "terminal_fan_default": round(settings.energy_model.terminal_fan_default, 4),
             "indoor_base_temp": round(settings.energy_model.indoor_base_temp, 2),
             "indoor_gain": round(settings.energy_model.indoor_gain, 2),
+            "outdoor_indoor_coupling": round(
+                settings.energy_model.outdoor_indoor_coupling, 4
+            ),
+            "outdoor_stress_ref": round(settings.energy_model.outdoor_stress_ref, 2),
+            "max_component_power_rise_pct": round(
+                settings.energy_model.max_component_power_rise_pct, 4
+            ),
         }
 
         self._path.parent.mkdir(parents=True, exist_ok=True)
-        with open(self._path, "w", encoding="utf-8") as f:
-            yaml.safe_dump(data, f, allow_unicode=True, sort_keys=False)
+        # 原子写入：先写临时文件再 os.replace，避免写入中途崩溃损坏备份
+        fd, tmp_path = tempfile.mkstemp(
+            dir=str(self._path.parent), suffix=".yaml.tmp"
+        )
+        try:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                yaml.safe_dump(data, f, allow_unicode=True, sort_keys=False)
+            os.replace(tmp_path, self._path)
+        except Exception:
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+            raise
         get_business_config.cache_clear()
         save_config_document(SETTINGS_NAMESPACE, settings.model_dump(mode="json"))
         logger.info(f"系统配置已保存: 数据库 + {self._path}")
@@ -229,6 +426,105 @@ class SettingsConfigService:
             min=float(raw.get("min", dmin)),
             max=float(raw.get("max", dmax)),
         )
+
+    @staticmethod
+    def _load_chw_finetune(raw: dict[str, Any] | None) -> ChilledWaterFinetune:
+        if not isinstance(raw, dict):
+            return ChilledWaterFinetune()
+        try:
+            return ChilledWaterFinetune(
+                max_delta=float(raw.get("max_delta", 0.5)),
+            )
+        except (TypeError, ValueError):
+            return ChilledWaterFinetune()
+
+    @staticmethod
+    def _load_operating_floors(raw: dict[str, Any] | None) -> OutdoorOperatingFloors:
+        if not isinstance(raw, dict):
+            return OutdoorOperatingFloors()
+
+        def _band(key: str, defaults: OperatingFloorBand) -> OperatingFloorBand:
+            item = raw.get(key)
+            if not isinstance(item, dict):
+                return defaults
+            try:
+                return OperatingFloorBand(
+                    chilled_pump_freq=float(
+                        item.get("chilled_pump_freq", defaults.chilled_pump_freq)
+                    ),
+                    cooling_pump_freq=float(
+                        item.get("cooling_pump_freq", defaults.cooling_pump_freq)
+                    ),
+                    chiller_load_pct=float(
+                        item.get("chiller_load_pct", defaults.chiller_load_pct)
+                    ),
+                )
+            except (TypeError, ValueError):
+                return defaults
+
+        base = OutdoorOperatingFloors()
+        return OutdoorOperatingFloors(
+            below_25=_band("below_25", base.below_25),
+            range_25_29=_band("range_25_29", base.range_25_29),
+            range_29_33=_band("range_29_33", base.range_29_33),
+            range_33_37=_band("range_33_37", base.range_33_37),
+            above_37=_band("above_37", base.above_37),
+        )
+
+    @staticmethod
+    def _load_comfort_margin(raw: dict[str, Any] | None) -> ComfortMarginConfig:
+        if not isinstance(raw, dict):
+            return ComfortMarginConfig()
+        defaults = ComfortMarginConfig()
+        try:
+            return ComfortMarginConfig(
+                base_from_ceiling=float(
+                    raw.get("base_from_ceiling", defaults.base_from_ceiling)
+                ),
+                base_from_floor=float(
+                    raw.get("base_from_floor", defaults.base_from_floor)
+                ),
+                outdoor_ref_temp=float(
+                    raw.get("outdoor_ref_temp", defaults.outdoor_ref_temp)
+                ),
+                outdoor_extra_per_degree=float(
+                    raw.get(
+                        "outdoor_extra_per_degree",
+                        defaults.outdoor_extra_per_degree,
+                    )
+                ),
+                indoor_proximity_threshold=float(
+                    raw.get(
+                        "indoor_proximity_threshold",
+                        defaults.indoor_proximity_threshold,
+                    )
+                ),
+                indoor_proximity_extra=float(
+                    raw.get("indoor_proximity_extra", defaults.indoor_proximity_extra)
+                ),
+            )
+        except (TypeError, ValueError):
+            return ComfortMarginConfig()
+
+    @staticmethod
+    def _load_chw_table(raw: dict[str, Any] | None) -> ChilledWaterTempTable:
+        """从配置段解析冷水出水温度查表，非法/缺失时回退默认 5 档。"""
+        if not isinstance(raw, dict):
+            return ChilledWaterTempTable()
+        fields = {
+            "below_25": 14.0,
+            "range_25_29": 12.0,
+            "range_29_33": 10.0,
+            "range_33_37": 9.0,
+            "above_37": 8.0,
+        }
+        kwargs: dict[str, float] = {}
+        for key, default in fields.items():
+            try:
+                kwargs[key] = float(raw.get(key, default))
+            except (TypeError, ValueError):
+                kwargs[key] = default
+        return ChilledWaterTempTable(**kwargs)
 
     @staticmethod
     def _dump_min_max(value: MinMaxRange) -> dict[str, float]:
@@ -246,7 +542,7 @@ class SettingsConfigService:
 
     @staticmethod
     def _normalize_constraints(constraints: HardConstraintsConfig) -> HardConstraintsConfig:
-        for name in ("chilled_water_temp", "pump_frequency", "cooling_tower_fan_frequency"):
+        for name in ("pump_frequency", "cooling_tower_fan_frequency"):
             item: MinMaxRange = getattr(constraints, name)
             if item.min > item.max:
                 item.min, item.max = item.max, item.min
@@ -262,7 +558,16 @@ def get_merged_business_config() -> dict[str, Any]:
         settings = settings_config_service.get_app_settings()
         cfg = dict(get_business_config())
         cfg["constraints"] = {
-            "chilled_water_temp": settings.constraints.chilled_water_temp.model_dump(),
+            "chilled_water_temp_table": (
+                settings.constraints.chilled_water_temp_table.model_dump()
+            ),
+            "chilled_water_finetune": (
+                settings.constraints.chilled_water_finetune.model_dump()
+            ),
+            "outdoor_operating_floors": (
+                settings.constraints.outdoor_operating_floors.model_dump()
+            ),
+            "comfort_margin": settings.constraints.comfort_margin.model_dump(),
             "pump_frequency": settings.constraints.pump_frequency.model_dump(),
             "cooling_tower_fan_frequency": (
                 settings.constraints.cooling_tower_fan_frequency.model_dump()

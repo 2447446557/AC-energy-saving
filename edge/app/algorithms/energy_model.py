@@ -40,6 +40,7 @@
 from __future__ import annotations
 
 import math
+import threading
 from dataclasses import dataclass, field, replace
 from typing import Any
 
@@ -53,6 +54,27 @@ from app.schemas.device import DeviceData
 _KELVIN = 273.15
 # 水的比热容近似（kJ/(kg·K)），用于换热量估算
 _CP_WATER = 4.187
+# 并行 PSO 下 SQLite 读设备配置可能瞬时失败；缓存最近一次成功结果避免回退到默认 120kW
+_site_config_lock = threading.Lock()
+_site_config_cache: tuple[Any, list[Any]] | None = None
+
+
+def _load_site_equipment() -> tuple[Any, list[Any]]:
+    """线程安全读取设备配置；失败时回退到最近一次成功缓存。"""
+    global _site_config_cache
+    from app.services.equipment_config import equipment_config_service
+
+    with _site_config_lock:
+        try:
+            eq = equipment_config_service.get_config()
+            units = equipment_config_service.get_units()
+            _site_config_cache = (eq, list(units))
+            return eq, list(units)
+        except Exception as e:
+            if _site_config_cache is not None:
+                logger.debug(f"读取设备配置失败，使用缓存: {e}")
+                return _site_config_cache
+            raise
 
 
 def _finite(value, default: float) -> float:
@@ -100,6 +122,11 @@ class EnergyModelParams:
     indoor_gain: float = 25.0
     # 供冷充足时的室内基准温度（℃）
     indoor_base_temp: float = 24.5
+    # 室外偏热且供冷偏紧时，室温上浮耦合系数（℃/℃）
+    outdoor_indoor_coupling: float = 0.06
+    outdoor_stress_ref: float = 29.0
+    # 相对实测功率的最大允许涨幅（辅机相似定律缩放上限）
+    max_component_power_rise_pct: float = 0.15
 
     # 频率额定基准（Hz），相似定律归一化用
     freq_rated: float = 50.0
@@ -110,9 +137,12 @@ class EnergyModelParams:
     cooling_pump_total_count: int = 1
     # 当前参与计算的冷却塔开启台数
     cooling_tower_count: int = 5
-    # 冷水出水温度约束区间（与 SafetyConstraints 一致，供供冷能力归一化）
-    chw_temp_min: float = 6.0
-    chw_temp_max: float = 12.0
+    # 冷水出水温度约束区间（与 SafetyConstraints 查表配置一致，供供冷能力归一化）
+    chw_temp_min: float = 8.0
+    chw_temp_max: float = 14.0
+    # 室内舒适温度区间（与策略配置一致，供室温预测）
+    comfort_temp_min: float = 24.0
+    comfort_temp_max: float = 26.0
 
 
 @dataclass
@@ -146,6 +176,28 @@ class ACEnergyModel:
                     setattr(base, f, float(em[f]))
                 except (TypeError, ValueError):
                     logger.warning(f"能耗模型参数 {f} 配置非法，使用默认值")
+        strategy = (cfg.get("strategy", {}) or {}) if isinstance(cfg, dict) else {}
+        indoor = (strategy.get("indoor_temp", {}) or {}) if isinstance(strategy, dict) else {}
+        constraints = (cfg.get("constraints", {}) or {}) if isinstance(cfg, dict) else {}
+        indoor_cfg = indoor or (constraints.get("indoor_temp", {}) or {})
+        try:
+            lo = float(indoor_cfg.get("min", base.comfort_temp_min))
+            hi = float(indoor_cfg.get("max", base.comfort_temp_max))
+            if lo > hi:
+                lo, hi = hi, lo
+            base = replace(base, comfort_temp_min=lo, comfort_temp_max=hi)
+        except (TypeError, ValueError):
+            pass
+        for field_name, key in (
+            ("outdoor_indoor_coupling", "outdoor_indoor_coupling"),
+            ("outdoor_stress_ref", "outdoor_stress_ref"),
+            ("max_component_power_rise_pct", "max_component_power_rise_pct"),
+        ):
+            if key in em:
+                try:
+                    base = replace(base, **{field_name: float(em[key])})
+                except (TypeError, ValueError):
+                    pass
         self.p = base
 
     # ---------- IEnergyModel 协议实现 ----------
@@ -205,17 +257,36 @@ class ACEnergyModel:
             * (f_chp / p.freq_rated),
             0.0,
         )
-        delivered = p.design_cooling_capacity * temp_factor * flow_chw_ratio
-        # 实际去除的热量不超过需求（多余供冷能力不额外耗能，由控制维持设定值）
+        load_pct = _finite(params.get("chiller_load_pct"), 0.0)
+        if load_pct <= 0:
+            load_pct = _finite(data.chiller_load, 0.0)
+        if load_pct <= 0:
+            load_pct = 80.0
+        load_pct = min(max(load_pct, 0.0), 100.0)
+        try:
+            from app.algorithms.constraints import SafetyConstraints
+
+            load_pct = min(load_pct, SafetyConstraints.max_chiller_load_pct())
+        except Exception:
+            pass
+        load_factor = load_pct / 100.0
+
+        delivered = (
+            p.design_cooling_capacity * temp_factor * flow_chw_ratio * load_factor
+        )
         q_evap = min(delivered, demand)
 
-        # --- 室内温度预测：供冷充足沿用实测室温，不足则按缺口上行 ---
         measured_indoor = _finite(data.indoor_temp, p.indoor_base_temp)
-        if demand <= 1e-6 or delivered >= demand * 0.98:
-            predicted_indoor = measured_indoor
-        else:
-            unmet = max(demand - delivered, 0.0)
-            predicted_indoor = measured_indoor + unmet / max(p.indoor_gain, 1e-6)
+        predicted_indoor = self._predict_indoor_temp(
+            measured_indoor=measured_indoor,
+            demand=demand,
+            delivered_capacity=delivered,
+            temp_factor=temp_factor,
+            flow_chw_ratio=flow_chw_ratio,
+            tchw=tchw,
+            outdoor_temp=outdoor_temp,
+            p=p,
+        )
 
         # --- 湿球温度（冷却塔散热下限） ---
         wet_bulb = self._wet_bulb(outdoor_temp, outdoor_humidity)
@@ -234,13 +305,25 @@ class ACEnergyModel:
 
         # --- 辅机能耗：Excel 有实测则按相似定律缩放，否则用配置额定功率 ---
         chilled_pump_power = self._predict_pump_power(
-            data, params, "chilled", f_chp, p.chilled_pump_count, p.chilled_pump_rated, p
+            data,
+            params,
+            "chilled",
+            f_chp,
+            int(chilled_pump_count or p.chilled_pump_count),
+            p.chilled_pump_rated,
+            p,
         )
         cooling_pump_power = self._predict_pump_power(
-            data, params, "cooling", f_cp, p.cooling_pump_count, p.cooling_pump_rated, p
+            data,
+            params,
+            "cooling",
+            f_cp,
+            int(cooling_pump_count or p.cooling_pump_count),
+            p.cooling_pump_rated,
+            p,
         )
         cooling_tower_fan_power = self._predict_tower_power(
-            data, params, f_fan, p.cooling_tower_count, p.cooling_tower_fan_rated, p
+            data, params, f_fan, tower_count, p.cooling_tower_fan_rated, p
         )
 
         # --- 末端风机：取实测（净化后），无实测用额定 ---
@@ -271,6 +354,94 @@ class ACEnergyModel:
     # ---------- 内部物理子模型 ----------
 
     @staticmethod
+    def _predict_indoor_temp(
+        measured_indoor: float,
+        demand: float,
+        delivered_capacity: float,
+        temp_factor: float,
+        flow_chw_ratio: float,
+        tchw: float,
+        outdoor_temp: float,
+        p: EnergyModelParams,
+    ) -> float:
+        """根据供冷能力与控制参数预测室内温度（℃）。
+
+        舒适区内也会随冷水温度/流量变化；室外偏热且供冷偏紧时上浮室温。
+        """
+        lo = p.comfort_temp_min
+        hi = p.comfort_temp_max
+        mid = (lo + hi) / 2.0
+        chw_lo = min(p.chw_temp_min, p.chw_temp_max)
+        chw_hi = max(p.chw_temp_min, p.chw_temp_max)
+        chw_span = max(chw_hi - chw_lo, 1e-6)
+        chw_norm = min(max((tchw - chw_lo) / chw_span, 0.0), 1.0)
+        control_effect = min(max(temp_factor * flow_chw_ratio, 0.0), 1.0)
+        if demand <= 1e-6:
+            return measured_indoor
+
+        capacity_ratio = delivered_capacity / max(demand, 1.0)
+        if capacity_ratio + 1e-6 < 0.98:
+            unmet = max(demand - delivered_capacity, 0.0)
+            if lo <= measured_indoor <= hi:
+                # 现场已舒适：实测优先，避免高负荷+高水温时误判“严重欠供冷”
+                drift = min(unmet / max(p.indoor_gain, 1e-6), 0.35)
+                predicted = measured_indoor + drift
+                predicted = min(hi, max(lo, predicted))
+            else:
+                predicted = measured_indoor + unmet / max(p.indoor_gain, 1e-6)
+        else:
+            indoor_span = max(hi - lo, 1e-6)
+            # 供冷富余度：capacity_ratio > 1 表示供冷充足，富余越多室温越低
+            surplus = min(max(capacity_ratio - 1.0, 0.0), 1.0)
+            # chw 对室温的影响：chw 越低，蒸发温度越低，室温越低
+            chw_effect = (chw_norm - 0.5) * indoor_span * 0.5
+            # 供冷富余对室温的下压：富余越多（负载高/流量大/水温低），室温越低
+            surplus_effect = -surplus * indoor_span * 0.4 * max(control_effect, 0.1)
+            equilibrium = mid + chw_effect + surplus_effect
+
+            if lo <= measured_indoor <= hi:
+                blend = 0.35
+                predicted = (1.0 - blend) * measured_indoor + blend * equilibrium
+                predicted = min(hi + 0.5, max(lo - 0.5, predicted))
+            else:
+                surplus_ratio = min(
+                    max((capacity_ratio - 1.0) / max(capacity_ratio, 1.0), 0.0), 1.0
+                )
+                relief = control_effect * surplus_ratio
+
+                if measured_indoor > hi:
+                    predicted = measured_indoor - (measured_indoor - mid) * relief
+                    predicted = max(lo, predicted)
+                elif measured_indoor < lo:
+                    predicted = measured_indoor + (mid - measured_indoor) * relief
+                    predicted = min(hi, max(lo, predicted))
+                else:
+                    predicted = measured_indoor
+
+        outdoor_stress = max(0.0, outdoor_temp - p.outdoor_stress_ref)
+        if (
+            outdoor_stress > 0
+            and capacity_ratio < 1.05
+            and not (lo <= measured_indoor <= hi)
+        ):
+            tightness = min(max(1.05 - capacity_ratio, 0.0) / 0.05, 1.0)
+            predicted += (
+                outdoor_stress
+                * p.outdoor_indoor_coupling
+                * tightness
+                * (1.0 - 0.5 * control_effect)
+            )
+
+        if lo <= measured_indoor <= hi:
+            # 允许少量越界（±1℃）以保留梯度信号，使 comfort_margin_penalty 能区分
+            # "安全中间值"与"危险边界值"，避免 PSO 在边界处梯度消失。
+            predicted = min(hi + 1.0, max(lo - 1.0, predicted))
+        else:
+            predicted = min(predicted, hi + 1.0)
+
+        return predicted
+
+    @staticmethod
     def _cooling_temp_factor(tchw: float, p: EnergyModelParams) -> float:
         """冷水出水温度对供冷能力的相对系数（0.5~1.0）。
 
@@ -292,10 +463,7 @@ class ACEnergyModel:
         """按本地设备配置生成本次计算使用的模型参数。"""
         p = self.p
         try:
-            from app.services.equipment_config import equipment_config_service
-
-            eq = equipment_config_service.get_config()
-            units = equipment_config_service.get_units()
+            eq, units = _load_site_equipment()
             if chilled_pump_count is None:
                 chilled_pump_count = eq.chilled_pump.count
             if cooling_pump_count is None:
@@ -307,11 +475,20 @@ class ACEnergyModel:
                 0, min(int(cooling_pump_count), eq.cooling_pump.count)
             )
             enabled_towers = [tower for tower in eq.cooling_towers if tower.enabled]
+            schemes = sorted(
+                {int(s) for s in (eq.cooling_tower_schemes or [len(enabled_towers)])}
+            )
+            max_scheme = max(schemes) if schemes else len(enabled_towers)
             if tower_count is None:
-                tower_count = len(enabled_towers)
-            tower_count = max(0, min(int(tower_count), len(enabled_towers)))
-            selected_towers = enabled_towers[:tower_count]
-            tower_power = sum(tower.motor_power_kw for tower in selected_towers)
+                tower_count = max_scheme
+            tower_count = max(0, min(int(tower_count), max_scheme))
+            selected_towers = enabled_towers[: min(len(enabled_towers), tower_count)]
+            if tower_count >= 5:
+                tower_power = 70.0
+            elif tower_count >= 3:
+                tower_power = 70.0 * tower_count / 5.0
+            else:
+                tower_power = sum(tower.motor_power_kw for tower in selected_towers)
 
             chilled_units = [
                 unit
@@ -366,13 +543,85 @@ class ACEnergyModel:
             try:
                 from app.algorithms.constraints import SafetyConstraints
 
-                chw_lo, chw_hi = SafetyConstraints().bounds["chilled_water_temp"]
-                p = replace(p, chw_temp_min=chw_lo, chw_temp_max=chw_hi)
+                constraints = SafetyConstraints()
+                # 冷水出水温度区间取查表配置的最小/最大值，供供冷能力归一化使用
+                chw_lo, chw_hi = constraints.chilled_water_temp_range()
+                comfort_lo, comfort_hi = constraints.indoor_temp_range
+                p = replace(
+                    p,
+                    chw_temp_min=chw_lo,
+                    chw_temp_max=chw_hi,
+                    comfort_temp_min=comfort_lo,
+                    comfort_temp_max=comfort_hi,
+                )
             except Exception:
                 pass
         except Exception as e:
             logger.debug(f"读取设备配置失败，能耗模型使用默认参数: {e}")
+            # 若已有成功缓存，再试一次（并行瞬时失败时常见）
+            try:
+                eq, units = _load_site_equipment()
+                if eq is not None:
+                    design_capacity = (
+                        eq.chiller.count
+                        * eq.chiller.rated_capacity_kw
+                        * eq.chiller.max_load_rate
+                    )
+                    if design_capacity > 0:
+                        chilled_n = (
+                            eq.chilled_pump.count
+                            if chilled_pump_count is None
+                            else max(0, min(int(chilled_pump_count), eq.chilled_pump.count))
+                        )
+                        cooling_n = (
+                            eq.cooling_pump.count
+                            if cooling_pump_count is None
+                            else max(0, min(int(cooling_pump_count), eq.cooling_pump.count))
+                        )
+                        enabled_towers = [t for t in eq.cooling_towers if t.enabled]
+                        schemes = sorted(
+                            {int(s) for s in (eq.cooling_tower_schemes or [len(enabled_towers)])}
+                        )
+                        max_scheme = max(schemes) if schemes else len(enabled_towers)
+                        tower_n = (
+                            max_scheme
+                            if tower_count is None
+                            else max(0, min(int(tower_count), max_scheme))
+                        )
+                        if tower_n >= 5:
+                            tower_rated = 70.0
+                        elif tower_n >= 3:
+                            tower_rated = 70.0 * tower_n / 5.0
+                        else:
+                            tower_rated = sum(
+                                t.motor_power_kw for t in enabled_towers[:tower_n]
+                            )
+                        p = replace(
+                            p,
+                            chilled_pump_rated=chilled_n * eq.chilled_pump.motor_power_kw,
+                            cooling_pump_rated=cooling_n * eq.cooling_pump.motor_power_kw,
+                            chilled_pump_count=chilled_n,
+                            chilled_pump_total_count=max(eq.chilled_pump.count, 1),
+                            cooling_pump_count=cooling_n,
+                            cooling_pump_total_count=max(eq.cooling_pump.count, 1),
+                            cooling_tower_fan_rated=tower_rated,
+                            cooling_tower_count=tower_n,
+                            design_cooling_capacity=design_capacity,
+                        )
+            except Exception:
+                pass
         return p
+
+    # 单台水泵现场典型功率区间（kW）；预测列按单台展示
+    _PUMP_UNIT_POWER_MIN = 40.0
+    _PUMP_UNIT_POWER_MAX = 50.0
+    _TOWER_SCHEME5_NOMINAL_KW = 70.0
+
+    @classmethod
+    def _clamp_pump_unit_kw(cls, per_unit: float, site_scale: bool = True) -> float:
+        if site_scale:
+            return min(max(per_unit, cls._PUMP_UNIT_POWER_MIN), cls._PUMP_UNIT_POWER_MAX)
+        return min(max(per_unit, 0.0), cls._PUMP_UNIT_POWER_MAX)
 
     def _predict_pump_power(
         self,
@@ -384,7 +633,7 @@ class ACEnergyModel:
         rated_total: float,
         p: EnergyModelParams,
     ) -> float:
-        """冷冻/冷却泵功率：Excel 实测优先，按频率³与台数缩放。"""
+        """冷冻/冷却泵功率（合计 kW）：Excel 实测优先，按单台相似定律缩放，单台钳位 40~50 kW。"""
         from app.services.excel_first_power import scale_measured_component
         from app.services.power_baseline import infer_active_counts
 
@@ -396,39 +645,75 @@ class ACEnergyModel:
         active_counts = params.get("_active_counts")
         if not isinstance(active_counts, dict):
             active_counts = infer_active_counts(data.model_dump())
-        base_count = active_counts.get(count_key, new_count)
+        base_count = int(active_counts.get(count_key, new_count) or new_count)
+        new_count = max(int(new_count), 1)
+        measured_per_unit = measured / max(base_count, 1) if measured > 0 else 0.0
+        site_scale = measured_per_unit >= 38.0
+
         scaled = scale_measured_component(
-            measured, base_freq, new_freq, int(base_count), int(new_count)
+            measured, base_freq, new_freq, base_count, new_count
         )
         if scaled is not None:
-            return scaled
-        return self._affinity(rated_total, new_freq, p)
+            max_rise = getattr(self.p, "max_component_power_rise_pct", 0.15)
+            if measured > 0 and max_rise >= 0:
+                ref_total = measured * (new_count / max(base_count, 1))
+                cap = ref_total * (1.0 + max_rise)
+                if scaled > cap:
+                    scaled = cap
+            per_unit = self._clamp_pump_unit_kw(scaled / new_count, site_scale)
+            return round(per_unit * new_count, 4)
+        fallback = self._affinity(rated_total, new_freq, p)
+        fallback_per_unit = fallback / new_count
+        rated_per_unit = rated_total / max(new_count, 1) if rated_total > 0 else 0.0
+        site_scale = site_scale or rated_per_unit >= 38.0
+        per_unit = self._clamp_pump_unit_kw(fallback_per_unit, site_scale)
+        return round(per_unit * new_count, 4)
+
+    @classmethod
+    def _tower_nominal_kw(cls, scheme_count: int) -> float:
+        if scheme_count >= 5:
+            return cls._TOWER_SCHEME5_NOMINAL_KW
+        if scheme_count >= 3:
+            return cls._TOWER_SCHEME5_NOMINAL_KW * scheme_count / 5.0
+        return 0.0
 
     def _predict_tower_power(
         self,
         data: DeviceData,
         params: dict,
         new_freq: float,
-        new_count: int,
+        scheme_count: int,
         rated_total: float,
         p: EnergyModelParams,
     ) -> float:
-        """冷却塔功率：Excel 实测优先。"""
-        from app.services.excel_first_power import scale_measured_component
+        """冷却塔功率：定频方案定额；5 台方案固定 70 kW。"""
         from app.services.power_baseline import infer_active_counts
 
+        scheme_count = max(int(scheme_count), 0)
+        if scheme_count <= 0:
+            return 0.0
+        if scheme_count >= 5:
+            return self._TOWER_SCHEME5_NOMINAL_KW
+
         measured = _finite(data.cooling_tower_fan_power, 0.0)
-        base_freq = _finite(data.cooling_tower_fan_freq, 50.0)
         active_counts = params.get("_active_counts")
         if not isinstance(active_counts, dict):
             active_counts = infer_active_counts(data.model_dump())
-        base_count = active_counts.get("cooling_tower_count", new_count)
-        scaled = scale_measured_component(
-            measured, base_freq, new_freq, int(base_count), int(new_count)
-        )
-        if scaled is not None:
-            return scaled
-        return self._affinity(rated_total, new_freq, p)
+        base_count = int(active_counts.get("cooling_tower_count", scheme_count) or scheme_count)
+
+        if measured > 0:
+            if base_count >= 5:
+                nominal = self._TOWER_SCHEME5_NOMINAL_KW
+            else:
+                nominal = measured
+            if scheme_count != base_count and base_count > 0:
+                return round(nominal * scheme_count / base_count, 4)
+            return round(nominal, 4)
+
+        nominal = self._tower_nominal_kw(scheme_count)
+        if nominal > 0:
+            return nominal
+        return max(rated_total, 0.0)
 
     def _predict_chiller_power(
         self,
@@ -475,7 +760,13 @@ class ACEnergyModel:
             p=base_p,
         )
         if model_base > 0:
-            return cooling_water_temp, cop, measured * (model_new / model_base)
+            scaled = measured * (model_new / model_base)
+            max_rise = getattr(self.p, "max_component_power_rise_pct", 0.15)
+            if measured > 0 and max_rise >= 0:
+                cap = measured * (1.0 + max_rise)
+                if scaled > cap:
+                    scaled = cap
+            return cooling_water_temp, cop, scaled
         return cooling_water_temp, cop, model_new
 
     def _affinity(self, rated_power: float, freq: float, p: EnergyModelParams | None = None) -> float:

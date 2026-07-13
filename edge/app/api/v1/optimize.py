@@ -132,10 +132,32 @@ async def batch_upload_optimize(
     failed_count = 0
     timeout_count = 0
     processed = 0
+    prev_result: OptimizeResult | None = None
 
     for item in parsed["rows"][:max_rows]:
+        # 闭环反馈：将上一轮寻优的预测值代入本轮输入，
+        # 使多次寻优形成连续闭环（预测功率→下一轮输入功率，预测室温→下一轮输入室温）
+        if prev_result is not None and prev_result.status == "success":
+            fb = dict(item["device_data"])
+            fb["total_power"] = round(prev_result.predicted_power, 2)
+            fb["chiller_power"] = round(prev_result.predicted_chiller_power, 2)
+            fb["indoor_temp"] = round(prev_result.predicted_indoor_temp, 2)
+            chp_n = max(int(prev_result.chilled_pump_count or 0), 1)
+            cwp_n = max(int(prev_result.cooling_pump_count or 0), 1)
+            fb["chilled_pump_power"] = round(prev_result.chilled_pump_power * chp_n, 2)
+            fb["cooling_pump_power"] = round(prev_result.cooling_pump_power * cwp_n, 2)
+            fb["cooling_tower_fan_power"] = round(prev_result.cooling_tower_power, 2)
+            fb["chilled_pump_freq"] = round(prev_result.chilled_pump_freq, 2)
+            fb["cooling_pump_freq"] = round(prev_result.cooling_pump_freq, 2)
+            fb["cooling_tower_fan_freq"] = round(prev_result.cooling_tower_fan_freq, 2)
+            fb["chiller_load"] = round(prev_result.chiller_load_pct, 2)
+            fb["chilled_water_temp"] = round(prev_result.chilled_water_temp, 2)
+            fb["cooling_water_temp"] = round(prev_result.predicted_cooling_water_temp, 2)
+            item["device_data"] = fb
+
         request = OptimizeRequest(device_data=item["device_data"], force=True)
         result = optimizer.optimize(request)
+        prev_result = result
         processed += 1
         if result.status == "success":
             success_count += 1
@@ -327,7 +349,10 @@ async def get_latest_optimize():
 
 
 @router.get("/history")
-async def get_optimize_history(page: int = 1, page_size: int = 20):
+async def get_optimize_history(
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=500),
+):
     """分页查询寻优历史"""
     items, total = storage.get_optimize_records(page, page_size)
     return success(

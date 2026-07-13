@@ -351,12 +351,24 @@
                     <input id="comfort-temp-max" type="number" step="0.1" value="26">
                 </div>
                 <div>
-                    <label>冷水出水温度下限 ℃</label>
-                    <input id="constraint-chw-min" type="number" step="0.1" value="10">
+                    <label>室外温度&lt;25℃ 冷水出水温度 ℃</label>
+                    <input id="constraint-chw-below-25" type="number" step="0.1" value="14">
                 </div>
                 <div>
-                    <label>冷水出水温度上限 ℃</label>
-                    <input id="constraint-chw-max" type="number" step="0.1" value="15">
+                    <label>25~29℃ 冷水出水温度 ℃</label>
+                    <input id="constraint-chw-25-29" type="number" step="0.1" value="12">
+                </div>
+                <div>
+                    <label>29~33℃ 冷水出水温度 ℃</label>
+                    <input id="constraint-chw-29-33" type="number" step="0.1" value="10">
+                </div>
+                <div>
+                    <label>33~37℃ 冷水出水温度 ℃</label>
+                    <input id="constraint-chw-33-37" type="number" step="0.1" value="9">
+                </div>
+                <div>
+                    <label>室外温度≥37℃ 冷水出水温度 ℃</label>
+                    <input id="constraint-chw-above-37" type="number" step="0.1" value="8">
                 </div>
                 <div>
                     <label>水泵频率下限 Hz（全局）</label>
@@ -375,7 +387,7 @@
                     <input id="constraint-tower-max" type="number" step="0.1" value="45">
                 </div>
             </div>
-            <div class="hint">泵/塔实际寻优边界还会与上方「设备配置」中的频率范围取交集；定频冷却塔会锁定为 fixed_freq。</div>
+            <div class="hint">冷水出水温度按室外温度区间查表确定（不再由寻优优化）；泵/塔实际寻优边界还会与上方「设备配置」中的频率范围取交集；定频冷却塔会锁定为 fixed_freq。</div>
 
             <h2 class="section-title">Excel 批量导入缺省值</h2>
             <div class="form-grid">
@@ -475,8 +487,7 @@
                 </table>
             </div>
             <div class="form-grid" style="margin-top:12px;">
-                <div><label>冷水出水温度 ℃</label><input id="in-chilled-water-temp" type="number" step="0.1" value="12.5"></div>
-                <div><label>冷水最低出水温度 ℃</label><input id="in-chilled-water-min" type="number" step="0.1" value="10" title="寻优推荐值不会低于此温度"></div>
+                <div><label>冷水出水温度 ℃</label><input id="in-chilled-water-temp" type="number" step="0.1" value="12.5" title="现场实测值，仅供展示；寻优按室外温度查表确定"></div>
                 <div><label>冷却水出水温度 ℃</label><input id="in-cooling-water-temp" type="number" step="0.1" value="32"></div>
             </div>
 
@@ -530,9 +541,21 @@
                     <span>次数</span>
                     <input id="optimize-repeat-count" type="number" min="1" max="50" step="1" value="5" style="width:72px;">
                 </label>
+                <label style="display:inline-flex; align-items:center; gap:6px; margin-left:12px;" title="每轮在上一轮室外温度基础上小幅随机波动，模拟天气变化">
+                    <input id="optimize-simulate-weather" type="checkbox" checked>
+                    <span>模拟室外温变化</span>
+                </label>
+                <label style="display:inline-flex; align-items:center; gap:6px;" title="每轮相对上一轮的最大变化幅度">
+                    <span>每轮±℃</span>
+                    <input id="optimize-weather-step" type="number" min="0.1" max="5" step="0.1" value="0.5" style="width:56px;">
+                </label>
+                <label style="display:inline-flex; align-items:center; gap:6px;" title="相对首次输入室外温度的累计波动上限">
+                    <span>基准±℃</span>
+                    <input id="optimize-weather-range" type="number" min="0.5" max="15" step="0.5" value="3" style="width:56px;">
+                </label>
             </div>
             <div id="optimize-action-status" class="action-status">填写参数后点击上方按钮；单次寻优约 3~10 秒，结果在下方「寻优输出结果」区域展示。</div>
-            <div class="hint">现场 CSV/Excel 数据可先按字段填入这里，也可以直接在下面上传批量寻优。多次寻优会将每轮推荐值与预测工况作为下一轮输入，模拟逐步执行推荐后的闭环过程。</div>
+            <div class="hint">现场 CSV/Excel 数据可先按字段填入这里，也可以直接在下面上传批量寻优。多次寻优会将每轮推荐值与预测工况作为下一轮输入，模拟逐步执行推荐后的闭环过程；勾选「模拟室外温变化」时，每轮室外温度会在基准附近小幅随机波动（冷水出水温度随室外温查表联动）。</div>
         </div>
 
         <h2 class="section-title" id="optimize-output-section">寻优输出结果</h2>
@@ -597,9 +620,24 @@
                 <div class="sub">kW</div>
             </div>
             <div class="card">
+                <h2>预测冷冻泵功率</h2>
+                <div class="value" id="out-predicted-chilled-pump">--</div>
+                <div class="sub">kW</div>
+            </div>
+            <div class="card">
+                <h2>预测冷却泵功率</h2>
+                <div class="value" id="out-predicted-cooling-pump">--</div>
+                <div class="sub">kW</div>
+            </div>
+            <div class="card">
+                <h2>预测冷却塔功率</h2>
+                <div class="value" id="out-predicted-tower">--</div>
+                <div class="sub">kW</div>
+            </div>
+            <div class="card">
                 <h2>预测冷却水温度</h2>
                 <div class="value" id="out-predicted-cooling-water">--</div>
-                <div class="sub">℃</div>
+                <div class="sub">℃（模型推算，非下发设定）</div>
             </div>
             <div class="card">
                 <h2>预测 COP</h2>
@@ -626,21 +664,31 @@
                     <thead>
                         <tr>
                             <th>轮次</th>
+                            <th>输入室外℃</th>
                             <th>输入冷水℃</th>
+                            <th>输入室内℃</th>
                             <th>输入冷冻泵Hz</th>
                             <th>输入冷却泵Hz</th>
+                            <th>输入主机kW</th>
+                            <th>输入主机%</th>
                             <th>输入总功率kW</th>
                             <th>推荐冷水℃</th>
+                            <th>推荐主机%</th>
                             <th>推荐冷冻泵Hz</th>
                             <th>推荐冷却泵Hz</th>
                             <th>预测总功率kW</th>
+                            <th>预测主机kW</th>
+                            <th>预测冷冻泵kW(单台)</th>
+                            <th>预测冷却泵kW(单台)</th>
+                            <th>预测冷却塔kW</th>
                             <th>预测室内℃</th>
+                            <th>预测冷却水℃</th>
                             <th>节能率%</th>
                             <th>耗时s</th>
                         </tr>
                     </thead>
                     <tbody id="multi-run-table">
-                        <tr><td colspan="12" style="text-align:center; color:#999;">尚未执行多次寻优</td></tr>
+                        <tr><td colspan="22" style="text-align:center; color:#999;">尚未执行多次寻优</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -792,15 +840,14 @@
 
         function buildOptimizeInputDefaultsFromConfig(cfg, settings) {
             const batch = (settings && settings.batch_defaults) || {};
-            const constraints = (settings && settings.constraints) || {};
-            const chw = constraints.chilled_water_temp || {min: 10, max: 15};
             const defaults = {
                 outdoor_temp: batch.outdoor_temp ?? 30,
                 outdoor_humidity: batch.outdoor_humidity ?? 60,
                 indoor_temp: batch.indoor_temp ?? 27,
                 indoor_humidity: batch.indoor_humidity ?? 55,
                 terminal_fan_power: batch.terminal_fan_power || (settings && settings.energy_model && settings.energy_model.terminal_fan_default) || 2,
-                chilled_water_temp: (Number(chw.min) + Number(chw.max)) / 2,
+                // 冷水出水温度现在按室外温度查表，这里仅给一个展示默认值
+                chilled_water_temp: 10,
                 cooling_water_temp: 32
             };
             if (cfg && cfg.chiller) {
@@ -1315,9 +1362,16 @@
             document.getElementById('out-baseline-power').textContent = fmt(r.baseline_power, 2);
             document.getElementById('out-predicted-indoor').textContent = fmt(r.predicted_indoor_temp, 2);
             document.getElementById('out-predicted-chiller').textContent = fmt(r.predicted_chiller_power, 2);
+            document.getElementById('out-predicted-chilled-pump').textContent = fmt(r.chilled_pump_power, 2);
+            document.getElementById('out-predicted-cooling-pump').textContent = fmt(r.cooling_pump_power, 2);
+            document.getElementById('out-predicted-tower').textContent = fmt(r.cooling_tower_power, 2);
             document.getElementById('out-predicted-cooling-water').textContent = fmt(r.predicted_cooling_water_temp, 2);
             document.getElementById('out-predicted-cop').textContent = fmt(r.predicted_cop, 2);
             document.getElementById('out-saving-rate').textContent = fmt(r.energy_saving_rate, 2);
+            const savingEl = document.getElementById('out-saving-rate');
+            if (savingEl) {
+                savingEl.style.color = Number(r.energy_saving_rate) < 0 ? '#c0392b' : '';
+            }
         }
 
         function renderBatchTable(results) {
@@ -1749,6 +1803,47 @@
             });
             renderOptimizeEquipmentUnits(equipmentUnits);
             recalculateSystemTotalPower();
+            if (Number(data.total_power) > 0) {
+                const totalInput = document.getElementById('in-total-power');
+                if (totalInput) {
+                    totalInput.value = Number(data.total_power).toFixed(2);
+                }
+            }
+        }
+
+        /** 多次寻优：在上一轮室外温/湿度基础上做小幅随机游走，模拟天气缓慢变化。 */
+        function driftOutdoorWeather(prevTemp, prevHumidity, opts) {
+            const step = Math.max(0.1, Number(opts.step) || 0.5);
+            const range = Math.max(step, Number(opts.range) || 3);
+            const baseTemp = Number(opts.baseTemp);
+            const baseHumidity = Number(opts.baseHumidity);
+            const deltaT = (Math.random() * 2 - 1) * step;
+            let nextTemp = Number(prevTemp) + deltaT;
+            if (Number.isFinite(baseTemp)) {
+                nextTemp = Math.max(baseTemp - range, Math.min(baseTemp + range, nextTemp));
+            }
+            nextTemp = Math.max(-10, Math.min(50, nextTemp));
+            nextTemp = Math.round(nextTemp * 10) / 10;
+
+            const humidityStep = Math.max(0.5, Number(opts.humidityStep) || 1.5);
+            const deltaH = (Math.random() * 2 - 1) * humidityStep;
+            let nextHumidity = Number(prevHumidity) + deltaH;
+            if (Number.isFinite(baseHumidity)) {
+                nextHumidity = Math.max(baseHumidity - 8, Math.min(baseHumidity + 8, nextHumidity));
+            }
+            nextHumidity = Math.max(20, Math.min(95, nextHumidity));
+            nextHumidity = Math.round(nextHumidity * 10) / 10;
+            return {outdoor_temp: nextTemp, outdoor_humidity: nextHumidity};
+        }
+
+        function readWeatherSimOptions() {
+            const enabled = !!document.getElementById('optimize-simulate-weather')?.checked;
+            return {
+                enabled: enabled,
+                step: Math.max(0.1, num('optimize-weather-step') || 0.5),
+                range: Math.max(0.5, num('optimize-weather-range') || 3),
+                humidityStep: 1.5
+            };
         }
 
         function collectDeviceData() {
@@ -1794,26 +1889,102 @@
             };
         }
 
+        function scaleUnitPowers(units, targetTotal) {
+            if (!units || !units.length || !(targetTotal > 0)) {
+                return (units || []).map(u => Object.assign({}, u));
+            }
+            const cloned = units.map(u => Object.assign({}, u));
+            const currentSum = sumValues(cloned.map(u => u.power));
+            if (currentSum <= 0) {
+                const each = targetTotal / cloned.length;
+                cloned.forEach(u => { u.power = each; });
+                return cloned;
+            }
+            const scale = targetTotal / currentSum;
+            cloned.forEach(u => { u.power = Number(u.power || 0) * scale; });
+            return cloned;
+        }
+
         function applyOptimizeResultToDeviceData(prev, result) {
+            const prevLoad = Number(prev.chiller_load || 0);
+            const recLoad = Number(result.chiller_load_pct || prevLoad);
+            const cappedLoad = prevLoad > 0 ? Math.min(recLoad, prevLoad) : recLoad;
+            const prevChp = Number(prev.chilled_pump_freq || 0);
+            const prevCwp = Number(prev.cooling_pump_freq || 0);
+            const recChp = Number(result.chilled_pump_freq || prevChp);
+            const recCwp = Number(result.cooling_pump_freq || prevCwp);
+            const chpCount = Math.max(1, Number(result.chilled_pump_count || (prev.equipment_units && prev.equipment_units.chilled_pumps && prev.equipment_units.chilled_pumps.length) || 1));
+            const cwpCount = Math.max(1, Number(result.cooling_pump_count || (prev.equipment_units && prev.equipment_units.cooling_pumps && prev.equipment_units.cooling_pumps.length) || 1));
+            const indoor = Number(prev.indoor_temp || 0);
+            const comfortable = indoor >= 24 && indoor <= 26;
+            const predTotal = Number(result.predicted_power || 0);
+            const predChiller = Number(result.predicted_chiller_power || 0);
+            const predChilledPump = Number(result.chilled_pump_power || 0);
+            const predCoolingPump = Number(result.cooling_pump_power || 0);
+            const predTower = Number(result.cooling_tower_power || 0);
             const next = Object.assign({}, prev, {
                 timestamp: new Date().toISOString(),
                 chilled_water_temp: result.chilled_water_temp,
-                chilled_pump_freq: result.chilled_pump_freq,
-                cooling_pump_freq: result.cooling_pump_freq,
+                chiller_load: cappedLoad,
+                chilled_pump_freq: comfortable && prevChp > 0 ? Math.min(recChp, prevChp) : recChp,
+                cooling_pump_freq: comfortable && prevCwp > 0 ? Math.min(recCwp, prevCwp) : recCwp,
                 cooling_tower_fan_freq: result.cooling_tower_fan_freq
             });
-            if (prev.chiller_power > 0 && result.predicted_chiller_power > 0) {
-                next.chiller_load = Math.max(
-                    0,
-                    Math.min(100, prev.chiller_load * result.predicted_chiller_power / prev.chiller_power)
-                );
+            if (predChiller > 0) {
+                next.chiller_power = predChiller;
+            }
+            if (predChilledPump > 0) {
+                next.chilled_pump_power = predChilledPump * chpCount;
+            }
+            if (predCoolingPump > 0) {
+                next.cooling_pump_power = predCoolingPump * cwpCount;
+            }
+            if (predTower > 0) {
+                next.cooling_tower_fan_power = predTower;
+            }
+            if (predTotal > 0) {
+                next.total_power = predTotal;
+            } else if (predChiller > 0) {
+                next.total_power = predChiller
+                    + Number(next.chilled_pump_power || 0)
+                    + Number(next.cooling_pump_power || 0)
+                    + Number(next.cooling_tower_fan_power || 0)
+                    + Number(next.terminal_fan_power || 0);
+            }
+            if (result.predicted_cooling_water_temp > 0) {
+                next.cooling_water_temp = result.predicted_cooling_water_temp;
+            }
+            if (result.predicted_indoor_temp > 0) {
+                next.indoor_temp = result.predicted_indoor_temp;
             }
             const units = prev.equipment_units || {};
+            const loadPct = cappedLoad;
+            let chillers = (units.chillers || []).map(function(u) {
+                return Object.assign({}, u, {load: loadPct > 0 ? loadPct : u.load});
+            });
+            let chilledPumps = (units.chilled_pumps || [])
+                .map(function(u) { return Object.assign({}, u, {freq: next.chilled_pump_freq}); });
+            let coolingPumps = (units.cooling_pumps || [])
+                .map(function(u) { return Object.assign({}, u, {freq: next.cooling_pump_freq}); });
+            let towers = (units.cooling_towers || [])
+                .map(function(u) { return Object.assign({}, u, {freq: result.cooling_tower_fan_freq}); });
+            if (predChiller > 0) {
+                chillers = scaleUnitPowers(chillers, predChiller);
+            }
+            if (predChilledPump > 0) {
+                chilledPumps = scaleUnitPowers(chilledPumps, predChilledPump * chpCount);
+            }
+            if (predCoolingPump > 0) {
+                coolingPumps = scaleUnitPowers(coolingPumps, predCoolingPump * cwpCount);
+            }
+            if (predTower > 0) {
+                towers = scaleUnitPowers(towers, predTower);
+            }
             next.equipment_units = {
-                chillers: (units.chillers || []).map(u => Object.assign({}, u)),
-                chilled_pumps: (units.chilled_pumps || []).map(u => Object.assign({}, u, {freq: result.chilled_pump_freq})),
-                cooling_pumps: (units.cooling_pumps || []).map(u => Object.assign({}, u, {freq: result.cooling_pump_freq})),
-                cooling_towers: (units.cooling_towers || []).map(u => Object.assign({}, u, {freq: result.cooling_tower_fan_freq}))
+                chillers: chillers,
+                chilled_pumps: chilledPumps,
+                cooling_pumps: coolingPumps,
+                cooling_towers: towers
             };
             return next;
         }
@@ -1898,12 +2069,7 @@
         }
 
         async function callOptimizeApi(deviceData) {
-            const minEl = document.getElementById('in-chilled-water-min');
-            const chilledWaterTempMin = minEl ? parseFloat(minEl.value) : NaN;
             const payload = {device_data: deviceData, force: true};
-            if (!Number.isNaN(chilledWaterTempMin)) {
-                payload.chilled_water_temp_min = chilledWaterTempMin;
-            }
             const res = await fetch('/api/v1/optimize/run', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -1912,33 +2078,44 @@
             return res.json();
         }
 
-        function renderMultiRunTable(history) {
+        function         renderMultiRunTable(history) {
             const tbody = document.getElementById('multi-run-table');
             if (!tbody) return;
             if (!history || !history.length) {
-                tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; color:#999;">尚未执行多次寻优</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="22" style="text-align:center; color:#999;">尚未执行多次寻优</td></tr>';
                 return;
             }
             tbody.innerHTML = history.map(item => {
                 const input = item.input || {};
                 const result = item.result || {};
-                const baseline = item.measured_total_power || input.total_power || result.baseline_power || 0;
+                const baseline = input.total_power || item.measured_total_power || result.baseline_power || 0;
                 const predicted = result.predicted_power || 0;
                 const saving = baseline > 0 && predicted > 0
-                    ? Math.max(0, (baseline - predicted) / baseline * 100)
+                    ? (baseline - predicted) / baseline * 100
                     : (result.energy_saving_rate || 0);
+                const savingStyle = saving < 0 ? ' style="color:#c0392b;"' : '';
                 return '<tr>' +
                     '<td>' + item.round + '</td>' +
+                    '<td>' + fmt(input.outdoor_temp, 2) + '</td>' +
                     '<td>' + fmt(input.chilled_water_temp, 2) + '</td>' +
+                    '<td>' + fmt(input.indoor_temp, 2) + '</td>' +
                     '<td>' + fmt(input.chilled_pump_freq, 2) + '</td>' +
                     '<td>' + fmt(input.cooling_pump_freq, 2) + '</td>' +
+                    '<td>' + fmt(input.chiller_power, 2) + '</td>' +
+                    '<td>' + fmt(input.chiller_load, 2) + '</td>' +
                     '<td>' + fmt(input.total_power, 2) + '</td>' +
                     '<td>' + fmt(result.chilled_water_temp, 2) + '</td>' +
+                    '<td>' + fmt(result.chiller_load_pct, 2) + '</td>' +
                     '<td>' + fmt(result.chilled_pump_freq, 2) + '</td>' +
                     '<td>' + fmt(result.cooling_pump_freq, 2) + '</td>' +
                     '<td>' + fmt(result.predicted_power, 2) + '</td>' +
+                    '<td>' + fmt(result.predicted_chiller_power, 2) + '</td>' +
+                    '<td>' + fmt(result.chilled_pump_power, 2) + '</td>' +
+                    '<td>' + fmt(result.cooling_pump_power, 2) + '</td>' +
+                    '<td>' + fmt(result.cooling_tower_power, 2) + '</td>' +
                     '<td>' + fmt(result.predicted_indoor_temp, 2) + '</td>' +
-                    '<td>' + fmt(saving, 2) + '</td>' +
+                    '<td>' + fmt(result.predicted_cooling_water_temp, 2) + '</td>' +
+                    '<td' + savingStyle + '>' + fmt(saving, 2) + '</td>' +
                     '<td>' + fmt(result.duration, 2) + '</td>' +
                     '</tr>';
             }).join('');
@@ -1972,30 +2149,69 @@
 
         async function runOptimizeMultipleFromInputs() {
             const rounds = Math.max(1, Math.min(50, Math.round(num('optimize-repeat-count') || 1)));
+            const weatherSim = readWeatherSimOptions();
             const box = document.getElementById('optimize-result');
             const history = [];
             let deviceData = collectDeviceData();
             const measuredTotalPower = deviceData.total_power || 0;
+            const weatherBaseline = {
+                outdoor_temp: deviceData.outdoor_temp,
+                outdoor_humidity: deviceData.outdoor_humidity
+            };
+            let lastOutdoor = {
+                temp: weatherBaseline.outdoor_temp,
+                humidity: weatherBaseline.outdoor_humidity
+            };
             setOptimizeButtonsDisabled(true);
-            setOptimizeActionStatus('开始 ' + rounds + ' 次闭环寻优，请稍候...');
+            const weatherHint = weatherSim.enabled
+                ? '（已启用室外温模拟：每轮±' + weatherSim.step + '℃，相对基准±' + weatherSim.range + '℃）'
+                : '';
+            setOptimizeActionStatus('开始 ' + rounds + ' 次闭环寻优' + weatherHint + '，请稍候...');
             box.textContent = '多次寻优进行中...';
             renderMultiRunTable([]);
 
             try {
                 for (let round = 1; round <= rounds; round += 1) {
-                    setOptimizeActionStatus('第 ' + round + '/' + rounds + ' 次寻优计算中...');
+                    if (weatherSim.enabled && round > 1) {
+                        const drifted = driftOutdoorWeather(
+                            lastOutdoor.temp,
+                            lastOutdoor.humidity,
+                            {
+                                step: weatherSim.step,
+                                range: weatherSim.range,
+                                baseTemp: weatherBaseline.outdoor_temp,
+                                baseHumidity: weatherBaseline.outdoor_humidity,
+                                humidityStep: weatherSim.humidityStep
+                            }
+                        );
+                        lastOutdoor = {
+                            temp: drifted.outdoor_temp,
+                            humidity: drifted.outdoor_humidity
+                        };
+                        deviceData.outdoor_temp = drifted.outdoor_temp;
+                        deviceData.outdoor_humidity = drifted.outdoor_humidity;
+                    }
+                    setOptimizeActionStatus(
+                        '第 ' + round + '/' + rounds + ' 次寻优计算中' +
+                        (weatherSim.enabled ? '（室外 ' + fmt(deviceData.outdoor_temp, 1) + '℃）' : '') +
+                        '...'
+                    );
                     const json = await callOptimizeApi(deviceData);
                     if (json.code !== 0 || !json.data) {
                         throw new Error(json.message || ('第 ' + round + ' 次寻优失败'));
                     }
                     const result = json.data;
                     const nextData = applyOptimizeResultToDeviceData(deviceData, result);
+                    // 闭环保留本轮室外工况，供下一轮天气游走
+                    nextData.outdoor_temp = deviceData.outdoor_temp;
+                    nextData.outdoor_humidity = deviceData.outdoor_humidity;
                     history.push({
                         round: round,
                         input: Object.assign({}, deviceData),
                         result: result,
                         next_input: Object.assign({}, nextData),
-                        measured_total_power: measuredTotalPower
+                        measured_total_power: measuredTotalPower,
+                        weather_simulated: weatherSim.enabled && round > 1
                     });
                     deviceData = nextData;
                     applyDeviceDataToInputs(deviceData, deviceData.equipment_units);
@@ -2005,11 +2221,18 @@
                 renderOptimizeOutputs(last);
                 box.textContent = JSON.stringify({
                     rounds: rounds,
-                    description: '每轮将推荐控制值与预测功率/温度作为下一轮输入，模拟逐步执行推荐',
+                    weather_simulation: weatherSim.enabled ? {
+                        step_c: weatherSim.step,
+                        range_c: weatherSim.range,
+                        baseline: weatherBaseline
+                    } : null,
+                    description: weatherSim.enabled
+                        ? '每轮室外温在基准附近小幅波动，推荐冷水温度随室外温查表联动；其余控制与预测工况作为下一轮输入'
+                        : '每轮将推荐控制值与预测功率/温度作为下一轮输入，模拟逐步执行推荐',
                     history: history
                 }, null, 2);
                 setOptimizeActionStatus(
-                    rounds + ' 次闭环寻优全部完成。输入框已更新为最后一轮预测工况。',
+                    rounds + ' 次闭环寻优全部完成' + weatherHint + '。输入框已更新为最后一轮预测工况。',
                     'success'
                 );
                 scrollToOptimizeOutput(true);
@@ -2141,8 +2364,12 @@
             }
             document.getElementById('comfort-temp-min').value = s.strategy.indoor_temp.min;
             document.getElementById('comfort-temp-max').value = s.strategy.indoor_temp.max;
-            document.getElementById('constraint-chw-min').value = s.constraints.chilled_water_temp.min;
-            document.getElementById('constraint-chw-max').value = s.constraints.chilled_water_temp.max;
+            const chwTable = (s.constraints && s.constraints.chilled_water_temp_table) || {};
+            document.getElementById('constraint-chw-below-25').value = chwTable.below_25 ?? 14;
+            document.getElementById('constraint-chw-25-29').value = chwTable.range_25_29 ?? 12;
+            document.getElementById('constraint-chw-29-33').value = chwTable.range_29_33 ?? 10;
+            document.getElementById('constraint-chw-33-37').value = chwTable.range_33_37 ?? 9;
+            document.getElementById('constraint-chw-above-37').value = chwTable.above_37 ?? 8;
             document.getElementById('constraint-pump-min').value = s.constraints.pump_frequency.min;
             document.getElementById('constraint-pump-max').value = s.constraints.pump_frequency.max;
             document.getElementById('constraint-tower-min').value = s.constraints.cooling_tower_fan_frequency.min;
@@ -2159,10 +2386,6 @@
             document.getElementById('model-terminal-default').value = s.energy_model.terminal_fan_default;
             document.getElementById('model-indoor-base').value = s.energy_model.indoor_base_temp;
             document.getElementById('model-indoor-gain').value = s.energy_model.indoor_gain;
-            const chwMinInput = document.getElementById('in-chilled-water-min');
-            if (chwMinInput) {
-                chwMinInput.value = s.constraints.chilled_water_temp.min;
-            }
             if (optimizeInputDefaults) {
                 const chwTempInput = document.getElementById('in-chilled-water-temp');
                 if (chwTempInput && isEmptyInputValue(chwTempInput.value)) {
@@ -2198,9 +2421,12 @@
                     terminal_fan_power: num('default-terminal-fan')
                 },
                 constraints: {
-                    chilled_water_temp: {
-                        min: num('constraint-chw-min'),
-                        max: num('constraint-chw-max')
+                    chilled_water_temp_table: {
+                        below_25: num('constraint-chw-below-25'),
+                        range_25_29: num('constraint-chw-25-29'),
+                        range_29_33: num('constraint-chw-29-33'),
+                        range_33_37: num('constraint-chw-33-37'),
+                        above_37: num('constraint-chw-above-37')
                     },
                     pump_frequency: {
                         min: num('constraint-pump-min'),

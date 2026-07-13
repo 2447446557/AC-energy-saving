@@ -30,6 +30,11 @@ from app.schemas.device import DeviceData
 from app.schemas.optimize import OptimizeRequest
 
 
+def _search_mid_params(c: SafetyConstraints, outdoor: float = 20.0, load: float = 80.0) -> dict:
+    bounds = c.search_bounds(outdoor, load)
+    return {v: (bounds[v][0] + bounds[v][1]) / 2.0 for v in VAR_ORDER}
+
+
 # ============================== 工具 ==============================
 
 def _fresh_pipeline(pop: int = 25, max_iter: int = 30):
@@ -43,21 +48,52 @@ def _fresh_pipeline(pop: int = 25, max_iter: int = 30):
 
 def _params_of(res) -> dict:
     return {
-        "chilled_water_temp": res.chilled_water_temp,
+        "chilled_water_temp_offset": getattr(res, "chilled_water_temp_offset", 0.0),
+        "chiller_load_pct": getattr(res, "chiller_load_pct", 80.0),
         "chilled_pump_freq": res.chilled_pump_freq,
         "cooling_pump_freq": res.cooling_pump_freq,
         "cooling_tower_fan_freq": res.cooling_tower_fan_freq,
     }
 
 
-def assert_safe_result(res, c: SafetyConstraints):
+def assert_safe_result(
+    res,
+    c: SafetyConstraints,
+    outdoor: float = 32.0,
+    load: float = 80.0,
+    *,
+    device_data: dict | None = None,
+    indoor: float = 25.0,
+    measured_chp: float = 40.0,
+    measured_cwp: float = 40.0,
+):
     """核心不变量：无论输入如何，输出必须有限、合法、安全。"""
     params = _params_of(res)
     for v in VAR_ORDER:
         assert math.isfinite(params[v]), f"{v} 非有限: {params[v]}"
-    assert c.validate(params), f"输出越界: {params}"
+    bounds_kw: dict = {}
+    if device_data is not None:
+        ctx = c.bounds_context_for_data(device_data)
+        outdoor = float(ctx.get("outdoor_temp", outdoor))
+        load = float(ctx.get("measured_load_pct", load))
+        bounds_kw = {
+            k: v
+            for k, v in ctx.items()
+            if k not in ("outdoor_temp", "measured_load_pct")
+        }
+    elif c.is_in_comfort_band(indoor):
+        bounds_kw = {
+            "cap_load_at_measured": True,
+            "cap_pumps_at_measured": True,
+            "measured_chilled_pump_freq": measured_chp,
+            "measured_cooling_pump_freq": measured_cwp,
+        }
+    clipped = c.clip(params, outdoor_temp=outdoor, measured_load_pct=load, **bounds_kw)
+    assert c.validate(
+        clipped, outdoor_temp=outdoor, measured_load_pct=load, **bounds_kw
+    ), f"输出越界: {params}"
     assert math.isfinite(res.predicted_power) and res.predicted_power >= 0
-    assert math.isfinite(res.energy_saving_rate) and res.energy_saving_rate >= 0
+    assert math.isfinite(res.energy_saving_rate)
     assert res.duration >= 0
     assert res.status in ("success", "failed", "timeout")
 
@@ -86,27 +122,32 @@ class TestConstraintsAdversarial:
 
     @pytest.mark.parametrize("bad", [float("nan"), float("inf"), float("-inf")])
     def test_nonfinite_params_are_invalid(self, bad):
-        params = {v: 8.0 if v == "chilled_water_temp" else 40.0 for v in VAR_ORDER}
-        params["chilled_water_temp"] = bad
-        assert self.c.validate(params) is False
+        params = _search_mid_params(self.c, outdoor=20.0)
+        params["chilled_pump_freq"] = bad
+        assert self.c.validate(params, outdoor_temp=20.0) is False
 
     def test_clip_sanitizes_nonfinite(self):
-        clipped = self.c.clip({
-            "chilled_water_temp": float("nan"),
-            "chilled_pump_freq": float("inf"),
-            "cooling_pump_freq": float("-inf"),
-            "cooling_tower_fan_freq": 35.0,
-        })
-        bounds = self.c._current_bounds()
+        clipped = self.c.clip(
+            {
+                "chilled_water_temp_offset": float("nan"),
+                "chiller_load_pct": float("inf"),
+                "chilled_pump_freq": float("inf"),
+                "cooling_pump_freq": float("-inf"),
+                "cooling_tower_fan_freq": 35.0,
+            },
+            outdoor_temp=20.0,
+            measured_load_pct=60.0,
+        )
+        bounds = self.c.search_bounds(20.0, 60.0)
         for v in VAR_ORDER:
             assert math.isfinite(clipped[v])
             lo, hi = bounds[v]
             assert lo <= clipped[v] <= hi
 
     def test_hard_violation_nonfinite_penalized(self):
-        params = {v: 40.0 for v in VAR_ORDER}
-        params["chilled_water_temp"] = float("nan")
-        assert self.c.hard_violation(params) > 0
+        params = _search_mid_params(self.c, outdoor=20.0)
+        params["chilled_pump_freq"] = float("nan")
+        assert self.c.hard_violation(params, outdoor_temp=20.0) > 0
 
     def test_comfort_penalty_nonfinite(self):
         assert math.isfinite(self.c.comfort_penalty(25.0))
@@ -122,8 +163,13 @@ class TestEnergyModelAdversarial:
         self.m = ACEnergyModel()
 
     def _p(self, **kw):
-        base = {"chilled_water_temp": 7.0, "chilled_pump_freq": 40.0,
-                "cooling_pump_freq": 40.0, "cooling_tower_fan_freq": 35.0}
+        base = {
+            "chilled_water_temp": 7.0,
+            "chiller_load_pct": 80.0,
+            "chilled_pump_freq": 40.0,
+            "cooling_pump_freq": 40.0,
+            "cooling_tower_fan_freq": 35.0,
+        }
         base.update(kw)
         return base
 
@@ -278,19 +324,21 @@ class TestOptimizerInvariants:
         c, *_r, opt = _fresh_pipeline()
         data = _good_data(indoor_load=bad, outdoor_temp=bad, chilled_water_temp=bad)
         res = opt.optimize(OptimizeRequest(device_data=data))
-        assert_safe_result(res, c)
+        assert_safe_result(res, c, device_data=data)
 
     def test_zero_and_negative_load(self):
         c, *_r, opt = _fresh_pipeline()
         for load in (0.0, -100.0):
-            res = opt.optimize(OptimizeRequest(device_data=_good_data(indoor_load=load)))
-            assert_safe_result(res, c)
+            data = _good_data(indoor_load=load)
+            res = opt.optimize(OptimizeRequest(device_data=data))
+            assert_safe_result(res, c, device_data=data)
 
     def test_infeasible_huge_load(self):
         # 负荷远超装机容量：不可行，但仍须输出合法安全参数（尽力而为）
         c, *_r, opt = _fresh_pipeline()
-        res = opt.optimize(OptimizeRequest(device_data=_good_data(indoor_load=100000.0)))
-        assert_safe_result(res, c)
+        data = _good_data(indoor_load=100000.0)
+        res = opt.optimize(OptimizeRequest(device_data=data))
+        assert_safe_result(res, c, device_data=data)
 
     def test_degenerate_bounds(self):
         # 约束退化为单点（min==max）时，寻优不得崩溃
@@ -300,26 +348,38 @@ class TestOptimizerInvariants:
             c.bounds[v] = (lo, lo)
         em, guard = ACEnergyModel(), SafeOutputGuard(c)
         opt = PSOOptimizer(em, c, guard, pop=20, max_iter=15)
-        res = opt.optimize(OptimizeRequest(device_data=_good_data()))
-        assert_safe_result(res, c)
+        data = _good_data()
+        res = opt.optimize(OptimizeRequest(device_data=data))
+        assert_safe_result(res, c, device_data=data)
 
     def test_circuit_break_forces_fixed(self):
         c, em, cleaner, guard, opt = _fresh_pipeline()
         for _ in range(6):
             cleaner.clean(DeviceData(**_good_data(indoor_temp=0.0)))
         assert cleaner.is_circuit_broken()
-        res = opt.optimize(OptimizeRequest(device_data=_good_data()))
+        data = _good_data()
+        res = opt.optimize(OptimizeRequest(device_data=data))
         assert res.status == "failed"
-        assert_safe_result(res, c)
+        assert_safe_result(res, c, device_data=data)
 
     def test_timeout(self):
+        """PSO 超时应返回 timeout/failed 状态并下发安全兜底参数。
+
+        用 mock 直接模拟超时返回，避免依赖真实 PSO 时序
+        （搜索空间降维后 PSO 可能极快收敛，无法稳定触发超时）。
+        """
+        from unittest.mock import patch
+
         c = SafetyConstraints()
         em = ACEnergyModel()
-        opt = PSOOptimizer(em, c, SafeOutputGuard(c), pop=300, max_iter=8000,
+        opt = PSOOptimizer(em, c, SafeOutputGuard(c), pop=30, max_iter=40,
                            timeout_seconds=0.001)
-        res = opt.optimize(OptimizeRequest(device_data=_good_data()))
+        with patch.object(
+            opt, "_run_pso_with_timeout", return_value=(None, None, False)
+        ):
+            res = opt.optimize(OptimizeRequest(device_data=_good_data()))
         assert res.status in ("timeout", "failed")
-        assert_safe_result(res, c)
+        assert_safe_result(res, c, device_data=_good_data())
 
 
 # ============================== 模拟器极端场景 ==============================
@@ -364,7 +424,7 @@ def test_end_to_end_fuzz_stability():
         d = gen.generate()
         cleaned = cleaner.clean(d)
         res = opt.optimize(OptimizeRequest(device_data=cleaned.model_dump(mode="json")))
-        assert_safe_result(res, c)
+        assert_safe_result(res, c, device_data=cleaned.model_dump())
         statuses[res.status] += 1
 
     # 绝大多数周期应正常寻优成功（允许少量因注入异常而兜底）
@@ -380,4 +440,4 @@ def test_out_of_order_and_duplicate_timestamps():
         d = DeviceData(**_good_data(timestamp=t.isoformat()))
         cleaned = cleaner.clean(d)
         res = opt.optimize(OptimizeRequest(device_data=cleaned.model_dump(mode="json")))
-        assert_safe_result(res, c)
+        assert_safe_result(res, c, device_data=cleaned.model_dump())

@@ -34,6 +34,13 @@ def test_strategy_config_round_trip():
 
 def test_app_config_round_trip():
     client = _client()
+    chw_table = {
+        "below_25": 14.0,
+        "range_25_29": 12.0,
+        "range_29_33": 10.0,
+        "range_33_37": 9.0,
+        "above_37": 8.0,
+    }
     payload = {
         "strategy": {"indoor_temp": {"min": 24.0, "max": 26.0}},
         "batch_defaults": {
@@ -44,7 +51,7 @@ def test_app_config_round_trip():
             "terminal_fan_power": 0.0,
         },
         "constraints": {
-            "chilled_water_temp": {"min": 6.0, "max": 12.0},
+            "chilled_water_temp_table": chw_table,
             "pump_frequency": {"min": 25.0, "max": 50.0},
             "cooling_tower_fan_frequency": {"min": 20.0, "max": 45.0},
         },
@@ -68,7 +75,7 @@ def test_app_config_round_trip():
     assert get.status_code == 200
     settings = get.json()["data"]["settings"]
     assert settings["batch_defaults"]["outdoor_temp"] == 31.0
-    assert settings["constraints"]["chilled_water_temp"]["max"] == 12.0
+    assert settings["constraints"]["chilled_water_temp_table"]["above_37"] == 8.0
     assert settings["energy_model"]["terminal_fan_default"] == 2.0
 
     from app.services.settings_config import settings_config_service
@@ -87,7 +94,7 @@ def test_app_config_round_trip():
             "terminal_fan_power": 0.0,
         },
         "constraints": {
-            "chilled_water_temp": {"min": 6.0, "max": 12.0},
+            "chilled_water_temp_table": chw_table,
             "pump_frequency": {"min": 25.0, "max": 50.0},
             "cooling_tower_fan_frequency": {"min": 20.0, "max": 45.0},
         },
@@ -129,3 +136,15 @@ def test_reload_runtime_settings_updates_optimizer_timeout():
     settings.optimize.timeout_seconds = 60
     settings_config_service.save_app_settings(settings)
     reload_runtime_settings()
+
+
+def test_normalize_constraints_swaps_inverted_min_max():
+    from app.services.settings_config import HardConstraintsConfig, MinMaxRange, SettingsConfigService
+
+    svc = SettingsConfigService()
+    constraints = HardConstraintsConfig(
+        pump_frequency=MinMaxRange(min=50.0, max=25.0),
+    )
+    normalized = svc._normalize_constraints(constraints)
+    assert normalized.pump_frequency.min == 25.0
+    assert normalized.pump_frequency.max == 50.0

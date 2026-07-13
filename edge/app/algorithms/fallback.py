@@ -28,22 +28,26 @@ from app.algorithms.constraints import VAR_ORDER, SafetyConstraints
 # 保证任何情况下下发的都是设备安全、舒适达标的“出厂默认”控制组合。
 _DEFAULT_FIXED_PARAMS: dict[str, float] = {
     "chilled_water_temp": 8.0,
+    "chilled_water_temp_offset": 0.0,
+    "chiller_load_pct": 80.0,
     "chilled_pump_freq": 40.0,
     "cooling_pump_freq": 40.0,
     "cooling_tower_fan_freq": 35.0,
 }
 
-# 单周期允许的最大变化步长（阶梯平滑），保护机组设备
 _DEFAULT_STEP_LIMITS: dict[str, float] = {
-    "chilled_water_temp": 0.5,   # 冷水温度每次最多变化 0.5℃
-    "chilled_pump_freq": 2.0,    # 频率每次最多变化 2Hz
+    "chilled_water_temp": 0.5,
+    "chilled_water_temp_offset": 0.3,
+    "chiller_load_pct": 5.0,
+    "chilled_pump_freq": 2.0,
     "cooling_pump_freq": 2.0,
     "cooling_tower_fan_freq": 2.0,
 }
 
-# 应急步长（工况突变/舒适度告急时启用）：放宽但仍受限，兼顾快速响应与设备保护
 _DEFAULT_EMERGENCY_STEP_LIMITS: dict[str, float] = {
     "chilled_water_temp": 1.5,
+    "chilled_water_temp_offset": 0.8,
+    "chiller_load_pct": 10.0,
     "chilled_pump_freq": 5.0,
     "cooling_pump_freq": 5.0,
     "cooling_tower_fan_freq": 5.0,
@@ -108,7 +112,7 @@ class SafeOutputGuard:
     def register_good(self, params: dict[str, Any]) -> None:
         """登记一次有效最优解（仅当满足硬约束时）。"""
         if self._constraints.validate(params):
-            self._last_good = {v: float(params[v]) for v in VAR_ORDER}
+            self._last_good = {v: float(params[v]) for v in VAR_ORDER if v in params}
 
     def fallback_params(self, reason: str = "") -> dict[str, float]:
         """获取兜底参数：优先复用上一次最优解，否则回退固定参数。

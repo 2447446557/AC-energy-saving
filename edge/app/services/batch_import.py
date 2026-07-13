@@ -261,11 +261,7 @@ def _avg_nonzero(row: pd.Series, columns: list[str], default: float = 0.0) -> fl
 
 
 def _chiller_status_columns(df: pd.DataFrame) -> list[str]:
-    return [
-        column
-        for column in _columns_matching(df, "约克离心机", "运行状态")
-        if "2#约克离心机" not in str(column) or True
-    ]
+    return _columns_matching(df, "约克离心机", "运行状态")
 
 
 def _is_running_row(row: pd.Series, status_column: str | None, chiller_status_columns: list[str]) -> bool:
@@ -343,6 +339,24 @@ def _chiller_power_columns(df: pd.DataFrame, prefix: str) -> list[str]:
     return [
         column
         for column in _columns_matching(df, prefix, "功率")
+        if "百分比" not in str(column)
+    ]
+
+
+def _pump_power_columns(df: pd.DataFrame, prefix: str) -> list[str]:
+    """泵功率列，排除"功率百分比"列（避免将 0-100 负载值当作功率求和）。"""
+    return [
+        column
+        for column in _columns_matching(df, prefix, "功率")
+        if "百分比" not in str(column)
+    ]
+
+
+def _tower_power_columns(df: pd.DataFrame) -> list[str]:
+    """冷却塔功率列，排除"功率百分比"列。"""
+    return [
+        column
+        for column in _columns_matching(df, "冷却塔", "功率")
         if "百分比" not in str(column)
     ]
 
@@ -616,8 +630,11 @@ def get_manual_input_config_defaults() -> dict[str, Any]:
 
         app_settings = settings_config_service.get_app_settings()
         constraints = SafetyConstraints()
-        chw_lo, chw_hi = constraints.bounds["chilled_water_temp"]
-        defaults["chilled_water_temp"] = round((chw_lo + chw_hi) / 2.0, 2)
+        # 冷水出水温度按室外温度查表确定（用缺省室外温度）
+        default_outdoor = app_settings.batch_defaults.outdoor_temp
+        defaults["chilled_water_temp"] = round(
+            constraints.resolve_chilled_water_temp(default_outdoor), 2
+        )
         defaults["cooling_water_temp"] = 32.0
         if not defaults.get("terminal_fan_power"):
             defaults["terminal_fan_power"] = app_settings.energy_model.terminal_fan_default
@@ -629,9 +646,7 @@ def get_manual_input_config_defaults() -> dict[str, Any]:
     eq = _equipment_config()
     if eq is not None:
         load_pct = max(10.0, min(100.0, eq.chiller.max_load_rate * 100.0 * 0.8))
-        thermal_kw = (
-            eq.chiller.rated_capacity_kw * eq.chiller.max_load_rate * load_pct / 100.0
-        )
+        thermal_kw = eq.chiller.rated_capacity_kw * load_pct / 100.0
         cop = max(eq.chiller.rated_cop, 2.0)
         defaults["chiller_load"] = round(load_pct, 2)
         defaults["chiller_power"] = round(thermal_kw / cop, 3)
@@ -1183,10 +1198,10 @@ def _derive_site_fields(
         )
 
     chilled_freq = _avg_nonzero(row, _columns_matching(df, "冷冻泵", "频率"))
-    chilled_power = _sum_numbers(row, _columns_matching(df, "冷冻泵", "功率"))
+    chilled_power = _sum_numbers(row, _pump_power_columns(df, "冷冻泵"))
     cooling_freq = _avg_nonzero(row, _columns_matching(df, "冷却泵", "频率"))
-    cooling_power = _sum_numbers(row, _columns_matching(df, "冷却泵", "功率"))
-    tower_power = _sum_numbers(row, _columns_matching(df, "冷却塔", "功率"))
+    cooling_power = _sum_numbers(row, _pump_power_columns(df, "冷却泵"))
+    tower_power = _sum_numbers(row, _tower_power_columns(df))
 
     if chilled_freq and not _excel_has_value(row, column_map, "chilled_pump_freq"):
         device_data["chilled_pump_freq"] = chilled_freq

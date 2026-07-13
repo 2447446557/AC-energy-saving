@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import json
+import os
+import tempfile
+import threading
 from pathlib import Path
 
 from loguru import logger
@@ -38,6 +41,7 @@ class EquipmentConfigService:
         self._path = Path(path)
         self._cache: EquipmentDocument | None = None
         self._config_cache: EquipmentConfig | None = None
+        self._lock = threading.RLock()
 
     @property
     def path(self) -> Path:
@@ -45,18 +49,20 @@ class EquipmentConfigService:
 
     def invalidate_cache(self) -> None:
         """清除内存缓存（保存或外部改动后调用）。"""
-        self._cache = None
-        self._config_cache = None
+        with self._lock:
+            self._cache = None
+            self._config_cache = None
 
     def get_document(self) -> EquipmentDocument:
         # 内存缓存：寻优时每次适应度评估都会读取设备配置，
         # 若每次都查询数据库会显著拖慢寻优速度，这里缓存文档并在保存时失效。
-        if self._cache is not None:
-            return self._cache
-        raw = load_config_document(self.NAMESPACE)
-        if raw is not None:
-            self._cache = EquipmentDocument(**raw)
-            return self._cache
+        with self._lock:
+            if self._cache is not None:
+                return self._cache
+            raw = load_config_document(self.NAMESPACE)
+            if raw is not None:
+                self._cache = EquipmentDocument(**raw)
+                return self._cache
         if self._path.exists():
             try:
                 legacy = load_equipment_json(self._path)
@@ -72,16 +78,18 @@ class EquipmentConfigService:
 
     def save_document(self, document: EquipmentDocument) -> EquipmentDocument:
         save_config_document(self.NAMESPACE, document.model_dump(mode="json"))
-        self._cache = document
-        self._config_cache = None
+        with self._lock:
+            self._cache = document
+            self._config_cache = None
         self._export_json_backup(document)
         logger.info("设备配置已保存到数据库")
         return document
 
     def get_config(self) -> EquipmentConfig:
-        if self._config_cache is None:
-            self._config_cache = aggregate_to_equipment_config(self.get_document())
-        return self._config_cache
+        with self._lock:
+            if self._config_cache is None:
+                self._config_cache = aggregate_to_equipment_config(self.get_document())
+            return self._config_cache
 
     def save_config(self, config: EquipmentConfig) -> EquipmentConfig:
         document = equipment_config_to_document(config)
@@ -157,14 +165,29 @@ class EquipmentConfigService:
         }
 
     def _export_json_backup(self, document: EquipmentDocument) -> None:
-        """同步写 JSON 备份，便于离线部署/人工编辑。"""
+        """同步写 JSON 备份，便于离线部署/人工编辑。
+
+        使用临时文件 + 原子 rename，避免写入中途崩溃导致备份文件损坏。
+        """
         try:
             config = aggregate_to_equipment_config(document)
             self._path.parent.mkdir(parents=True, exist_ok=True)
-            self._path.write_text(
-                config.model_dump_json(indent=2),
-                encoding="utf-8",
+            content = config.model_dump_json(indent=2)
+            fd, tmp_path = tempfile.mkstemp(
+                dir=str(self._path.parent),
+                prefix=".equipment_tmp_",
+                suffix=".json",
             )
+            try:
+                with os.fdopen(fd, "w", encoding="utf-8") as f:
+                    f.write(content)
+                os.replace(tmp_path, self._path)
+            except Exception:
+                try:
+                    os.unlink(tmp_path)
+                except OSError:
+                    pass
+                raise
         except Exception as e:
             logger.warning(f"写入 equipment.json 备份失败: {e}")
 

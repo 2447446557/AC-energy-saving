@@ -49,13 +49,12 @@ def infer_active_counts(device_data: dict[str, Any]) -> dict[str, int]:
     for kind, pump in (("chilled", eq.chilled_pump), ("cooling", eq.cooling_pump)):
         power = float(device_data.get(f"{kind}_pump_power") or 0.0)
         freq = float(device_data.get(f"{kind}_pump_freq") or 0.0)
-        if power > 0 and freq > 0:
-            # Excel 实测优先：汇总功率视为当前配置总台数同时运行
-            counts[f"{kind}_pump_count"] = max(1, pump.count)
-        elif pump.motor_power_kw > 0 and power > 0 and freq > 0:
+        if power > 0 and freq > 0 and pump.motor_power_kw > 0:
             single = pump.motor_power_kw * (freq / 50.0) ** 3
             inferred = int(round(power / single)) if single > 0 else pump.count
             counts[f"{kind}_pump_count"] = max(1, min(inferred, pump.count))
+        elif power > 0 and freq > 0:
+            counts[f"{kind}_pump_count"] = max(1, pump.count)
         else:
             counts[f"{kind}_pump_count"] = max(1, pump.count)
 
@@ -84,6 +83,8 @@ def current_operating_params(device_data: dict[str, Any]) -> dict[str, float | i
     """构造“当前运行参数”字典，供基线能耗计算。"""
     params: dict[str, float | int] = {
         "chilled_water_temp": float(device_data.get("chilled_water_temp") or 7.0),
+        "chilled_water_temp_offset": 0.0,
+        "chiller_load_pct": float(device_data.get("chiller_load") or 80.0),
         "chilled_pump_freq": float(device_data.get("chilled_pump_freq") or 35.0),
         "cooling_pump_freq": float(device_data.get("cooling_pump_freq") or 35.0),
         "cooling_tower_fan_freq": float(device_data.get("cooling_tower_fan_freq") or 50.0),

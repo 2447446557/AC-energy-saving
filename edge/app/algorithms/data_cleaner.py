@@ -224,6 +224,7 @@ class RobustDataCleaner:
             dq.clear()
         self._consecutive_anomalies = 0
         self._circuit_broken = False
+        self.last_report = None
 
     # ---------- 内部清洗逻辑 ----------
 
@@ -266,6 +267,9 @@ class RobustDataCleaner:
                 pending.clear()
                 return float(min(max(accepted, spec.low), spec.high)), "regime_shift"
             # 尚未确认 → 当作瞬时脏数据剔除
+            # 用末值持平而非外推，避免连续 spike 时外推值基于外推值导致 history 漂移
+            if history:
+                return history[-1], "spike"
             return fallback, "spike"
 
         # 5) 正常值 → 清空越跳缓冲 + EWMA 平滑降噪
