@@ -1,5 +1,5 @@
 optimize:
-  enabled: false
+  enabled: true
   interval_minutes: 10
   timeout_seconds: 60
 batch_defaults:
@@ -15,6 +15,8 @@ energy_model:
   indoor_gain: 25.0
   outdoor_indoor_coupling: 0.06
   outdoor_stress_ref: 29.0
+  outdoor_load_coupling: 0.02
+  min_running_chiller_power_ratio: 0.65
   max_component_power_rise_pct: 0.15
 simulator:
   enabled: false
@@ -63,10 +65,10 @@ constraints:
     indoor_proximity_threshold: 0.3
     indoor_proximity_extra: 0.15
   pump_frequency:
-    min: 32.0
+    min: 25.0
     max: 50.0
   cooling_tower_fan_frequency:
-    min: 32.0
+    min: 20.0
     max: 45.0
   indoor_temp:
     min: 24.0

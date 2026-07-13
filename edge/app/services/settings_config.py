@@ -215,6 +215,8 @@ class EnergyModelConfig(BaseModel):
     indoor_gain: float = Field(default=25.0, ge=1.0)
     outdoor_indoor_coupling: float = Field(default=0.06, ge=0.0, le=1.0)
     outdoor_stress_ref: float = Field(default=29.0, ge=0.0, le=50.0)
+    outdoor_load_coupling: float = Field(default=0.02, ge=0.0, le=0.2)
+    min_running_chiller_power_ratio: float = Field(default=0.65, ge=0.0, le=1.0)
     max_component_power_rise_pct: float = Field(default=0.15, ge=0.0, le=1.0)
 
 
@@ -319,6 +321,12 @@ class SettingsConfigService:
                     energy_raw.get("outdoor_indoor_coupling", 0.06)
                 ),
                 outdoor_stress_ref=float(energy_raw.get("outdoor_stress_ref", 29.0)),
+                outdoor_load_coupling=float(
+                    energy_raw.get("outdoor_load_coupling", 0.02)
+                ),
+                min_running_chiller_power_ratio=float(
+                    energy_raw.get("min_running_chiller_power_ratio", 0.65)
+                ),
                 max_component_power_rise_pct=float(
                     energy_raw.get("max_component_power_rise_pct", 0.15)
                 ),
@@ -393,6 +401,12 @@ class SettingsConfigService:
                 settings.energy_model.outdoor_indoor_coupling, 4
             ),
             "outdoor_stress_ref": round(settings.energy_model.outdoor_stress_ref, 2),
+            "outdoor_load_coupling": round(
+                settings.energy_model.outdoor_load_coupling, 4
+            ),
+            "min_running_chiller_power_ratio": round(
+                settings.energy_model.min_running_chiller_power_ratio, 4
+            ),
             "max_component_power_rise_pct": round(
                 settings.energy_model.max_component_power_rise_pct, 4
             ),

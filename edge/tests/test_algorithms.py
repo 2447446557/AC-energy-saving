@@ -78,6 +78,16 @@ class TestConstraints:
         assert self.c.resolve_chilled_water_temp(37.0) == 8.0    # >= 37
         assert self.c.resolve_chilled_water_temp(40.0) == 8.0    # >= 37
 
+    def test_resolve_chilled_water_sticks_in_band(self):
+        """offset=0 且实测在查表±0.5 带内时，粘住实测，避免闭环回弹。"""
+        # outdoor 27 → lookup 12；实测 12.5 在带内
+        assert self.c.resolve_chilled_water_for_control(27.0, 12.5, 26.0, 0.0) == 12.5
+        # 带外实测（现场 12℃，查表 10℃）→ 回落到查表中心
+        assert self.c.resolve_chilled_water_for_control(30.9, 12.0, 26.0, 0.0) == 10.0
+        # 显式 offset 仍相对查表生效
+        assert self.c.resolve_chilled_water_for_control(27.0, 12.5, 26.0, 0.5) == 12.5
+        assert self.c.resolve_chilled_water_for_control(27.0, 12.5, 26.0, -0.5) == 11.5
+
     def test_comfort_penalty(self):
         # 适宜温度区间内惩罚为 0（不追中心点）
         assert self.c.comfort_penalty(25.0) == 0.0
@@ -119,6 +129,29 @@ class TestConstraints:
         # 泵频率不再 cap 在实测值，PSO 可在设备区间内自由搜索
         assert bounds["chilled_pump_freq"][1] > 40.0
         assert bounds["cooling_pump_freq"][1] > 42.0
+
+    def test_near_upper_comfort_ceiling_holds_chiller_load(self):
+        """高温且室温接近上限时，不能通过下调主机负荷制造虚假节能。"""
+        ctx = self.c.bounds_context_for_data(
+            {
+                "outdoor_temp": 30.9,
+                "chiller_load": 80.0,
+                "indoor_temp": 26.0,
+                "chilled_pump_freq": 40.0,
+                "cooling_pump_freq": 45.0,
+            }
+        )
+        assert ctx["floor_load_at_measured"] is True
+        bounds = self.c.search_bounds(
+            30.9,
+            80.0,
+            **{
+                k: v
+                for k, v in ctx.items()
+                if k not in ("outdoor_temp", "measured_load_pct")
+            },
+        )
+        assert bounds["chiller_load_pct"] == (80.0, 80.0)
 
 
 # ------------------------- 能耗模型 -------------------------
@@ -164,6 +197,95 @@ class TestEnergyModel:
         low = self.m.predict(self.data, self._p(chilled_water_temp=6.5)).chiller_power
         high = self.m.predict(self.data, self._p(chilled_water_temp=11.0)).chiller_power
         assert high < low  # 冷水温度越高 COP 越高，机组能耗越低
+
+    def test_chiller_anchor_splits_baseline_q_evap(self):
+        """锚定缩放时基线蒸发负荷须按基线控制量计算，降低负荷应降低主机预测功率。"""
+        from app.services.power_baseline import current_operating_params
+
+        data = _base_data()
+        data.outdoor_temp = 32.0
+        data.indoor_load = 2500.0
+        data.chiller_power = 556.0
+        data.chiller_load = 80.0
+        data.chilled_water_temp = 10.0
+        data.chilled_pump_freq = 40.0
+        baseline = current_operating_params(data.model_dump())
+        ctx = {
+            "_baseline_params": baseline,
+            "chilled_pump_count": 2,
+            "cooling_pump_count": 2,
+            "cooling_tower_count": 5,
+        }
+        high = self.m.predict(
+            data, {**self._p(chilled_water_temp=10.0, chiller_load_pct=80.0), **ctx}
+        )
+        low = self.m.predict(
+            data, {**self._p(chilled_water_temp=10.0, chiller_load_pct=55.0), **ctx}
+        )
+        assert low.chiller_power < high.chiller_power - 1.0
+
+    def test_running_chillers_keep_measured_power_floor(self):
+        """两台持续运行的主机不能被模型压到几十 kW 的非物理功率。"""
+        data = _base_data()
+        data.chiller_power = 556.0
+        data.chiller_load = 80.0
+        data.indoor_load = 2137.6
+        data.chilled_water_temp = 10.0
+        baseline = {
+            "chilled_water_temp": 10.0,
+            "chiller_load_pct": 80.0,
+            "chilled_pump_freq": 40.0,
+            "cooling_pump_freq": 45.0,
+            "cooling_tower_fan_freq": 50.0,
+        }
+        low_load = self.m.predict(
+            data,
+            {
+                **self._p(chiller_load_pct=50.0),
+                "_baseline_params": baseline,
+                "chilled_pump_count": 2,
+                "cooling_pump_count": 2,
+                "cooling_tower_count": 5,
+            },
+        )
+        # 默认下限 65% × 556kW；等价于两台仍各至少约 180kW。
+        assert low_load.chiller_power >= 556.0 * 0.65 - 1e-6
+
+    def test_chiller_reference_preserves_hot_weather_power_rise(self):
+        """室外升温时，相对首轮现场锚点的主机预测功率不能被比例计算抵消。"""
+        data = _base_data()
+        data.chiller_power = 556.0
+        data.chiller_load = 80.0
+        data.indoor_load = 800.0
+        data.chilled_water_temp = 10.0
+        data.chilled_pump_freq = 40.0
+        data.cooling_pump_freq = 45.0
+        data.cooling_tower_fan_freq = 50.0
+        params = {
+            **self._p(
+                chilled_water_temp=10.0,
+                chiller_load_pct=80.0,
+                chilled_pump_freq=40.0,
+                cooling_pump_freq=45.0,
+                cooling_tower_fan_freq=50.0,
+            ),
+            "chilled_pump_count": 2,
+            "cooling_pump_count": 2,
+            "cooling_tower_count": 5,
+        }
+        base = data.model_copy(
+            update={
+                "outdoor_temp": 30.0,
+                "outdoor_humidity": 60.0,
+                "chiller_power_reference": 556.0,
+                "chiller_power_reference_outdoor_temp": 30.0,
+                "chiller_power_reference_outdoor_humidity": 60.0,
+            }
+        )
+        hot = base.model_copy(update={"outdoor_temp": 35.0})
+        assert self.m.predict(hot, params).chiller_power > (
+            self.m.predict(base, params).chiller_power
+        )
 
     def test_higher_fan_freq_lowers_cooling_water_temp(self):
         low = self.m.predict(self.data, self._p(cooling_tower_fan_freq=22.0)).cooling_water_temp
@@ -555,8 +677,8 @@ class TestPSOOptimizer:
         assert res.predicted_power <= data.total_power + 0.5
         assert 24.0 <= res.predicted_indoor_temp <= 26.0
 
-    def test_in_band_objective_is_pure_power(self):
-        """适宜温度内目标函数只比功耗，不因室温靠近中心而加分。"""
+    def test_in_band_objective_applies_margin_and_power(self):
+        """适宜温度内目标仍含裕量惩罚；同裕量下更高频率不应更优。"""
         data = _base_data()
         data.outdoor_temp = 20.0  # 查表 → 14℃
         data.indoor_temp = 25.0
@@ -585,6 +707,8 @@ class TestPSOOptimizer:
         assert self.c.comfort_penalty(25.5) == 0.0
         assert self.c.comfort_penalty(26.0) == 0.0
         assert self.c.comfort_penalty(27.0) > 0.0
+        # 裕量惩罚始终可触发（靠近上限时）
+        assert self.c.comfort_margin_penalty(25.9, 35.0, 25.0) > 0.0
 
     def test_repeated_optimize_does_not_increase_power(self):
         """连续多次寻优同一工况，预测功率不应高于实测基线。
@@ -616,6 +740,39 @@ class TestPSOOptimizer:
             assert res.status == "success"
             assert res.predicted_power <= data.total_power + 1.0
             assert res.energy_saving_rate >= 0.0
+
+    def test_cooling_tower_schemes_follow_equipment_config(self):
+        """冷却塔台数按设备配置方案（0/3/5）参与寻优，不因约 70kW 输入被硬锁。"""
+        data = _base_data()
+        data.cooling_tower_fan_power = 70.0
+        data.indoor_load = 500.0
+        schemes = self.opt._cooling_tower_schemes(data)
+        assert schemes == [0, 3, 5]
+
+    def test_closed_loop_does_not_raise_power_after_saving_chw(self):
+        """降温段：上一轮已推到带内偏暖冷水后，下一轮不得无故回弹增耗。"""
+        data = _base_data()
+        data.outdoor_temp = 27.2
+        data.indoor_temp = 25.5
+        data.indoor_load = 2137.6
+        data.chilled_water_temp = 12.5  # 查表 12 ±0.5 带内
+        data.chilled_pump_freq = 38.0
+        data.cooling_pump_freq = 44.41
+        data.cooling_tower_fan_freq = 50.0
+        data.chiller_power = 541.35
+        data.chiller_load = 50.0
+        data.chilled_pump_power = 80.0
+        data.cooling_pump_power = 80.0
+        data.cooling_tower_fan_power = 70.0
+        data.terminal_fan_power = 2.0
+        data.total_power = 773.35
+        req = OptimizeRequest(device_data=data.model_dump(mode="json"), force=True)
+        res = self.opt.optimize(req)
+        assert res.status == "success"
+        assert res.predicted_power <= data.total_power + 0.5
+        assert res.energy_saving_rate >= -0.01
+        # 不应把 12.5 强行打回 12.0 并抬高功率
+        assert abs(res.chilled_water_temp - 12.5) <= 0.51 or res.predicted_power <= data.total_power + 0.5
 
     def test_bad_input_falls_back(self):
         res = self.opt.optimize(OptimizeRequest(device_data={"foo": "bar"}))

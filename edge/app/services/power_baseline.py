@@ -81,9 +81,21 @@ def infer_active_counts(device_data: dict[str, Any]) -> dict[str, int]:
 
 def current_operating_params(device_data: dict[str, Any]) -> dict[str, float | int]:
     """构造“当前运行参数”字典，供基线能耗计算。"""
+    measured_chw = float(device_data.get("chilled_water_temp") or 7.0)
+    outdoor = float(device_data.get("outdoor_temp") or 30.0)
+    offset = 0.0
+    try:
+        from app.algorithms.constraints import SafetyConstraints
+
+        offset, _sticky = SafetyConstraints().sticky_chilled_water_offset(
+            outdoor, measured_chw
+        )
+    except Exception:
+        offset = 0.0
     params: dict[str, float | int] = {
-        "chilled_water_temp": float(device_data.get("chilled_water_temp") or 7.0),
-        "chilled_water_temp_offset": 0.0,
+        "chilled_water_temp": measured_chw,
+        # 实测已在查表带内时 offset 对齐实测，避免 finalize(offset=0) 把冷水拉回查表中心
+        "chilled_water_temp_offset": float(offset),
         "chiller_load_pct": float(device_data.get("chiller_load") or 80.0),
         "chilled_pump_freq": float(device_data.get("chilled_pump_freq") or 35.0),
         "cooling_pump_freq": float(device_data.get("cooling_pump_freq") or 35.0),

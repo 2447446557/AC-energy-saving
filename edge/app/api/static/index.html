@@ -1906,17 +1906,15 @@
         }
 
         function applyOptimizeResultToDeviceData(prev, result) {
+            // 与批量 API 闭环一致：直接采用后端推荐值，不再前端额外压负荷/泵频
             const prevLoad = Number(prev.chiller_load || 0);
             const recLoad = Number(result.chiller_load_pct || prevLoad);
-            const cappedLoad = prevLoad > 0 ? Math.min(recLoad, prevLoad) : recLoad;
             const prevChp = Number(prev.chilled_pump_freq || 0);
             const prevCwp = Number(prev.cooling_pump_freq || 0);
             const recChp = Number(result.chilled_pump_freq || prevChp);
             const recCwp = Number(result.cooling_pump_freq || prevCwp);
             const chpCount = Math.max(1, Number(result.chilled_pump_count || (prev.equipment_units && prev.equipment_units.chilled_pumps && prev.equipment_units.chilled_pumps.length) || 1));
             const cwpCount = Math.max(1, Number(result.cooling_pump_count || (prev.equipment_units && prev.equipment_units.cooling_pumps && prev.equipment_units.cooling_pumps.length) || 1));
-            const indoor = Number(prev.indoor_temp || 0);
-            const comfortable = indoor >= 24 && indoor <= 26;
             const predTotal = Number(result.predicted_power || 0);
             const predChiller = Number(result.predicted_chiller_power || 0);
             const predChilledPump = Number(result.chilled_pump_power || 0);
@@ -1925,14 +1923,23 @@
             const next = Object.assign({}, prev, {
                 timestamp: new Date().toISOString(),
                 chilled_water_temp: result.chilled_water_temp,
-                chiller_load: cappedLoad,
-                chilled_pump_freq: comfortable && prevChp > 0 ? Math.min(recChp, prevChp) : recChp,
-                cooling_pump_freq: comfortable && prevCwp > 0 ? Math.min(recCwp, prevCwp) : recCwp,
+                chiller_load: recLoad,
+                chilled_pump_freq: recChp,
+                cooling_pump_freq: recCwp,
                 cooling_tower_fan_freq: result.cooling_tower_fan_freq
             });
-            if (predChiller > 0) {
-                next.chiller_power = predChiller;
-            }
+            // 当前主机功率随预测结果回写；首轮/现场实测功率单独作为模型校准锚点。
+            // 两者分开，避免预测值递归锚定后把双主机压到非物理低功率。
+            next.chiller_power = Number(predChiller || prev.chiller_power || 0);
+            next.chiller_power_reference = Number(
+                prev.chiller_power_reference || prev.chiller_power || predChiller || 0
+            );
+            next.chiller_power_reference_outdoor_temp = Number(
+                prev.chiller_power_reference_outdoor_temp || prev.outdoor_temp || 0
+            );
+            next.chiller_power_reference_outdoor_humidity = Number(
+                prev.chiller_power_reference_outdoor_humidity || prev.outdoor_humidity || 0
+            );
             if (predChilledPump > 0) {
                 next.chilled_pump_power = predChilledPump * chpCount;
             }
@@ -1942,14 +1949,17 @@
             if (predTower > 0) {
                 next.cooling_tower_fan_power = predTower;
             }
-            if (predTotal > 0) {
-                next.total_power = predTotal;
-            } else if (predChiller > 0) {
-                next.total_power = predChiller
+            // 闭环输入总功率必须等于回写后的分项功率之和。
+            // 不可直接回写 result.predicted_power：当后端安全闸把结果锚定后，
+            // 它可能与保留的实测主机功率不一致，进而造成虚假的下一轮基线。
+            if (next.chiller_power > 0) {
+                next.total_power = Number(next.chiller_power || 0)
                     + Number(next.chilled_pump_power || 0)
                     + Number(next.cooling_pump_power || 0)
                     + Number(next.cooling_tower_fan_power || 0)
                     + Number(next.terminal_fan_power || 0);
+            } else if (predTotal > 0) {
+                next.total_power = predTotal;
             }
             if (result.predicted_cooling_water_temp > 0) {
                 next.cooling_water_temp = result.predicted_cooling_water_temp;
@@ -1958,7 +1968,7 @@
                 next.indoor_temp = result.predicted_indoor_temp;
             }
             const units = prev.equipment_units || {};
-            const loadPct = cappedLoad;
+            const loadPct = recLoad;
             let chillers = (units.chillers || []).map(function(u) {
                 return Object.assign({}, u, {load: loadPct > 0 ? loadPct : u.load});
             });
@@ -1968,8 +1978,8 @@
                 .map(function(u) { return Object.assign({}, u, {freq: next.cooling_pump_freq}); });
             let towers = (units.cooling_towers || [])
                 .map(function(u) { return Object.assign({}, u, {freq: result.cooling_tower_fan_freq}); });
-            if (predChiller > 0) {
-                chillers = scaleUnitPowers(chillers, predChiller);
+            if (next.chiller_power > 0) {
+                chillers = scaleUnitPowers(chillers, next.chiller_power);
             }
             if (predChilledPump > 0) {
                 chilledPumps = scaleUnitPowers(chilledPumps, predChilledPump * chpCount);

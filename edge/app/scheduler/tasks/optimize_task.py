@@ -81,16 +81,44 @@ def run_optimize() -> None:
         )
         result = optimizer.optimize(request)
 
-        # 4. 约束校验（stub，Cursor 实现）
+        # 4. 约束校验：须覆盖 VAR_ORDER 全部搜索变量，并带上当前室外/负荷边界上下文
+        from app.algorithms.constraints import VAR_ORDER
+
         constraints = get_constraints()
         params = {
-            "chilled_water_temp": result.chilled_water_temp,
-            "chilled_pump_freq": result.chilled_pump_freq,
-            "cooling_pump_freq": result.cooling_pump_freq,
-            "cooling_tower_fan_freq": result.cooling_tower_fan_freq,
+            "chilled_water_temp_offset": float(result.chilled_water_temp_offset),
+            "chiller_load_pct": float(result.chiller_load_pct),
+            "chilled_pump_freq": float(result.chilled_pump_freq),
+            "cooling_pump_freq": float(result.cooling_pump_freq),
+            "cooling_tower_fan_freq": float(result.cooling_tower_fan_freq),
         }
-        if not constraints.validate(params):
-            logger.warning("寻优结果未通过约束校验，已丢弃")
+        outdoor = float(cleaned_data.outdoor_temp or 30.0)
+        measured_load = float(cleaned_data.chiller_load or 0.0)
+        bounds_ctx = constraints.bounds_context_for_data(cleaned_data.model_dump())
+        bounds_kw = {
+            k: v
+            for k, v in bounds_ctx.items()
+            if k not in ("outdoor_temp", "measured_load_pct")
+        }
+        # 结果里的冷水温度也应落在查表±微调带内（额外语义检查）
+        resolved_chw = constraints.resolve_chilled_water_for_control(
+            outdoor,
+            float(cleaned_data.chilled_water_temp or 0.0),
+            float(cleaned_data.indoor_temp or 0.0),
+            float(result.chilled_water_temp_offset),
+        )
+        if abs(float(result.chilled_water_temp) - resolved_chw) > 0.51:
+            logger.warning(
+                f"寻优冷水与查表带不一致: result={result.chilled_water_temp}, "
+                f"resolved={resolved_chw}"
+            )
+        missing = [v for v in VAR_ORDER if v not in params]
+        if missing or not constraints.validate(
+            params, outdoor, measured_load, **bounds_kw
+        ):
+            logger.warning(
+                f"寻优结果未通过约束校验，已丢弃: missing={missing}, params={params}"
+            )
             storage.save_alarm(
                 level="CRITICAL",
                 category="optimize",

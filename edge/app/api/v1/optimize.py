@@ -139,7 +139,21 @@ async def batch_upload_optimize(
         # 使多次寻优形成连续闭环（预测功率→下一轮输入功率，预测室温→下一轮输入室温）
         if prev_result is not None and prev_result.status == "success":
             fb = dict(item["device_data"])
-            fb["total_power"] = round(prev_result.predicted_power, 2)
+            # 当前功率随上一轮预测回写；首轮/现场实测功率单独保留为校准锚点，
+            # 避免多轮模型自反馈把持续运行的多台主机压到非物理低功率。
+            fb["chiller_power_reference"] = float(
+                fb.get("chiller_power_reference") or fb.get("chiller_power") or 0.0
+            )
+            fb["chiller_power_reference_outdoor_temp"] = float(
+                fb.get("chiller_power_reference_outdoor_temp")
+                or fb.get("outdoor_temp")
+                or 0.0
+            )
+            fb["chiller_power_reference_outdoor_humidity"] = float(
+                fb.get("chiller_power_reference_outdoor_humidity")
+                or fb.get("outdoor_humidity")
+                or 0.0
+            )
             fb["chiller_power"] = round(prev_result.predicted_chiller_power, 2)
             fb["indoor_temp"] = round(prev_result.predicted_indoor_temp, 2)
             chp_n = max(int(prev_result.chilled_pump_count or 0), 1)
@@ -147,6 +161,16 @@ async def batch_upload_optimize(
             fb["chilled_pump_power"] = round(prev_result.chilled_pump_power * chp_n, 2)
             fb["cooling_pump_power"] = round(prev_result.cooling_pump_power * cwp_n, 2)
             fb["cooling_tower_fan_power"] = round(prev_result.cooling_tower_power, 2)
+            # 总功率必须与闭环回写后的分项功率一致，不能直接采用可能被安全闸
+            # 锚定过的 predicted_power。
+            fb["total_power"] = round(
+                float(fb.get("chiller_power") or 0.0)
+                + float(fb.get("chilled_pump_power") or 0.0)
+                + float(fb.get("cooling_pump_power") or 0.0)
+                + float(fb.get("cooling_tower_fan_power") or 0.0)
+                + float(fb.get("terminal_fan_power") or 0.0),
+                2,
+            )
             fb["chilled_pump_freq"] = round(prev_result.chilled_pump_freq, 2)
             fb["cooling_pump_freq"] = round(prev_result.cooling_pump_freq, 2)
             fb["cooling_tower_fan_freq"] = round(prev_result.cooling_tower_fan_freq, 2)

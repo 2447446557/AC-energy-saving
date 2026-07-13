@@ -125,6 +125,11 @@ class EnergyModelParams:
     # 室外偏热且供冷偏紧时，室温上浮耦合系数（℃/℃）
     outdoor_indoor_coupling: float = 0.06
     outdoor_stress_ref: float = 29.0
+    # 室外高于参考温度时，冷负荷相对增幅（1/℃），抑制“越热越省电”
+    outdoor_load_coupling: float = 0.02
+    # 已运行主机的最小输入功率占实测总主机功率比例。
+    # 防止闭环将模型预测反复当实测锚点后，出现“两台主机合计几十 kW”的非物理结果。
+    min_running_chiller_power_ratio: float = 0.65
     # 相对实测功率的最大允许涨幅（辅机相似定律缩放上限）
     max_component_power_rise_pct: float = 0.15
 
@@ -191,6 +196,8 @@ class ACEnergyModel:
         for field_name, key in (
             ("outdoor_indoor_coupling", "outdoor_indoor_coupling"),
             ("outdoor_stress_ref", "outdoor_stress_ref"),
+            ("outdoor_load_coupling", "outdoor_load_coupling"),
+            ("min_running_chiller_power_ratio", "min_running_chiller_power_ratio"),
             ("max_component_power_rise_pct", "max_component_power_rise_pct"),
         ):
             if key in em:
@@ -247,7 +254,11 @@ class ACEnergyModel:
         outdoor_humidity = _finite(data.outdoor_humidity, 60.0)
 
         # --- 供冷需求：Excel 有 indoor_load 优先，否则 0 ---
+        # 室外高于参考温度时略增冷负荷，避免“越热总功率反而下降”的失真
         demand = min(max(_finite(data.indoor_load, 0.0), 0.0), 1.0e7)
+        outdoor_stress = max(0.0, outdoor_temp - p.outdoor_stress_ref)
+        demand *= 1.0 + outdoor_stress * p.outdoor_load_coupling
+        demand = min(demand, 1.0e7)
 
         # --- 供冷能力：冷水越冷、冷冻泵流量越大，供冷能力越强 ---
         # 归一化到系统配置的冷水温度区间 [chw_min, chw_max]；最高水温仍保留约 50% 换热能力
@@ -296,7 +307,9 @@ class ACEnergyModel:
             data=data,
             params=params,
             q_evap=q_evap,
+            demand=demand,
             tchw=tchw,
+            f_chp=f_chp,
             f_cp=f_cp,
             f_fan=f_fan,
             wet_bulb=wet_bulb,
@@ -720,13 +733,19 @@ class ACEnergyModel:
         data: DeviceData,
         params: dict,
         q_evap: float,
+        demand: float,
         tchw: float,
+        f_chp: float,
         f_cp: float,
         f_fan: float,
         wet_bulb: float,
         p: EnergyModelParams,
     ) -> tuple[float, float, float]:
-        """机组功率：Excel 有实测时锚定实测，按物理模型比例缩放推荐参数。"""
+        """机组功率：Excel 有实测时锚定实测，按物理模型比例缩放推荐参数。
+
+        model_new 用候选工况的 q_evap；model_base 用基线控制量单独计算的
+        q_evap_base，避免负荷/冷水变化时共用候选蒸发负荷导致缩放失真。
+        """
         from app.services.power_baseline import current_operating_params
 
         cooling_water_temp, cop, model_new = self._solve_condenser(
@@ -737,7 +756,14 @@ class ACEnergyModel:
             wet_bulb=wet_bulb,
             p=p,
         )
-        measured = _finite(data.chiller_power, 0.0)
+        # 多轮仿真可保留首轮现场实测功率作为校准锚点；当前 chiller_power
+        # 仍表示上一轮实际/预测运行功率，二者不能互相覆盖。
+        measured = _finite(
+            getattr(data, "chiller_power_reference", 0.0),
+            0.0,
+        )
+        if measured <= 0:
+            measured = _finite(data.chiller_power, 0.0)
         if measured <= 0:
             return cooling_water_temp, cop, model_new
 
@@ -751,16 +777,69 @@ class ACEnergyModel:
                 cooling_pump_count=int(baseline.get("cooling_pump_count", p.cooling_pump_count)),
                 tower_count=int(baseline.get("cooling_tower_count", p.cooling_tower_count)),
             )
+        tchw_b = _finite(baseline.get("chilled_water_temp"), tchw)
+        f_chp_b = _finite(baseline.get("chilled_pump_freq"), f_chp)
+        f_cp_b = _finite(baseline.get("cooling_pump_freq"), f_cp)
+        f_fan_b = _finite(baseline.get("cooling_tower_fan_freq"), f_fan)
+        load_b = _finite(baseline.get("chiller_load_pct"), _finite(data.chiller_load, 80.0))
+        if load_b <= 0:
+            load_b = 80.0
+        load_b = min(max(load_b, 0.0), 100.0)
+        temp_factor_b = self._cooling_temp_factor(tchw_b, base_p)
+        flow_chw_b = max(
+            (base_p.chilled_pump_count / max(base_p.chilled_pump_total_count, 1))
+            * (f_chp_b / base_p.freq_rated),
+            0.0,
+        )
+        delivered_b = (
+            base_p.design_cooling_capacity
+            * temp_factor_b
+            * flow_chw_b
+            * (load_b / 100.0)
+        )
+        q_evap_base = min(delivered_b, max(demand, 0.0))
+        reference_outdoor_temp = _finite(
+            getattr(data, "chiller_power_reference_outdoor_temp", 0.0),
+            0.0,
+        )
+        reference_outdoor_humidity = _finite(
+            getattr(data, "chiller_power_reference_outdoor_humidity", 0.0),
+            0.0,
+        )
+        if reference_outdoor_temp <= 0:
+            reference_outdoor_temp = _finite(data.outdoor_temp, 30.0)
+        if reference_outdoor_humidity <= 0:
+            reference_outdoor_humidity = _finite(data.outdoor_humidity, 60.0)
+        wet_bulb_base = self._wet_bulb(
+            reference_outdoor_temp, reference_outdoor_humidity
+        )
         _, _, model_base = self._solve_condenser(
-            q_evap=q_evap,
-            tchw=_finite(baseline.get("chilled_water_temp"), tchw),
-            f_cp=_finite(baseline.get("cooling_pump_freq"), f_cp),
-            f_fan=_finite(baseline.get("cooling_tower_fan_freq"), f_fan),
-            wet_bulb=wet_bulb,
+            q_evap=q_evap_base,
+            tchw=tchw_b,
+            f_cp=f_cp_b,
+            f_fan=f_fan_b,
+            # 多轮模拟中，基线使用首轮实测室外工况；当前工况使用实时室外温湿度。
+            # 因而室外升温会反映为冷凝侧增耗，不会在同一湿球温度比值中相互抵消。
+            wet_bulb=wet_bulb_base,
             p=base_p,
         )
         if model_base > 0:
             scaled = measured * (model_new / model_base)
+            # 设备配置中的冷机均为已启用设备，当前策略没有冷机启停变量；
+            # 因此主机台数固定运行时，不能因模型比例缩放降到非物理低功率。
+            try:
+                from app.services.equipment_config import equipment_config_service
+
+                running_count = max(int(equipment_config_service.get_config().chiller.count), 1)
+            except Exception:
+                running_count = 1
+            per_unit_measured = measured / running_count
+            min_ratio = min(
+                max(float(p.min_running_chiller_power_ratio), 0.0),
+                1.0,
+            )
+            running_floor = per_unit_measured * running_count * min_ratio
+            scaled = max(scaled, running_floor)
             max_rise = getattr(self.p, "max_component_power_rise_pct", 0.15)
             if measured > 0 and max_rise >= 0:
                 cap = measured * (1.0 + max_rise)

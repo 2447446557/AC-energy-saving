@@ -191,6 +191,11 @@ class PSOOptimizer:
         measured_load = float(data.chiller_load or 0.0)
         bounds_kw = self._bounds_kw_for_data(data)
         current_full = self._finalize_control_params(data, current_params)
+        self._guard.set_bounds_context(
+            outdoor_temp=outdoor_temp,
+            measured_load_pct=measured_load,
+            **bounds_kw,
+        )
         self._guard.set_baseline(current_full)
 
         if data.indoor_load > 10:
@@ -602,10 +607,10 @@ class PSOOptimizer:
         """构造 PSO 目标函数（最小化）。
 
         策略：
-        - 冷水出水 = 查表/实测基准 + 微调；设备频率下限随室外温度抬升；
-        - 预测室内在适宜温度内且未突破预防裕量：纯功耗最小化；
-        - 预测越界或裕量不足：强惩罚，禁止用降功率换舒适；
-        - 现场已偏热/偏冷时：在仍保持预测舒适的前提下优先回到适宜温度。
+        - 冷水出水 = 查表基准 + 微调；设备频率下限随室外温度抬升；
+        - 始终施加舒适裕量惩罚（与硬闸一致，预防顶出适宜区）；
+        - 预测越出适宜硬边界时再叠加硬越界惩罚；
+        - 在裕量内最小化功耗，禁止用降功率换舒适。
         """
         energy_model = self._energy_model
         constraints = self._constraints
@@ -616,9 +621,6 @@ class PSOOptimizer:
         measured_indoor = float(data.indoor_temp or 0.0)
         measured_load = float(data.chiller_load or 0.0)
         bounds_kw = self._bounds_kw_for_data(data)
-        # 现场已达舒适区时，PSO 只关注节能（功率 + 硬边界惩罚），不施加裕量惩罚；
-        # 现场越出舒适区时，施加裕量惩罚引导 PSO 拉回适宜温度。
-        site_in_band = constraints.is_in_comfort_band(measured_indoor)
 
         def evaluate(params: dict[str, float]) -> float:
             cache_key = tuple(
@@ -764,7 +766,12 @@ class PSOOptimizer:
 
     @staticmethod
     def _cooling_tower_schemes(data: DeviceData) -> list[int]:
-        """读取冷却塔离散开启方案；有负荷时保留 0 方案但由目标函数强惩罚。"""
+        """读取冷却塔离散开启方案（如 0/3/5 台）。
+
+        冷却塔台数是可寻优的离散变量：减少台数省风机功率，但冷凝侧逼近度
+        变差会抬高主机功率，二者由能耗模型综合权衡，只有净功率更低且满足
+        舒适时才会被采纳。台数上限受设备配置约束，不在此硬锁。
+        """
         try:
             from app.services.equipment_config import equipment_config_service
 
@@ -824,7 +831,7 @@ class PSOOptimizer:
     # ---------- 结果构造 ----------
 
     def _bounds_kw_for_data(self, data: DeviceData) -> dict[str, Any]:
-        """从实测工况提取 search_bounds 的附加参数（舒适区内锁定负荷/泵频上限）。"""
+        """从实测工况提取 search_bounds 的附加参数（舒适区内锁定主机负荷上限）。"""
         ctx = self._constraints.bounds_context_for_data(data.model_dump())
         return {
             k: v
@@ -923,9 +930,10 @@ class PSOOptimizer:
             return params
 
         def _acceptable(indoor: float) -> bool:
+            # 与硬闸一致：仅认舒适裕量，避免精修通过后被闸回退
             return self._constraints.is_within_comfort_margin(
                 indoor, outdoor, measured_indoor
-            ) or self._constraints.is_in_comfort_band(indoor)
+            )
 
         best = dict(params)
         try:
@@ -977,11 +985,10 @@ class PSOOptimizer:
         current_params: dict[str, float],
         candidate: dict[str, float],
     ) -> tuple[dict[str, float], str]:
-        """仅在舒适+节能+稳定三条件同时满足时才调整主机负荷和泵频率。
+        """仅在舒适+节能+稳定三条件同时满足时才调整主机负荷、泵频率和冷水。
 
-        冷水出水温度的±0.5℃微调始终允许（由查表+finetune 决定），
-        不受三条件约束。主机负荷率、冷冻泵频率、冷却泵频率仅在
-        现场室温处于舒适区且推荐方案有节能且预测室温在裕量内时才调整。
+        现场室温未舒适时：仍允许冷水查表±微调纠偏，但主机/泵保持当前。
+        已舒适但无节能（或预测越裕量）：主机/泵/冷水全部粘住当前，禁止越调越费电。
         """
         measured_indoor = float(data.indoor_temp or 0.0)
         outdoor_temp = float(data.outdoor_temp or 30.0)
@@ -1003,13 +1010,27 @@ class PSOOptimizer:
         )
 
         site_comfortable = self._constraints.is_in_comfort_band(measured_indoor)
+        current_in_margin = self._constraints.is_within_comfort_margin(
+            current_bd.predicted_indoor_temp, outdoor_temp, measured_indoor
+        )
         candidate_in_margin = self._constraints.is_within_comfort_margin(
             candidate_bd.predicted_indoor_temp, outdoor_temp, measured_indoor
         )
-        energy_saving = candidate_bd.total_power < baseline_ref - 0.5
+        current_margin_penalty = self._constraints.comfort_margin_penalty(
+            current_bd.predicted_indoor_temp, outdoor_temp, measured_indoor
+        )
+        candidate_margin_penalty = self._constraints.comfort_margin_penalty(
+            candidate_bd.predicted_indoor_temp, outdoor_temp, measured_indoor
+        )
+        candidate_improves_margin = (
+            candidate_margin_penalty < current_margin_penalty - 1e-6
+        )
+        # 仅接受可观测的节能，过滤 PSO 小幅抖动造成的频率/冷水来回切换。
+        min_saving_kw = max(0.5, baseline_ref * 0.01)
+        energy_saving = candidate_bd.total_power < baseline_ref - min_saving_kw
 
-        def _merge_keep_tuning(remark: str) -> tuple[dict[str, float], str]:
-            """保留当前主机负荷/泵频率；冷水温度仅允许查表±微调（沿用候选 offset）。"""
+        def _merge_keep_current(remark: str, keep_candidate_chw: bool) -> tuple[dict[str, float], str]:
+            """回退主机负荷/泵频率；无节能时连冷水一并粘住当前，避免越调越费电。"""
             merged = dict(candidate)
             merged["chiller_load_pct"] = float(
                 current_params.get("chiller_load_pct", data.chiller_load or 80.0)
@@ -1020,6 +1041,15 @@ class PSOOptimizer:
             merged["cooling_pump_freq"] = float(
                 current_params.get("cooling_pump_freq", data.cooling_pump_freq or 35.0)
             )
+            if keep_candidate_chw:
+                # 室温未舒适：允许策略冷水微调纠偏，仍保留候选 offset
+                pass
+            else:
+                off, chw = self._constraints.sticky_chilled_water_offset(
+                    outdoor_temp, float(data.chilled_water_temp or 0.0)
+                )
+                merged["chilled_water_temp_offset"] = off
+                merged["chilled_water_temp"] = chw
             merged = self._finalize_control_params(data, merged)
             return merged, remark
 
@@ -1027,17 +1057,36 @@ class PSOOptimizer:
         if site_comfortable and candidate_in_margin and energy_saving:
             return self._finalize_control_params(data, candidate), ""
 
-        # 条件不满足：保持当前主机负荷和泵频率，仅允许冷水温度±微调
+        # 虽仍在 24~26℃，但已经越过预防性上限/下限时，舒适优先。
+        # 允许推荐恢复裕量，不因短时功率上涨而继续维持在 26℃边缘。
+        if site_comfortable and not current_in_margin and candidate_in_margin:
+            return self._finalize_control_params(data, candidate), (
+                "当前室温已越出舒适裕量，优先恢复温度安全距离"
+            )
+        if (
+            site_comfortable
+            and not current_in_margin
+            and self._constraints.is_in_comfort_band(candidate_bd.predicted_indoor_temp)
+            and candidate_improves_margin
+        ):
+            return self._finalize_control_params(data, candidate), (
+                "当前室温已接近舒适上限，优先向安全裕量回调"
+            )
+
+        # 室温未舒适：可保留冷水策略纠偏，但主机/泵不跟无节能方案走
         if not site_comfortable:
-            return _merge_keep_tuning(
-                "现场室温未达适宜区间，保持当前主机负荷和泵频率"
+            return _merge_keep_current(
+                "现场室温未达适宜区间，保持当前主机负荷和泵频率",
+                keep_candidate_chw=True,
             )
         if not candidate_in_margin:
-            return _merge_keep_tuning(
-                "推荐工况预测室温越出舒适裕量，保持当前主机负荷和泵频率"
+            return _merge_keep_current(
+                "推荐工况预测室温越出舒适裕量，保持当前主机负荷和泵频率",
+                keep_candidate_chw=False,
             )
-        return _merge_keep_tuning(
-            "推荐方案无节能效果，保持当前主机负荷和泵频率"
+        return _merge_keep_current(
+            "推荐方案无节能效果，保持当前主机负荷、泵频率和冷水",
+            keep_candidate_chw=False,
         )
 
     def _apply_output_hard_gates(
@@ -1064,23 +1113,58 @@ class PSOOptimizer:
             measured_total if measured_total > 1e-6 else cur_bd.total_power
         )
         measured_indoor = float(data.indoor_temp or 25.0)
+        reference_outdoor = float(
+            getattr(data, "chiller_power_reference_outdoor_temp", 0.0) or 0.0
+        )
+        weather_shifted = (
+            reference_outdoor > 0
+            and abs(outdoor - reference_outdoor) > 0.3
+        )
         site_comfortable = self._constraints.is_in_comfort_band(measured_indoor)
         current_in_margin = self._constraints.is_within_comfort_margin(
             cur_bd.predicted_indoor_temp, outdoor, measured_indoor
+        )
+        current_margin_penalty = self._constraints.comfort_margin_penalty(
+            cur_bd.predicted_indoor_temp, outdoor, measured_indoor
+        )
+        candidate_margin_penalty = self._constraints.comfort_margin_penalty(
+            cand_bd.predicted_indoor_temp, outdoor, measured_indoor
+        )
+        candidate_improves_margin = (
+            candidate_margin_penalty < current_margin_penalty - 1e-6
         )
         reasons: list[str] = []
         if float(cand.get("chiller_load_pct", 0.0)) > max_load + 1e-6:
             reasons.append("主机负荷超过设备上限")
         if not self._constraints.is_in_comfort_band(cand_bd.predicted_indoor_temp):
             reasons.append("预测室温越出适宜区间")
-        if not self._constraints.is_within_comfort_margin(
-            cand_bd.predicted_indoor_temp, outdoor, measured_indoor
+        if (
+            not self._constraints.is_within_comfort_margin(
+                cand_bd.predicted_indoor_temp, outdoor, measured_indoor
+            )
+            and not (
+                not current_in_margin
+                and self._constraints.is_in_comfort_band(
+                    cand_bd.predicted_indoor_temp
+                )
+                and candidate_improves_margin
+            )
         ):
             reasons.append("预测室温越出舒适裕量")
-        # 有实测总功率时：预测不得超过输入（与表格节能率口径一致）
+        # 有实测总功率且当前仍在舒适裕量时：预测不得超过输入。
+        # 若当前已越出裕量，允许有限增功率恢复舒适安全距离。
         if measured_total > 1e-6:
-            if cand_bd.total_power > measured_total + 0.5:
-                reasons.append("预测总功耗高于实测输入")
+            if current_in_margin and not weather_shifted:
+                if cand_bd.total_power > measured_total + 0.5:
+                    reasons.append("预测总功耗高于实测输入")
+            elif weather_shifted:
+                weather_allowance = max(measured_total * 0.15, 50.0)
+                if cand_bd.total_power > measured_total + weather_allowance:
+                    reasons.append("室外工况变化所需功率超过安全增幅")
+            else:
+                recovery_allowance = max(measured_total * 0.15, 50.0)
+                if cand_bd.total_power > measured_total + recovery_allowance:
+                    reasons.append("恢复舒适裕量所需功率超过安全增幅")
         elif site_comfortable and current_in_margin:
             if cand_bd.total_power > baseline_ref + 0.5:
                 reasons.append("预测总功耗高于基线")
@@ -1103,6 +1187,12 @@ class PSOOptimizer:
         for key in ("chilled_pump_count", "cooling_pump_count", "cooling_tower_count"):
             if key in current_full:
                 merged[key] = current_full[key]
+        # 回退时粘住当前冷水（钳到查表带），禁止 finalize(offset=0) 把 12.5 拉回 12.0 增耗
+        off, chw = self._constraints.sticky_chilled_water_offset(
+            outdoor, float(data.chilled_water_temp or 0.0)
+        )
+        merged["chilled_water_temp_offset"] = off
+        merged["chilled_water_temp"] = chw
         merged = self._finalize_control_params(data, merged)
         return merged, "硬闸：" + "；".join(reasons) + "，保持现有设定"
 
@@ -1180,12 +1270,18 @@ class PSOOptimizer:
             saving = 0.0
 
         measured_total = float(data.total_power or 0.0)
+        reference_outdoor = float(
+            getattr(data, "chiller_power_reference_outdoor_temp", 0.0) or 0.0
+        )
+        weather_shifted = (
+            reference_outdoor > 0
+            and abs(float(data.outdoor_temp or 0.0) - reference_outdoor) > 0.3
+        )
         if (
             status == "success"
             and measured_total > 1e-6
             and predicted > measured_total + 0.5
-            and remark
-            and "高于实测输入" in remark
+            and not weather_shifted
         ):
             predicted = measured_total
             saving = 0.0
@@ -1210,6 +1306,10 @@ class PSOOptimizer:
                         data.terminal_fan_power or breakdown.terminal_fan_power
                     ),
                 )
+            if remark and "高于实测输入" not in remark:
+                remark = f"{remark}; 预测总功耗高于实测输入，已锚定输入功率"
+            elif not remark:
+                remark = "预测总功耗高于实测输入，已锚定输入功率"
 
         measured_indoor = float(data.indoor_temp or 0.0)
         display_indoor = (

@@ -29,6 +29,12 @@ class DeviceData(BaseModel):
     # 冷水机组
     chiller_load: float = 0.0  # 冷水机组负载（%）
     chiller_power: float = 0.0  # 冷水机组功率（kW）
+    # 多轮仿真内部校准值：保留首轮/现场实测主机功率，避免预测功率递归锚定。
+    # 实时采集场景通常为 0，模型将回退使用 chiller_power。
+    chiller_power_reference: float = 0.0
+    # 与校准功率同时保存的室外工况；用于模拟室外升温时保留冷凝侧增耗。
+    chiller_power_reference_outdoor_temp: float = 0.0
+    chiller_power_reference_outdoor_humidity: float = 0.0
     chilled_water_temp: float = 0.0  # 冷水出水温度（℃）
     cooling_water_temp: float = 0.0  # 冷却水出水温度（℃）
 

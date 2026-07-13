@@ -149,8 +149,23 @@ def run_closed_loop(rounds: int = 20, verbose: bool = True) -> list[dict]:
         current_data["cooling_pump_freq"] = result.cooling_pump_freq
         current_data["cooling_tower_fan_freq"] = result.cooling_tower_fan_freq
         # 预测值反馈
-        current_data["total_power"] = result.predicted_power
         current_data["indoor_temp"] = result.predicted_indoor_temp
+        # 当前功率随预测回写，首轮/现场实测值单独保留为下一轮模型锚点。
+        current_data["chiller_power_reference"] = float(
+            current_data.get("chiller_power_reference")
+            or current_data.get("chiller_power")
+            or 0.0
+        )
+        current_data["chiller_power_reference_outdoor_temp"] = float(
+            current_data.get("chiller_power_reference_outdoor_temp")
+            or current_data.get("outdoor_temp")
+            or 0.0
+        )
+        current_data["chiller_power_reference_outdoor_humidity"] = float(
+            current_data.get("chiller_power_reference_outdoor_humidity")
+            or current_data.get("outdoor_humidity")
+            or 0.0
+        )
         current_data["chiller_power"] = result.predicted_chiller_power
         current_data["cooling_water_temp"] = result.predicted_cooling_water_temp
         chp_n = max(int(result.chilled_pump_count or 0), 1)
@@ -158,6 +173,13 @@ def run_closed_loop(rounds: int = 20, verbose: bool = True) -> list[dict]:
         current_data["chilled_pump_power"] = result.chilled_pump_power * chp_n
         current_data["cooling_pump_power"] = result.cooling_pump_power * cwp_n
         current_data["cooling_tower_fan_power"] = result.cooling_tower_power
+        current_data["total_power"] = (
+            float(current_data.get("chiller_power") or 0.0)
+            + float(current_data.get("chilled_pump_power") or 0.0)
+            + float(current_data.get("cooling_pump_power") or 0.0)
+            + float(current_data.get("cooling_tower_fan_power") or 0.0)
+            + float(current_data.get("terminal_fan_power") or 0.0)
+        )
 
     # 汇总
     if verbose:

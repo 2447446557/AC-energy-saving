@@ -122,9 +122,11 @@ class SafetyConstraints:
     ) -> float:
         """解析本次寻优/下发的冷水出水温度（℃）。
 
-        直接以查表值为基准 + ±finetune 微调，确保冷水温度始终跟随室外温度。
-        室内温度安全裕量由 comfort_margin_penalty 保证，无需在 chw 层面额外限制。
+        以查表值为中心，结果必须落在查表 ±finetune 内。
+        offset≈0 且实测已在带内时，粘住实测冷水，避免闭环把上一轮推荐（如 12.5℃）
+        无故拉回查表中心（12.0℃）导致增耗。
         """
+        del measured_indoor  # 室温裕量由 comfort_margin_penalty 约束，不在此改冷水
         lookup = self.resolve_chilled_water_temp(outdoor_temp)
         chw_min, chw_max = self.chilled_water_temp_range()
         finetune = self.chw_finetune.max_delta
@@ -136,8 +138,43 @@ class SafetyConstraints:
             off = 0.0
         off = min(max(off, -finetune), finetune)
 
+        band_lo = max(chw_min, lookup - finetune)
+        band_hi = min(chw_max, lookup + finetune)
+        try:
+            measured = float(measured_chw)
+        except (TypeError, ValueError):
+            measured = lookup
+        if not math.isfinite(measured):
+            measured = lookup
+
+        if abs(off) <= 1e-12:
+            if band_lo - 1e-9 <= measured <= band_hi + 1e-9:
+                return min(max(measured, band_lo), band_hi)
+            return min(max(lookup, band_lo), band_hi)
+
         chw = lookup + off
-        return min(max(chw, chw_min), chw_max)
+        return min(max(chw, band_lo), band_hi)
+
+    def sticky_chilled_water_offset(
+        self, outdoor_temp: float, measured_chw: float
+    ) -> tuple[float, float]:
+        """返回 (offset, chw)：把实测冷水钳到查表±微调带，供回退/基线保持连续。"""
+        lookup = self.resolve_chilled_water_temp(outdoor_temp)
+        finetune = self.chw_finetune.max_delta
+        chw_min, chw_max = self.chilled_water_temp_range()
+        band_lo = max(chw_min, lookup - finetune)
+        band_hi = min(chw_max, lookup + finetune)
+        try:
+            measured = float(measured_chw)
+        except (TypeError, ValueError):
+            measured = lookup
+        if not math.isfinite(measured):
+            measured = lookup
+        if band_lo - 1e-9 <= measured <= band_hi + 1e-9:
+            sticky = min(max(measured, band_lo), band_hi)
+        else:
+            sticky = min(max(lookup, band_lo), band_hi)
+        return round(sticky - lookup, 3), sticky
 
     def chilled_water_temp_range(self) -> tuple[float, float]:
         """返回查表配置的最小/最大冷水温度（供能耗模型归一化使用）。"""
@@ -232,6 +269,7 @@ class SafetyConstraints:
         measured_load_pct: float = 0.0,
         *,
         cap_load_at_measured: bool = False,
+        floor_load_at_measured: bool = False,
         cap_pumps_at_measured: bool = False,
         measured_chilled_pump_freq: float = 0.0,
         measured_cooling_pump_freq: float = 0.0,
@@ -251,6 +289,10 @@ class SafetyConstraints:
             load_floor = min(measured_load_pct, load_ceiling)
         if cap_load_at_measured and measured_load_pct > 0:
             load_ceiling = min(load_ceiling, measured_load_pct)
+        if floor_load_at_measured and measured_load_pct > 0:
+            # 室温已靠近/越过预防性上限时，不允许通过下调主机负荷“节能”；
+            # 先保留当前制冷能力，待室温回到安全裕量后再释放下调空间。
+            load_floor = max(load_floor, min(measured_load_pct, load_ceiling))
 
         chp_lo = max(device["chilled_pump_freq"][0], floors.chilled_pump_freq)
         chp_hi = device["chilled_pump_freq"][1]
@@ -291,6 +333,9 @@ class SafetyConstraints:
         except (TypeError, ValueError):
             indoor = 0.0
         comfortable = self.is_in_comfort_band(indoor)
+        near_or_above_ceiling = indoor >= self.effective_comfort_ceiling(
+            outdoor, indoor
+        )
         try:
             chp = float(device_data.get("chilled_pump_freq") or 0.0)
         except (TypeError, ValueError):
@@ -303,6 +348,7 @@ class SafetyConstraints:
             "outdoor_temp": outdoor,
             "measured_load_pct": load,
             "cap_load_at_measured": comfortable,
+            "floor_load_at_measured": near_or_above_ceiling,
             "cap_pumps_at_measured": False,
             "measured_chilled_pump_freq": chp,
             "measured_cooling_pump_freq": cwp,

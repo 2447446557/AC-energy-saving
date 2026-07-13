@@ -76,6 +76,21 @@ class SafeOutputGuard:
         self._last_good: dict[str, float] | None = None
         # 上一次真实下发的输出（平滑基准）
         self._last_output: dict[str, float] = dict(self._fixed)
+        # 当前工况边界上下文（由 set_baseline / 调用方更新）
+        self._outdoor_temp: float = 30.0
+        self._measured_load_pct: float = 0.0
+        self._bounds_kw: dict[str, Any] = {}
+
+    def set_bounds_context(
+        self,
+        outdoor_temp: float = 30.0,
+        measured_load_pct: float = 0.0,
+        **bounds_kw: Any,
+    ) -> None:
+        """更新 clip/validate 使用的室外温度与边界附加参数。"""
+        self._outdoor_temp = float(outdoor_temp)
+        self._measured_load_pct = float(measured_load_pct)
+        self._bounds_kw = dict(bounds_kw)
 
     # ---------- 平滑 ----------
 
@@ -103,7 +118,12 @@ class SafeOutputGuard:
                 smoothed[var] = prev - step
             else:
                 smoothed[var] = goal
-        smoothed = self._constraints.clip(smoothed)
+        smoothed = self._constraints.clip(
+            smoothed,
+            self._outdoor_temp,
+            self._measured_load_pct,
+            **self._bounds_kw,
+        )
         self._last_output = dict(smoothed)
         return smoothed
 
@@ -111,7 +131,12 @@ class SafeOutputGuard:
 
     def register_good(self, params: dict[str, Any]) -> None:
         """登记一次有效最优解（仅当满足硬约束时）。"""
-        if self._constraints.validate(params):
+        if self._constraints.validate(
+            params,
+            self._outdoor_temp,
+            self._measured_load_pct,
+            **self._bounds_kw,
+        ):
             self._last_good = {v: float(params[v]) for v in VAR_ORDER if v in params}
 
     def fallback_params(self, reason: str = "") -> dict[str, float]:
@@ -127,7 +152,10 @@ class SafeOutputGuard:
     def set_baseline(self, params: dict[str, Any]) -> None:
         """将平滑基准重置为指定控制参数（通常为当前实测工况）。"""
         baseline = self._constraints.clip(
-            {var: float(params.get(var, self._fixed[var])) for var in VAR_ORDER}
+            {var: float(params.get(var, self._fixed[var])) for var in VAR_ORDER},
+            self._outdoor_temp,
+            self._measured_load_pct,
+            **self._bounds_kw,
         )
         self._last_output = dict(baseline)
 
