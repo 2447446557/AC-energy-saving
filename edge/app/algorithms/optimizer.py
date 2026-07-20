@@ -3,10 +3,14 @@
 基于开源库 scikit-opt 封装工业级 PSO 粒子群寻优，实现多变量协同寻优
 （对应设计文档 4.6 节、需求文档 3.1 节）。
 
-优化变量（5 维，顺序见 constraints.VAR_ORDER）：
-    冷水微调量、主机负荷率、冷冻泵/冷却泵/冷却塔频率
+可调变量（随室内外温度变化）：
+    冷水出水温度（查表 ± 微调）、冷冻泵频率/台数、冷却泵频率/台数
 
-注：冷水出水温度 = 查表/实测基准 + 微调量；设备频率下限随室外温度分档抬升。
+固定不调（现场定额/保持当前）：
+    主机负荷率、冷却塔频率、冷却塔台数与功率
+
+注：VAR_ORDER 仍含负荷/塔频维，但搜索上下界钳为当前值（等效固定）。
+    冷水出水温度 = 查表/实测基准 + 微调量；泵频率下限随室外温度分档抬升。
 
 优化目标：
     在满足设备安全硬约束、室内舒适软约束的前提下，系统总能耗最小。
@@ -40,6 +44,7 @@ from sko.PSO import PSO
 from app.algorithms.constraints import VAR_ORDER, SafetyConstraints
 from app.algorithms.energy_model import ACEnergyModel
 from app.algorithms.fallback import SafeOutputGuard
+from app.algorithms.indoor_temp import control_indoor_temp
 from app.core.config import get_business_config
 from app.services.settings_config import get_merged_business_config
 from app.schemas.device import DeviceData
@@ -49,6 +54,8 @@ from app.schemas.optimize import OptimizeRequest, OptimizeResult
 _HARD_PENALTY_WEIGHT = 1.0e6
 # 预测室内越出适宜温度时的软惩罚权重：优先拉回舒适带，但仍允许在无可行舒适解时收敛
 _COMFORT_PENALTY_WEIGHT = 500.0
+# 舒适裕量内：泵频每高过搜索下限 1Hz，目标函数略加点偏置，引导向最低频率靠拢省辅机电
+_PUMP_FLOOR_BIAS_KW_PER_HZ = 0.08
 
 
 class PSOOptimizer:
@@ -186,6 +193,23 @@ class PSOOptimizer:
                 )
         except Exception:
             pass
+        # 冷冻/冷却泵功率不采信输入 kW，统一按频率立方律重算后再寻优
+        data = self._normalize_pump_powers_from_freq(data)
+        # 首轮即写入主机功率锚点，避免无 reference 时比例缩放到 0.65 地板制造虚假节能
+        if float(getattr(data, "chiller_power_reference", 0.0) or 0.0) <= 0:
+            chiller_now = float(data.chiller_power or 0.0)
+            if chiller_now > 0:
+                data = data.model_copy(
+                    update={
+                        "chiller_power_reference": chiller_now,
+                        "chiller_power_reference_outdoor_temp": float(
+                            data.outdoor_temp or 0.0
+                        ),
+                        "chiller_power_reference_outdoor_humidity": float(
+                            data.outdoor_humidity or 0.0
+                        ),
+                    }
+                )
         current_params = self._current_params(data)
         outdoor_temp = float(data.outdoor_temp or 30.0)
         measured_load = float(data.chiller_load or 0.0)
@@ -312,21 +336,9 @@ class PSOOptimizer:
             smoothed["cooling_pump_count"] = self._snap_pump_count(
                 "cooling", best_params.get("cooling_pump_count", 1), require_positive=has_load
             )
-            smoothed["cooling_tower_count"] = self._snap_tower_count(
-                data, best_params.get("cooling_tower_count", 5), require_positive=has_load
-            )
-            if has_load:
-                from app.services.power_baseline import infer_active_counts
-
-                active = infer_active_counts(data.model_dump())
-                smoothed["chilled_pump_count"] = max(
-                    int(smoothed.get("chilled_pump_count", 1)),
-                    int(active.get("chilled_pump_count", 1)),
-                )
-                smoothed["cooling_pump_count"] = max(
-                    int(smoothed.get("cooling_pump_count", 1)),
-                    int(active.get("cooling_pump_count", 1)),
-                )
+            # 冷却塔台数定额：始终保持当前运行台数
+            smoothed["cooling_tower_count"] = self._fixed_tower_count(data)
+            # 不再用“当前开启台数”抬高推荐泵台数下限，否则离散减泵方案会被锁死
 
             smoothed, guard_remark = self._prefer_current_if_no_saving(
                 data, current_full, smoothed
@@ -334,7 +346,7 @@ class PSOOptimizer:
             smoothed, gate_remark = self._apply_output_hard_gates(
                 data, current_full, smoothed
             )
-            if self._constraints.is_in_comfort_band(float(data.indoor_temp or 0.0)):
+            if self._constraints.is_in_comfort_band(control_indoor_temp(data)):
                 smoothed = self._refine_for_policy_saving(
                     data, current_full, smoothed
                 )
@@ -476,29 +488,35 @@ class PSOOptimizer:
         return best_params, best_y, converged
 
     @staticmethod
-    def _discrete_options(data: DeviceData) -> list[dict[str, int]]:
-        """离散台数方案；有负荷时不低于当前实测开启台数。"""
-        min_chilled = 0
-        min_cooling = 0
-        if data.indoor_load > 10:
-            try:
-                from app.services.power_baseline import infer_active_counts
+    def _fixed_tower_count(data: DeviceData) -> int:
+        """冷却塔台数定额：保持当前运行台数，不参与离散寻优。"""
+        try:
+            from app.services.power_baseline import infer_active_counts
 
-                active = infer_active_counts(data.model_dump())
-                min_chilled = int(active.get("chilled_pump_count", 1))
-                min_cooling = int(active.get("cooling_pump_count", 1))
-            except Exception:
-                min_chilled = 1
-                min_cooling = 1
+            counts = infer_active_counts(data.model_dump())
+            n = int(counts.get("cooling_tower_count") or 0)
+            if n > 0:
+                return n
+        except Exception:
+            pass
+        schemes = PSOOptimizer._cooling_tower_schemes(data)
+        return schemes[-1] if schemes else 5
+
+    @staticmethod
+    def _discrete_options(data: DeviceData) -> list[dict[str, int]]:
+        """离散台数方案。
+
+        有室内负荷时排除 0 台泵，允许在配置方案内调整冷冻/冷却泵台数。
+        冷却塔台数定额，固定为当前运行台数。
+        """
+        require_positive = data.indoor_load > 10
+        tower_count = PSOOptimizer._fixed_tower_count(data)
         options: list[dict[str, int]] = []
-        for chilled_count, cooling_count, tower_count in product(
+        for chilled_count, cooling_count in product(
             PSOOptimizer._pump_schemes("chilled"),
             PSOOptimizer._pump_schemes("cooling"),
-            PSOOptimizer._cooling_tower_schemes(data),
         ):
-            if data.indoor_load > 10 and (
-                chilled_count < min_chilled or cooling_count < min_cooling
-            ):
+            if require_positive and (chilled_count <= 0 or cooling_count <= 0):
                 continue
             options.append(
                 {
@@ -507,11 +525,13 @@ class PSOOptimizer:
                     "cooling_tower_count": tower_count,
                 }
             )
-        return options or [
+        if options:
+            return options
+        return [
             {
-                "chilled_pump_count": max(min_chilled, 1),
-                "cooling_pump_count": max(min_cooling, 1),
-                "cooling_tower_count": PSOOptimizer._cooling_tower_schemes(data)[-1],
+                "chilled_pump_count": 1,
+                "cooling_pump_count": 1,
+                "cooling_tower_count": tower_count,
             }
         ]
 
@@ -618,9 +638,18 @@ class PSOOptimizer:
         cache: dict[tuple[Any, ...], float] = {}
         model_context = self._model_context(data, fixed_extra)
         outdoor_temp = float(data.outdoor_temp or 30.0)
-        measured_indoor = float(data.indoor_temp or 0.0)
+        measured_indoor = control_indoor_temp(data)
         measured_load = float(data.chiller_load or 0.0)
         bounds_kw = self._bounds_kw_for_data(data)
+        try:
+            _sb0 = constraints.search_bounds(
+                outdoor_temp, measured_load, **bounds_kw
+            )
+            pump_bias_chp_lo = float(_sb0["chilled_pump_freq"][0])
+            pump_bias_cwp_lo = float(_sb0["cooling_pump_freq"][0])
+        except Exception:
+            pump_bias_chp_lo = 0.0
+            pump_bias_cwp_lo = 0.0
 
         def evaluate(params: dict[str, float]) -> float:
             cache_key = tuple(
@@ -649,6 +678,16 @@ class PSOOptimizer:
                 if not constraints.is_in_comfort_band(pred_indoor):
                     cost += _COMFORT_PENALTY_WEIGHT * constraints.comfort_penalty(
                         pred_indoor
+                    )
+                # 已在舒适裕量内：轻微偏向更低泵频（泵频下限在闭包外缓存，避免每次查表）
+                elif margin_pen <= 1e-12 and (
+                    pump_bias_chp_lo > 0 or pump_bias_cwp_lo > 0
+                ):
+                    chp = float(params.get("chilled_pump_freq", pump_bias_chp_lo))
+                    cwp = float(params.get("cooling_pump_freq", pump_bias_cwp_lo))
+                    cost += _PUMP_FLOOR_BIAS_KW_PER_HZ * (
+                        max(0.0, chp - pump_bias_chp_lo)
+                        + max(0.0, cwp - pump_bias_cwp_lo)
                     )
                 search_vars = {var: params.get(var, 0.0) for var in VAR_ORDER}
                 cost += _HARD_PENALTY_WEIGHT * constraints.hard_violation(
@@ -766,12 +805,7 @@ class PSOOptimizer:
 
     @staticmethod
     def _cooling_tower_schemes(data: DeviceData) -> list[int]:
-        """读取冷却塔离散开启方案（如 0/3/5 台）。
-
-        冷却塔台数是可寻优的离散变量：减少台数省风机功率，但冷凝侧逼近度
-        变差会抬高主机功率，二者由能耗模型综合权衡，只有净功率更低且满足
-        舒适时才会被采纳。台数上限受设备配置约束，不在此硬锁。
-        """
+        """读取冷却塔配置台数方案（仅作定额回退；寻优不再切换塔台数）。"""
         try:
             from app.services.equipment_config import equipment_config_service
 
@@ -878,14 +912,23 @@ class PSOOptimizer:
         result["chilled_water_temp"] = self._constraints.resolve_chilled_water_for_control(
             outdoor_temp,
             float(data.chilled_water_temp or 7.0),
-            float(data.indoor_temp or 0.0),
+            control_indoor_temp(data),
             offset,
         )
-        if float(result.get("chiller_load_pct", 0.0)) <= 0:
-            result["chiller_load_pct"] = max(
-                measured_load,
-                clipped.get("chiller_load_pct", measured_load or 80.0),
-            )
+        # 主机负荷、冷却塔频率定额：始终回写为现场当前值
+        if measured_load > 0:
+            result["chiller_load_pct"] = measured_load
+        elif float(result.get("chiller_load_pct", 0.0)) <= 0:
+            result["chiller_load_pct"] = clipped.get("chiller_load_pct", 80.0)
+        tower_now = float(data.cooling_tower_fan_freq or 0.0)
+        if tower_now <= 0:
+            tower_lo, tower_hi = bounds["cooling_tower_fan_freq"]
+            tower_now = tower_lo if tower_lo == tower_hi else 0.5 * (tower_lo + tower_hi)
+        if tower_now > 0:
+            result["cooling_tower_fan_freq"] = tower_now
+        result["cooling_tower_count"] = int(
+            result.get("cooling_tower_count", self._fixed_tower_count(data))
+        )
         return result
 
     def _predict_with_context(
@@ -921,16 +964,25 @@ class PSOOptimizer:
         current_full: dict[str, float | int],
         params: dict[str, float | int],
     ) -> dict[str, float | int]:
-        """在查表±微调与舒适裕量内，扫描冷水 offset 与小幅泵频调整以降低功耗。"""
+        """轻量精修：稀疏试探冷水微调与泵频（约几十次预测，不做全网格）。"""
         outdoor = float(data.outdoor_temp or 30.0)
-        measured_indoor = float(data.indoor_temp or 0.0)
+        measured_indoor = control_indoor_temp(data)
         measured_total = float(data.total_power or 0.0)
+        measured_load = float(data.chiller_load or 0.0)
         finetune = self._constraints.chw_finetune.max_delta
-        if finetune <= 0:
-            return params
+        bounds_kw = self._bounds_kw_for_data(data)
+        try:
+            sb = self._constraints.search_bounds(
+                outdoor, measured_load, **bounds_kw
+            )
+            chp_lo = float(sb["chilled_pump_freq"][0])
+            cwp_lo = float(sb["cooling_pump_freq"][0])
+            chp_hi = float(sb["chilled_pump_freq"][1])
+            cwp_hi = float(sb["cooling_pump_freq"][1])
+        except Exception:
+            chp_lo, cwp_lo, chp_hi, cwp_hi = 0.0, 0.0, 50.0, 50.0
 
         def _acceptable(indoor: float) -> bool:
-            # 与硬闸一致：仅认舒适裕量，避免精修通过后被闸回退
             return self._constraints.is_within_comfort_margin(
                 indoor, outdoor, measured_indoor
             )
@@ -940,42 +992,207 @@ class PSOOptimizer:
             best = self._finalize_control_params(data, best)
             best_bd = self._predict_with_context(data, best)
             best_power = best_bd.total_power
+            best_margin = self._constraints.comfort_margin_penalty(
+                best_bd.predicted_indoor_temp, outdoor, measured_indoor
+            )
         except Exception:
             return params
 
-        if not _acceptable(best_bd.predicted_indoor_temp):
-            best_power = float("inf")
-
+        need_recovery = not _acceptable(best_bd.predicted_indoor_temp)
         base_chp = float(best.get("chilled_pump_freq", data.chilled_pump_freq or 40.0))
         base_cwp = float(best.get("cooling_pump_freq", data.cooling_pump_freq or 40.0))
         base_load = float(best.get("chiller_load_pct", data.chiller_load or 80.0))
-        steps = max(3, int(round(finetune / 0.1)) + 1)
+        base_offset = float(best.get("chilled_water_temp_offset", 0.0))
+        ceiling = self._constraints.effective_comfort_ceiling(outdoor, measured_indoor)
+        best_indoor = float(best_bd.predicted_indoor_temp)
 
-        for i in range(steps + 1):
-            offset = -finetune + (2.0 * finetune * i / steps)
-            for chp_delta in (0.0, -1.0, -2.0, -3.0):
-                for cwp_delta in (0.0, -1.0, -2.0, -3.0):
-                    for load_delta in (0.0, -2.0, -5.0):
-                        trial = dict(params)
-                        trial["chilled_water_temp_offset"] = round(offset, 3)
-                        trial["chilled_pump_freq"] = base_chp + chp_delta
-                        trial["cooling_pump_freq"] = base_cwp + cwp_delta
-                        trial["chiller_load_pct"] = base_load + load_delta
-                        trial = self._finalize_control_params(data, trial)
-                        try:
-                            bd = self._predict_with_context(data, trial)
-                        except Exception:
-                            continue
-                        if not _acceptable(bd.predicted_indoor_temp):
-                            continue
-                        if (
-                            measured_total > 1e-6
-                            and bd.total_power > measured_total + 0.5
-                        ):
-                            continue
-                        if bd.total_power < best_power - 1e-6:
-                            best = trial
-                            best_power = bd.total_power
+        def _sparse_freqs(base: float, lo: float, hi: float, down: bool) -> list[float]:
+            """仅取当前/±2/±5/端点等少数点，避免 1Hz 全扫。"""
+            vals = {round(base, 2)}
+            if down:
+                for d in (2.0, 5.0):
+                    vals.add(round(max(lo, base - d), 2))
+                if lo > 0:
+                    vals.add(round(lo, 2))
+            else:
+                for d in (2.0, 5.0):
+                    vals.add(round(min(hi, base + d), 2))
+                vals.add(round(hi, 2))
+            return sorted(vals)
+
+        # 主机负荷定额不调，精修只动冷水微调与泵频
+        load_deltas = (0.0,)
+        if need_recovery:
+            chp_list = _sparse_freqs(base_chp, chp_lo, chp_hi, down=False)
+            cwp_list = _sparse_freqs(base_cwp, cwp_lo, cwp_hi, down=False)
+            power_cap = (
+                measured_total * 1.15 if measured_total > 1e-6 else float("inf")
+            )
+            offsets = (
+                sorted(
+                    {
+                        round(base_offset, 3),
+                        round(-finetune, 3),
+                        round(-finetune * 0.5, 3),
+                    }
+                )
+                if finetune > 0
+                else [round(base_offset, 3)]
+            )
+        else:
+            chp_list = _sparse_freqs(base_chp, chp_lo, chp_hi, down=True)
+            cwp_list = _sparse_freqs(base_cwp, cwp_lo, cwp_hi, down=True)
+            power_cap = (
+                measured_total + 0.5 if measured_total > 1e-6 else float("inf")
+            )
+            # 裕量内：允许抬冷水（查表方向）+ 降泵，挤出正节能
+            if finetune > 0:
+                offsets = sorted(
+                    {
+                        round(base_offset, 3),
+                        0.0,
+                        round(finetune * 0.5, 3),
+                        round(finetune, 3),
+                        round(-finetune * 0.5, 3),
+                    }
+                )
+            else:
+                offsets = [round(base_offset, 3)]
+
+        def _try(trial_src: dict[str, float | int]) -> None:
+            nonlocal best, best_power, best_margin, best_indoor
+            trial = self._finalize_control_params(data, trial_src)
+            try:
+                bd = self._predict_with_context(data, trial)
+            except Exception:
+                return
+            margin = self._constraints.comfort_margin_penalty(
+                bd.predicted_indoor_temp, outdoor, measured_indoor
+            )
+            if not need_recovery and not _acceptable(bd.predicted_indoor_temp):
+                return
+            if bd.total_power > power_cap + 1e-6:
+                return
+            if need_recovery:
+                below_ceiling = bd.predicted_indoor_temp <= ceiling + 1e-9
+                best_below = best_indoor <= ceiling + 1e-9
+                # 先抢回天花板以下，再比裕量惩罚/功耗
+                if below_ceiling and not best_below:
+                    best = trial
+                    best_power = bd.total_power
+                    best_margin = margin
+                    best_indoor = float(bd.predicted_indoor_temp)
+                    return
+                if below_ceiling == best_below:
+                    if margin < best_margin - 1e-9 or (
+                        abs(margin - best_margin) <= 1e-9
+                        and bd.total_power < best_power - 1e-6
+                    ):
+                        best = trial
+                        best_power = bd.total_power
+                        best_margin = margin
+                        best_indoor = float(bd.predicted_indoor_temp)
+                return
+            power_better = bd.total_power < best_power - 1e-6
+            power_tie = abs(bd.total_power - best_power) <= 0.05
+            pumps_lower = (
+                float(trial.get("chilled_pump_freq", base_chp))
+                + float(trial.get("cooling_pump_freq", base_cwp))
+                < float(best.get("chilled_pump_freq", base_chp))
+                + float(best.get("cooling_pump_freq", base_cwp))
+                - 1e-6
+            )
+            # 功耗接近时：优先更靠近安全目标（更远离 26℃ 硬上限）
+            target = self._constraints.safety_indoor_target(
+                outdoor, measured_indoor
+            )
+            indoor_safer = abs(bd.predicted_indoor_temp - target) < abs(
+                best_indoor - target
+            ) - 1e-9
+            if power_better or (power_tie and (pumps_lower or indoor_safer)):
+                best = trial
+                best_power = bd.total_power
+                best_indoor = float(bd.predicted_indoor_temp)
+
+        # 恢复态：少量“双泵同升 + 更冷冷水”组合包（负荷定额不动）
+        if need_recovery:
+            for bump in (0.0, 2.0, 5.0):
+                chp = round(min(chp_hi, base_chp + bump), 2)
+                cwp = round(min(cwp_hi, base_cwp + bump), 2)
+                for offset in offsets[:2]:
+                    trial = dict(params)
+                    trial["chilled_water_temp_offset"] = offset
+                    trial["chiller_load_pct"] = base_load
+                    trial["chilled_pump_freq"] = chp
+                    trial["cooling_pump_freq"] = cwp
+                    _try(trial)
+
+        def _run_coord_search() -> None:
+            # 1) 先只动冷水/负荷（次数少）
+            for offset in offsets:
+                for load_delta in load_deltas:
+                    trial = dict(params)
+                    trial["chilled_water_temp_offset"] = offset
+                    trial["chiller_load_pct"] = base_load + load_delta
+                    trial["chilled_pump_freq"] = float(
+                        best.get("chilled_pump_freq", base_chp)
+                    )
+                    trial["cooling_pump_freq"] = float(
+                        best.get("cooling_pump_freq", base_cwp)
+                    )
+                    _try(trial)
+
+            # 2) 坐标下降：交替调整冷冻泵、冷却泵
+            for _ in range(2):
+                cur_cwp = float(best.get("cooling_pump_freq", base_cwp))
+                cur_off = float(best.get("chilled_water_temp_offset", base_offset))
+                cur_load = float(best.get("chiller_load_pct", base_load))
+                for chp in chp_list:
+                    trial = dict(params)
+                    trial["chilled_water_temp_offset"] = cur_off
+                    trial["chiller_load_pct"] = cur_load
+                    trial["chilled_pump_freq"] = chp
+                    trial["cooling_pump_freq"] = cur_cwp
+                    _try(trial)
+                cur_chp = float(best.get("chilled_pump_freq", base_chp))
+                cur_off = float(best.get("chilled_water_temp_offset", base_offset))
+                cur_load = float(best.get("chiller_load_pct", base_load))
+                for cwp in cwp_list:
+                    trial = dict(params)
+                    trial["chilled_water_temp_offset"] = cur_off
+                    trial["chiller_load_pct"] = cur_load
+                    trial["chilled_pump_freq"] = cur_chp
+                    trial["cooling_pump_freq"] = cwp
+                    _try(trial)
+
+        _run_coord_search()
+
+        # 两阶段：恢复成功后，同一轮立刻切换节能相（降泵/抬冷水），
+        # 避免多轮闭环一直停在“恢复态、越寻越费”。
+        if need_recovery and _acceptable(best_indoor):
+            need_recovery = False
+            base_chp = float(best.get("chilled_pump_freq", base_chp))
+            base_cwp = float(best.get("cooling_pump_freq", base_cwp))
+            base_load = float(best.get("chiller_load_pct", base_load))
+            base_offset = float(best.get("chilled_water_temp_offset", base_offset))
+            chp_list = _sparse_freqs(base_chp, chp_lo, chp_hi, down=True)
+            cwp_list = _sparse_freqs(base_cwp, cwp_lo, cwp_hi, down=True)
+            power_cap = (
+                measured_total + 0.5 if measured_total > 1e-6 else float("inf")
+            )
+            if finetune > 0:
+                offsets = sorted(
+                    {
+                        round(base_offset, 3),
+                        0.0,
+                        round(finetune * 0.5, 3),
+                        round(finetune, 3),
+                        round(-finetune * 0.5, 3),
+                    }
+                )
+            else:
+                offsets = [round(base_offset, 3)]
+            _run_coord_search()
 
         return best
 
@@ -990,7 +1207,7 @@ class PSOOptimizer:
         现场室温未舒适时：仍允许冷水查表±微调纠偏，但主机/泵保持当前。
         已舒适但无节能（或预测越裕量）：主机/泵/冷水全部粘住当前，禁止越调越费电。
         """
-        measured_indoor = float(data.indoor_temp or 0.0)
+        measured_indoor = control_indoor_temp(data)
         outdoor_temp = float(data.outdoor_temp or 30.0)
         count_keys = ("chilled_pump_count", "cooling_pump_count", "cooling_tower_count")
         try:
@@ -1025,9 +1242,27 @@ class PSOOptimizer:
         candidate_improves_margin = (
             candidate_margin_penalty < current_margin_penalty - 1e-6
         )
-        # 仅接受可观测的节能，过滤 PSO 小幅抖动造成的频率/冷水来回切换。
-        min_saving_kw = max(0.5, baseline_ref * 0.01)
+        # 仅接受可观测的节能；泵频相对当前下调时阈值放宽，允许小幅靠拢最低频率
+        pumps_trimmed = (
+            float(candidate.get("chilled_pump_freq", 0.0))
+            < float(current_params.get("chilled_pump_freq", 0.0)) - 0.05
+            or float(candidate.get("cooling_pump_freq", 0.0))
+            < float(current_params.get("cooling_pump_freq", 0.0)) - 0.05
+        )
+        min_saving_kw = (
+            max(0.2, baseline_ref * 0.002)
+            if pumps_trimmed
+            else max(0.5, baseline_ref * 0.01)
+        )
+        # 相对现场实测节能；若模型整体偏高，也接受“相对维持现状更省、且不超过实测过多”的降泵方案
         energy_saving = candidate_bd.total_power < baseline_ref - min_saving_kw
+        if not energy_saving and pumps_trimmed:
+            vs_current = candidate_bd.total_power < current_bd.total_power - min_saving_kw
+            not_much_worse_than_site = (
+                baseline_ref <= 1e-6
+                or candidate_bd.total_power <= baseline_ref * 1.01 + 0.5
+            )
+            energy_saving = vs_current and not_much_worse_than_site
 
         def _merge_keep_current(remark: str, keep_candidate_chw: bool) -> tuple[dict[str, float], str]:
             """回退主机负荷/泵频率；无节能时连冷水一并粘住当前，避免越调越费电。"""
@@ -1053,6 +1288,32 @@ class PSOOptimizer:
             merged = self._finalize_control_params(data, merged)
             return merged, remark
 
+        # 恢复裕量时：接受“泵频上调/负荷上调”的候选，即使暂无节能
+        pumps_boosted = (
+            float(candidate.get("chilled_pump_freq", 0.0))
+            > float(current_params.get("chilled_pump_freq", 0.0)) + 0.05
+            or float(candidate.get("cooling_pump_freq", 0.0))
+            > float(current_params.get("cooling_pump_freq", 0.0)) + 0.05
+        )
+        if (
+            site_comfortable
+            and not current_in_margin
+            and candidate_improves_margin
+            and pumps_boosted
+            and candidate_bd.total_power <= baseline_ref * 1.15 + 1e-6
+        ):
+            # 轻微越天花板：不允许靠大幅提频“硬恢复”，优先保住节能
+            ceiling = self._constraints.effective_comfort_ceiling(
+                outdoor_temp, measured_indoor
+            )
+            overshoot = max(0.0, float(current_bd.predicted_indoor_temp) - ceiling)
+            if overshoot <= 0.25 and candidate_bd.total_power > baseline_ref * 1.03 + 1e-6:
+                pass  # fall through to keep-current / other branches
+            else:
+                return self._finalize_control_params(data, candidate), (
+                    "当前室温贴近舒适上限，优先提频恢复安全距离"
+                )
+
         # 三条件同时满足：接受完整推荐方案
         if site_comfortable and candidate_in_margin and energy_saving:
             return self._finalize_control_params(data, candidate), ""
@@ -1060,18 +1321,35 @@ class PSOOptimizer:
         # 虽仍在 24~26℃，但已经越过预防性上限/下限时，舒适优先。
         # 允许推荐恢复裕量，不因短时功率上涨而继续维持在 26℃边缘。
         if site_comfortable and not current_in_margin and candidate_in_margin:
-            return self._finalize_control_params(data, candidate), (
-                "当前室温已越出舒适裕量，优先恢复温度安全距离"
+            ceiling = self._constraints.effective_comfort_ceiling(
+                outdoor_temp, measured_indoor
             )
+            overshoot = max(0.0, float(current_bd.predicted_indoor_temp) - ceiling)
+            # 轻微越界且候选明显更费电：不接受“为 0.2℃ 提频”
+            if not (
+                overshoot <= 0.25
+                and candidate_bd.total_power > baseline_ref * 1.03 + 1e-6
+            ):
+                return self._finalize_control_params(data, candidate), (
+                    "当前室温已越出舒适裕量，优先恢复温度安全距离"
+                )
         if (
             site_comfortable
             and not current_in_margin
             and self._constraints.is_in_comfort_band(candidate_bd.predicted_indoor_temp)
             and candidate_improves_margin
         ):
-            return self._finalize_control_params(data, candidate), (
-                "当前室温已接近舒适上限，优先向安全裕量回调"
+            ceiling = self._constraints.effective_comfort_ceiling(
+                outdoor_temp, measured_indoor
             )
+            overshoot = max(0.0, float(current_bd.predicted_indoor_temp) - ceiling)
+            if not (
+                overshoot <= 0.25
+                and candidate_bd.total_power > baseline_ref * 1.03 + 1e-6
+            ):
+                return self._finalize_control_params(data, candidate), (
+                    "当前室温已接近舒适上限，优先向安全裕量回调"
+                )
 
         # 室温未舒适：可保留冷水策略纠偏，但主机/泵不跟无节能方案走
         if not site_comfortable:
@@ -1112,13 +1390,13 @@ class PSOOptimizer:
         baseline_ref = (
             measured_total if measured_total > 1e-6 else cur_bd.total_power
         )
-        measured_indoor = float(data.indoor_temp or 25.0)
+        measured_indoor = control_indoor_temp(data) or 25.0
         reference_outdoor = float(
             getattr(data, "chiller_power_reference_outdoor_temp", 0.0) or 0.0
         )
-        weather_shifted = (
-            reference_outdoor > 0
-            and abs(outdoor - reference_outdoor) > 0.3
+        # 室外降温不应给“增功率恢复”开绿灯；仅升温才放宽功耗上限
+        outdoor_warmer = (
+            reference_outdoor > 0 and outdoor > reference_outdoor + 0.3
         )
         site_comfortable = self._constraints.is_in_comfort_band(measured_indoor)
         current_in_margin = self._constraints.is_within_comfort_margin(
@@ -1134,6 +1412,14 @@ class PSOOptimizer:
             candidate_margin_penalty < current_margin_penalty - 1e-6
         )
         reasons: list[str] = []
+        # 主机负荷定额：候选若偏离实测则回退
+        if load > 0 and abs(float(cand.get("chiller_load_pct", 0.0)) - load) > 0.05:
+            reasons.append("主机负荷定额不可调整")
+        tower_now = float(data.cooling_tower_fan_freq or 0.0)
+        if tower_now > 0 and abs(
+            float(cand.get("cooling_tower_fan_freq", 0.0)) - tower_now
+        ) > 0.05:
+            reasons.append("冷却塔频率定额不可调整")
         if float(cand.get("chiller_load_pct", 0.0)) > max_load + 1e-6:
             reasons.append("主机负荷超过设备上限")
         if not self._constraints.is_in_comfort_band(cand_bd.predicted_indoor_temp):
@@ -1154,15 +1440,25 @@ class PSOOptimizer:
         # 有实测总功率且当前仍在舒适裕量时：预测不得超过输入。
         # 若当前已越出裕量，允许有限增功率恢复舒适安全距离。
         if measured_total > 1e-6:
-            if current_in_margin and not weather_shifted:
+            if current_in_margin and not outdoor_warmer:
                 if cand_bd.total_power > measured_total + 0.5:
                     reasons.append("预测总功耗高于实测输入")
-            elif weather_shifted:
+            elif outdoor_warmer:
                 weather_allowance = max(measured_total * 0.15, 50.0)
                 if cand_bd.total_power > measured_total + weather_allowance:
                     reasons.append("室外工况变化所需功率超过安全增幅")
             else:
-                recovery_allowance = max(measured_total * 0.15, 50.0)
+                # 仅轻微越过预防天花板时，只允许很小增功率；避免为 0.2℃ 裕量把泵拉满
+                ceiling = self._constraints.effective_comfort_ceiling(
+                    outdoor, measured_indoor
+                )
+                overshoot = max(0.0, float(cur_bd.predicted_indoor_temp) - ceiling)
+                if overshoot <= 0.25:
+                    recovery_allowance = max(measured_total * 0.03, 12.0)
+                elif overshoot <= 0.5:
+                    recovery_allowance = max(measured_total * 0.08, 25.0)
+                else:
+                    recovery_allowance = max(measured_total * 0.15, 50.0)
                 if cand_bd.total_power > measured_total + recovery_allowance:
                     reasons.append("恢复舒适裕量所需功率超过安全增幅")
         elif site_comfortable and current_in_margin:
@@ -1288,22 +1584,24 @@ class PSOOptimizer:
             if breakdown:
                 from dataclasses import replace
 
+                # 锚定总功率时按比例缩放分项，保证分项之和 = 预测总功率
+                model_total = max(float(breakdown.total_power or 0.0), 1e-6)
+                scale = measured_total / model_total
                 breakdown = replace(
                     breakdown,
                     total_power=measured_total,
-                    chiller_power=float(data.chiller_power or breakdown.chiller_power),
-                    chilled_pump_power=float(
-                        data.chilled_pump_power or breakdown.chilled_pump_power
+                    chiller_power=round(float(breakdown.chiller_power) * scale, 4),
+                    chilled_pump_power=round(
+                        float(breakdown.chilled_pump_power) * scale, 4
                     ),
-                    cooling_pump_power=float(
-                        data.cooling_pump_power or breakdown.cooling_pump_power
+                    cooling_pump_power=round(
+                        float(breakdown.cooling_pump_power) * scale, 4
                     ),
-                    cooling_tower_fan_power=float(
-                        data.cooling_tower_fan_power
-                        or breakdown.cooling_tower_fan_power
+                    cooling_tower_fan_power=round(
+                        float(breakdown.cooling_tower_fan_power) * scale, 4
                     ),
-                    terminal_fan_power=float(
-                        data.terminal_fan_power or breakdown.terminal_fan_power
+                    terminal_fan_power=round(
+                        float(breakdown.terminal_fan_power) * scale, 4
                     ),
                 )
             if remark and "高于实测输入" not in remark:
@@ -1311,7 +1609,7 @@ class PSOOptimizer:
             elif not remark:
                 remark = "预测总功耗高于实测输入，已锚定输入功率"
 
-        measured_indoor = float(data.indoor_temp or 0.0)
+        measured_indoor = control_indoor_temp(data)
         display_indoor = (
             breakdown.predicted_indoor_temp if breakdown else 0.0
         )
@@ -1447,8 +1745,83 @@ class PSOOptimizer:
         except Exception:
             return 5
 
+    def _normalize_pump_powers_from_freq(self, data: DeviceData) -> DeviceData:
+        """忽略输入泵 kW，按 P=P_rated×(f/f_rated)³ 重写冷冻/冷却泵功率与总功率。"""
+        from app.services.power_baseline import scheme_max
+
+        rated_freq = float(getattr(data, "pump_rated_freq", 0.0) or 0.0) or 50.0
+        chp_unit = float(getattr(data, "chilled_pump_rated_power_kw", 0.0) or 0.0)
+        cwp_unit = float(getattr(data, "cooling_pump_rated_power_kw", 0.0) or 0.0)
+        chp_freq = float(data.chilled_pump_freq or 0.0)
+        cwp_freq = float(data.cooling_pump_freq or 0.0)
+        # 优先闭环/前端传入的开启台数；否则取允许方案最大台数（不是无脑装机全开）
+        chp_n = int(getattr(data, "chilled_pump_running_count", 0) or 0)
+        cwp_n = int(getattr(data, "cooling_pump_running_count", 0) or 0)
+        try:
+            from app.services.equipment_config import equipment_config_service
+
+            eq = equipment_config_service.get_config()
+            if chp_unit <= 0:
+                chp_unit = float(eq.chilled_pump.motor_power_kw or 0.0)
+            if cwp_unit <= 0:
+                cwp_unit = float(eq.cooling_pump.motor_power_kw or 0.0)
+            if chp_n <= 0 and chp_freq > 0:
+                chp_n = scheme_max(
+                    eq.chilled_pump.active_count_schemes, eq.chilled_pump.count
+                )
+            if cwp_n <= 0 and cwp_freq > 0:
+                cwp_n = scheme_max(
+                    eq.cooling_pump.active_count_schemes, eq.cooling_pump.count
+                )
+            chp_n = max(0, min(chp_n, int(eq.chilled_pump.count or chp_n)))
+            cwp_n = max(0, min(cwp_n, int(eq.cooling_pump.count or cwp_n)))
+        except Exception:
+            if chp_n <= 0 and chp_freq > 0:
+                chp_n = 1
+            if cwp_n <= 0 and cwp_freq > 0:
+                cwp_n = 1
+        if chp_freq <= 0:
+            chp_n = 0
+        if cwp_freq <= 0:
+            cwp_n = 0
+
+        chp_total = self._pump_power_with_rated(
+            chp_n, chp_unit, chp_freq, rated_freq
+        )
+        cwp_total = self._pump_power_with_rated(
+            cwp_n, cwp_unit, cwp_freq, rated_freq
+        )
+        total = (
+            float(data.chiller_power or 0.0)
+            + chp_total
+            + cwp_total
+            + float(data.cooling_tower_fan_power or 0.0)
+            + float(data.terminal_fan_power or 0.0)
+        )
+        return data.model_copy(
+            update={
+                "chilled_pump_power": round(chp_total, 3),
+                "cooling_pump_power": round(cwp_total, 3),
+                "chilled_pump_rated_power_kw": round(chp_unit, 3),
+                "cooling_pump_rated_power_kw": round(cwp_unit, 3),
+                "chilled_pump_running_count": int(chp_n),
+                "cooling_pump_running_count": int(cwp_n),
+                "pump_rated_freq": round(rated_freq, 3),
+                "total_power": round(total, 3) if total > 1e-6 else float(data.total_power or 0.0),
+            }
+        )
+
     @staticmethod
-    def _pump_power(kind: str, count: int, freq: float) -> float:
+    def _pump_power_with_rated(
+        count: int, rated_unit_kw: float, freq: float, rated_freq: float = 50.0
+    ) -> float:
+        count = max(int(count), 0)
+        f_rated = max(float(rated_freq or 50.0), 1e-6)
+        ratio = max(float(freq), 0.0) / f_rated
+        return max(float(rated_unit_kw), 0.0) * count * (ratio**3)
+
+    @staticmethod
+    def _pump_power(kind: str, count: int, freq: float, rated_freq: float = 50.0) -> float:
         """按推荐开启台数和频率计算水泵功率。"""
         try:
             from app.services.equipment_config import equipment_config_service
@@ -1456,7 +1829,8 @@ class PSOOptimizer:
             eq = equipment_config_service.get_config()
             pump = eq.chilled_pump if kind == "chilled" else eq.cooling_pump
             count = max(0, min(int(count), pump.count))
-            ratio = max(float(freq), 0.0) / 50.0
+            f_rated = max(float(rated_freq or 50.0), 1e-6)
+            ratio = max(float(freq), 0.0) / f_rated
             return count * pump.motor_power_kw * (ratio ** 3)
         except Exception:
             return 0.0

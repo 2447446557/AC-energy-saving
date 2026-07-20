@@ -30,11 +30,23 @@ _FIELD_ALIASES: dict[str, tuple[str, ...]] = {
     "outdoor_humidity": ("室外湿度", "室外湿度%", "环境湿度"),
     "indoor_temp": ("室内温度", "室内温度℃", "室内温度°C"),
     "indoor_humidity": ("室内湿度", "室内湿度%"),
-    "indoor_load": ("室内负荷", "室内负荷kw", "室内负荷kW", "负荷"),
+    # 勿用过于宽泛的「负荷」，以免误匹配导叶开度等列
+    "indoor_load": ("室内负荷", "室内负荷kw", "室内负荷kW", "冷负荷", "空调负荷"),
     "chiller_load": ("机组负载", "机组负荷", "机组负载%", "冷机负载"),
     "chiller_power": ("机组功率", "机组功率kw", "机组功率kW", "冷机功率"),
-    "chilled_water_temp": ("冷水出水温度", "冷冻水出水温度", "冷冻水温度"),
-    "cooling_water_temp": ("冷却水出水温度", "冷却水温度"),
+    "chilled_water_temp": (
+        "冷水出水温度",
+        "冷冻水出水温度",
+        "冷冻水温度",
+        "RA2冷冻出口温度",
+        "冷冻出口温度",
+    ),
+    "cooling_water_temp": (
+        "冷却水出水温度",
+        "冷却水温度",
+        "RA2冷却出口温度",
+        "冷却出口温度",
+    ),
     "chilled_pump_freq": ("当前冷冻泵频率", "冷冻泵频率", "冷冻泵频率hz"),
     "chilled_pump_power": ("当前冷冻泵功率", "冷冻泵功率"),
     "cooling_pump_freq": ("当前冷却泵频率", "冷却泵频率", "冷却泵频率hz"),
@@ -49,7 +61,7 @@ _STATUS_ALIASES = ("运行状态", "寻优运行状态", "设备状态", "状态
 _SITE_DEFAULTS_FALLBACK = {
     "outdoor_temp": 30.0,
     "outdoor_humidity": 60.0,
-    "indoor_temp": 27.0,
+    "indoor_temp": 25.0,
     "indoor_humidity": 55.0,
     "terminal_fan_power": 0.0,
 }
@@ -490,6 +502,44 @@ def _estimate_chiller_power(load_pct: float, cfg: Any) -> float:
     return round(thermal_kw / cop, 3) if thermal_kw > 0 else 0.0
 
 
+def _estimate_indoor_load_kw(
+    row: pd.Series,
+    df: pd.DataFrame,
+    eq: Any | None,
+    fallback_load_pct: float = 0.0,
+) -> float:
+    """按运行中冷水机组估算室内冷负荷（kW）= Σ 额定制冷量 × 负载%/100。"""
+    total = 0.0
+    cfg_units = _chiller_cfg_units(eq)
+    any_running = False
+    for prefix in _discover_chiller_prefixes(df):
+        if not _is_chiller_running(row, df, prefix):
+            continue
+        any_running = True
+        load_pct = _first_number(row, _chiller_load_columns(df, prefix))
+        if load_pct <= 0:
+            continue
+        cfg_unit = _match_chiller_cfg(prefix, cfg_units, eq)
+        if cfg_unit is not None:
+            capacity = float(getattr(cfg_unit, "rated_capacity_kw", 0.0) or 0.0)
+        elif eq is not None:
+            capacity = float(eq.chiller.rated_capacity_kw or 0.0)
+        else:
+            capacity = 516.2
+        if capacity <= 0:
+            capacity = 516.2
+        total += capacity * load_pct / 100.0
+    if total > 0:
+        return total
+    if not any_running and fallback_load_pct <= 0:
+        return 0.0
+    load_pct = fallback_load_pct
+    if load_pct <= 0:
+        return 0.0
+    capacity = float(eq.chiller.rated_capacity_kw) if eq is not None else 516.2
+    return capacity * load_pct / 100.0
+
+
 def build_equipment_units_from_config(
     device_data: dict[str, Any],
     eq: Any | None = None,
@@ -653,6 +703,9 @@ def get_manual_input_config_defaults() -> dict[str, Any]:
         defaults["indoor_load"] = round(thermal_kw, 3)
         defaults["chilled_pump_freq"] = eq.chilled_pump.min_freq
         defaults["cooling_pump_freq"] = eq.cooling_pump.min_freq
+        # 0 = 不额外抬高寻优下限，仅用「设备min ∪ 分档地板」
+        defaults["chilled_pump_min_freq"] = 0.0
+        defaults["cooling_pump_min_freq"] = 0.0
         defaults["chilled_pump_power"] = round(
             eq.chilled_pump.count
             * _pump_power_at_freq(eq.chilled_pump.motor_power_kw, eq.chilled_pump.min_freq),
@@ -911,10 +964,19 @@ def apply_manual_input_config_defaults(
         if _is_missing_scalar(device_data.get("indoor_load")):
             load_pct = float(device_data["chiller_load"])
             device_data["indoor_load"] = round(
-                eq.chiller.rated_capacity_kw * eq.chiller.max_load_rate * load_pct / 100.0,
+                eq.chiller.rated_capacity_kw * load_pct / 100.0,
                 3,
             )
             filled_fields.append("indoor_load")
+            if field_sources is not None:
+                mark_field(
+                    field_sources,
+                    "indoor_load",
+                    device_data["indoor_load"],
+                    "equipment_config",
+                    detail="额定制冷量×机组负载%/100（估算）",
+                    substituted=True,
+                )
 
     enriched_units = _enrich_equipment_units_from_config(equipment_units, device_data, eq)
     enriched_units = _align_units_to_device_scalars(device_data, enriched_units)
@@ -1151,6 +1213,22 @@ def _derive_site_fields(
 
     evaporating_temp = _first_number(row, _columns_matching(df, chiller_prefix, "蒸发温度"))
     condensing_temp = _first_number(row, _columns_matching(df, chiller_prefix, "冷凝温度"))
+    ra2_chilled_out_cols = (
+        _columns_matching(df, "RA2", "冷冻出口")
+        or _columns_matching(df, "冷冻出口温度")
+        or _columns_matching(df, "冷冻出口")
+    )
+    ra2_cooling_out_cols = (
+        _columns_matching(df, "RA2", "冷却出口")
+        or _columns_matching(df, "冷却出口温度")
+        or _columns_matching(df, "冷却出口")
+    )
+    # 排除回水列，避免「冷却回水」误入「冷却出口」
+    ra2_cooling_out_cols = [
+        c for c in ra2_cooling_out_cols if "回水" not in str(c)
+    ]
+    ra2_chilled_out = _first_number(row, ra2_chilled_out_cols)
+    ra2_cooling_out = _first_number(row, ra2_cooling_out_cols)
     return_water_temp = _first_number(
         row,
         _columns_matching(df, "冷水总回水温度")
@@ -1158,7 +1236,18 @@ def _derive_site_fields(
         or _columns_matching(df, "回水温度"),
     )
     if not _excel_has_value(row, column_map, "chilled_water_temp"):
-        if return_water_temp:
+        if ra2_chilled_out:
+            device_data["chilled_water_temp"] = ra2_chilled_out
+            mark_field(
+                field_sources,
+                "chilled_water_temp",
+                ra2_chilled_out,
+                "excel_multi_header",
+                excel_column=ra2_chilled_out_cols[0] if ra2_chilled_out_cols else None,
+                detail="RA2 冷冻出口温度",
+                substituted=True,
+            )
+        elif return_water_temp:
             device_data["chilled_water_temp"] = max(return_water_temp - 5.0, 5.0)
             rw_cols = _columns_matching(df, "冷水总回水温度") or _columns_matching(
                 df, "回水温度"
@@ -1184,18 +1273,30 @@ def _derive_site_fields(
                 detail="无出水/回水列，暂用蒸发温度近似",
                 substituted=True,
             )
-    if not _excel_has_value(row, column_map, "cooling_water_temp") and condensing_temp:
-        device_data["cooling_water_temp"] = condensing_temp
-        cond_cols = _columns_matching(df, chiller_prefix, "冷凝温度")
-        mark_field(
-            field_sources,
-            "cooling_water_temp",
-            condensing_temp,
-            "approximation",
-            excel_column=cond_cols[0] if cond_cols else None,
-            detail="无冷却水出水列，暂用冷凝温度近似",
-            substituted=True,
-        )
+    if not _excel_has_value(row, column_map, "cooling_water_temp"):
+        if ra2_cooling_out:
+            device_data["cooling_water_temp"] = ra2_cooling_out
+            mark_field(
+                field_sources,
+                "cooling_water_temp",
+                ra2_cooling_out,
+                "excel_multi_header",
+                excel_column=ra2_cooling_out_cols[0] if ra2_cooling_out_cols else None,
+                detail="RA2 冷却出口温度",
+                substituted=True,
+            )
+        elif condensing_temp:
+            device_data["cooling_water_temp"] = condensing_temp
+            cond_cols = _columns_matching(df, chiller_prefix, "冷凝温度")
+            mark_field(
+                field_sources,
+                "cooling_water_temp",
+                condensing_temp,
+                "approximation",
+                excel_column=cond_cols[0] if cond_cols else None,
+                detail="无冷却水出水列，暂用冷凝温度近似",
+                substituted=True,
+            )
 
     chilled_freq = _avg_nonzero(row, _columns_matching(df, "冷冻泵", "频率"))
     chilled_power = _sum_numbers(row, _pump_power_columns(df, "冷冻泵"))
@@ -1250,38 +1351,35 @@ def _derive_site_fields(
         )
 
     if not _excel_has_value(row, column_map, "cooling_tower_fan_freq"):
+        # 现场冷却塔为定频，Excel 通常无频率列：统一按 50Hz（或设备配置 fixed_freq）
         fixed_tower_freq = 50.0
         if eq:
             enabled = [tower for tower in eq.cooling_towers if tower.enabled]
             if enabled:
-                fixed_tower_freq = enabled[0].fixed_freq
+                fixed_tower_freq = float(enabled[0].fixed_freq or 50.0)
         device_data["cooling_tower_fan_freq"] = fixed_tower_freq
         mark_field(
             field_sources,
             "cooling_tower_fan_freq",
             fixed_tower_freq,
             "equipment_config",
-            detail="Excel无塔频率列，用设备配置定频",
+            detail="冷却塔定频（默认 50Hz）",
             substituted=True,
         )
 
-    if (
-        device_data.get("indoor_load", 0.0) == 0
-        and not _excel_has_value(row, column_map, "indoor_load")
-        and chiller_load
-        and eq
-    ):
-        device_data["indoor_load"] = (
-            eq.chiller.rated_capacity_kw * eq.chiller.max_load_rate * chiller_load / 100.0
-        )
-        mark_field(
-            field_sources,
-            "indoor_load",
-            device_data["indoor_load"],
-            "equipment_config",
-            detail="额定制冷量×负荷上限×机组负载%",
-            substituted=True,
-        )
+    # 室内负荷：无「室内负荷」列时，按运行中机组 额定制冷量×负载% 估算
+    if not _excel_has_value(row, column_map, "indoor_load"):
+        estimated_load = _estimate_indoor_load_kw(row, df, eq, chiller_load)
+        if estimated_load > 0:
+            device_data["indoor_load"] = round(estimated_load, 3)
+            mark_field(
+                field_sources,
+                "indoor_load",
+                device_data["indoor_load"],
+                "equipment_config",
+                detail="运行机组额定制冷量×电机功率百分比/100（估算室内冷负荷）",
+                substituted=True,
+            )
 
     device_data["total_power"] = (
         device_data.get("chiller_power", 0.0)

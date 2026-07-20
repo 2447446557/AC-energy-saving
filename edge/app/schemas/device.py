@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class DeviceData(BaseModel):
@@ -22,7 +22,9 @@ class DeviceData(BaseModel):
     outdoor_humidity: float = 0.0  # 室外湿度（%）
 
     # 室内环境
-    indoor_temp: float = 0.0  # 室内温度（℃）
+    indoor_temp: float = 0.0  # 室内温度（℃）；单点时使用
+    # 多末端温度列表（如整栋楼数百个温控点）。非空时寻优舒适约束取聚合控制温度（默认最高温）。
+    indoor_temps: list[float] = Field(default_factory=list)
     indoor_humidity: float = 0.0  # 室内湿度（%）
     indoor_load: float = 0.0  # 室内负荷（kW）
 
@@ -40,11 +42,23 @@ class DeviceData(BaseModel):
 
     # 冷冻泵
     chilled_pump_freq: float = 0.0  # 冷冻泵频率（Hz）
-    chilled_pump_power: float = 0.0  # 冷冻泵功率（kW）
+    chilled_pump_power: float = 0.0  # 冷冻泵功率（kW，入口会按频率立方律重算）
+    # 单台额定功率（kW）；>0 时寻优按 P = P_rated×(f/f_rated)³，覆盖设备配置额定
+    chilled_pump_rated_power_kw: float = 0.0
+    # 当前开启台数；0 表示由设备方案推断（不强制等于装机台数）
+    chilled_pump_running_count: int = 0
+    # 本次寻优允许的最低频率（Hz）；>0 时抬高搜索/钳位下限，不得低于该值
+    chilled_pump_min_freq: float = 0.0
 
     # 冷却泵
     cooling_pump_freq: float = 0.0  # 冷却泵频率（Hz）
-    cooling_pump_power: float = 0.0  # 冷却泵功率（kW）
+    cooling_pump_power: float = 0.0  # 冷却泵功率（kW，入口会按频率立方律重算）
+    cooling_pump_rated_power_kw: float = 0.0  # 单台额定功率（kW）
+    cooling_pump_running_count: int = 0
+    cooling_pump_min_freq: float = 0.0
+
+    # 水泵额定频率（Hz），相似定律分母；0 表示用模型默认 50 Hz
+    pump_rated_freq: float = 0.0
 
     # 冷却塔风机
     cooling_tower_fan_freq: float = 0.0  # 冷却塔风机频率（Hz）

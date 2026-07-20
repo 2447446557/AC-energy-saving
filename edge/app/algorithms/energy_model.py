@@ -10,19 +10,26 @@
 各部件建模思路（工业近似，非黑箱，全部显性可解释）：
 
 1. 冷水机组（主耗能，占比最大）
-   采用「卡诺效率修正」COP 模型：
-       COP = eta_chiller * T_evap / (T_cond - T_evap)
+   采用「卡诺效率修正 COP × 部分负荷 EIR 曲线」：
+       COP_carnot = eta_chiller * T_evap / (T_cond - T_evap)
+       P = (Q_evap / COP_carnot) * (EIRFPLR(PLR) / PLR)
    - 提高冷水出水温度 → 蒸发温度升高 → COP 升高 → 机组能耗下降；
    - 提高冷却塔风机频率 / 冷却泵流量 → 冷却水温下降 → 冷凝温度下降
-     → COP 升高 → 机组能耗下降。
+     → COP 升高 → 机组能耗下降；
+   - 极低部分负荷时 EIRFPLR/PLR > 1，反映离心机低负荷效率变差。
    机组制冷量 = 蒸发侧换热量；冷凝侧排热 = 制冷量 + 压缩机功耗（能量守恒），
    由于冷却水温反过来依赖排热量，采用少量定点迭代求稳态解。
+   有铭牌额定冷量/功率时，将 eta_chiller 校准到设计工况附近。
 
-2. 冷冻泵 / 冷却泵 / 冷却塔风机
-   遵循风机水泵「相似定律（affinity law）」：功率 ∝ 频率³。
-   降频节能显著，但会削弱换热能力（流量/风量下降），需与机组能耗权衡。
+2. 冷冻泵 / 冷却泵
+   按水泵「相似定律」由频率反推功率：P = P_rated × (f / f_rated)³。
+   降频节能显著，但会削弱流量/换热能力，需与机组能耗权衡。
 
-3. 末端风机
+3. 冷却塔风机
+   现场为定频运行：功率取开启台数对应电机额定 kW 之和（或方案定额），
+   不随频率做立方律缩放；频率字段仅表示定频点位（如 50 Hz）。
+
+4. 末端风机
    近似恒定负荷，取实测值（无实测时用额定值）。
 
 多机组并联
@@ -100,6 +107,7 @@ class EnergyModelParams:
     """
 
     # 冷水机组卡诺效率修正系数（实际 COP / 卡诺 COP），典型 0.4~0.6
+    # 有铭牌额定冷量/电功率时会按设计工况自动校准（仍钳在合理区间）。
     eta_chiller: float = 0.50
     # 蒸发器换热温差（冷媒蒸发温度低于冷水出水温度，℃）
     evap_approach: float = 2.0
@@ -118,6 +126,8 @@ class EnergyModelParams:
 
     # 供冷能力标定：等效机组在“冷水7℃、冷冻泵50Hz”下的额定制冷量（kW）
     design_cooling_capacity: float = 120.0
+    # 铭牌额定电功率合计（kW）；>0 时用于校准 eta_chiller
+    design_chiller_power: float = 0.0
     # 室内温度对供冷缺口的响应增益（kW/℃），越小表示越敏感
     indoor_gain: float = 25.0
     # 供冷充足时的室内基准温度（℃）
@@ -130,8 +140,19 @@ class EnergyModelParams:
     # 已运行主机的最小输入功率占实测总主机功率比例。
     # 防止闭环将模型预测反复当实测锚点后，出现“两台主机合计几十 kW”的非物理结果。
     min_running_chiller_power_ratio: float = 0.65
-    # 相对实测功率的最大允许涨幅（辅机相似定律缩放上限）
-    max_component_power_rise_pct: float = 0.15
+    # 相对实测功率的最大允许涨幅（允许室外/负荷驱动的真实升功率）
+    max_component_power_rise_pct: float = 0.30
+    # 部分负荷 EIR 曲线：P/P_full = a + b·PLR + c·PLR² + d·PLR³
+    # 默认近似离心机：低负荷时比功率升高（EIRFPLR/PLR > 1）
+    plr_eir_a: float = 0.338
+    plr_eir_b: float = 0.284
+    plr_eir_c: float = 0.378
+    plr_eir_d: float = 0.0
+    # 是否启用部分负荷效率修正
+    enable_part_load_curve: bool = True
+    # 铭牌校准用的设计工况（冷水出水 / 冷却水进水，℃）
+    design_chw_temp: float = 7.0
+    design_cw_temp: float = 30.0
 
     # 频率额定基准（Hz），相似定律归一化用
     freq_rated: float = 50.0
@@ -175,12 +196,17 @@ class ACEnergyModel:
         em = (cfg.get("energy_model", {}) or {}) if isinstance(cfg, dict) else {}
         # 允许从配置覆盖任意字段，未配置项用默认值
         base = EnergyModelParams()
+        bool_fields = {"enable_part_load_curve"}
         for f in EnergyModelParams.__dataclass_fields__:
-            if f in em:
-                try:
+            if f not in em:
+                continue
+            try:
+                if f in bool_fields:
+                    setattr(base, f, bool(em[f]))
+                else:
                     setattr(base, f, float(em[f]))
-                except (TypeError, ValueError):
-                    logger.warning(f"能耗模型参数 {f} 配置非法，使用默认值")
+            except (TypeError, ValueError):
+                logger.warning(f"能耗模型参数 {f} 配置非法，使用默认值")
         strategy = (cfg.get("strategy", {}) or {}) if isinstance(cfg, dict) else {}
         indoor = (strategy.get("indoor_temp", {}) or {}) if isinstance(strategy, dict) else {}
         constraints = (cfg.get("constraints", {}) or {}) if isinstance(cfg, dict) else {}
@@ -199,12 +225,20 @@ class ACEnergyModel:
             ("outdoor_load_coupling", "outdoor_load_coupling"),
             ("min_running_chiller_power_ratio", "min_running_chiller_power_ratio"),
             ("max_component_power_rise_pct", "max_component_power_rise_pct"),
+            ("plr_eir_a", "plr_eir_a"),
+            ("plr_eir_b", "plr_eir_b"),
+            ("plr_eir_c", "plr_eir_c"),
+            ("plr_eir_d", "plr_eir_d"),
+            ("design_chw_temp", "design_chw_temp"),
+            ("design_cw_temp", "design_cw_temp"),
         ):
             if key in em:
                 try:
                     base = replace(base, **{field_name: float(em[key])})
                 except (TypeError, ValueError):
                     pass
+        if "enable_part_load_curve" in em:
+            base = replace(base, enable_part_load_curve=bool(em["enable_part_load_curve"]))
         self.p = base
 
     # ---------- IEnergyModel 协议实现 ----------
@@ -240,6 +274,13 @@ class ACEnergyModel:
                 cooling_pump_count=cooling_pump_count,
                 tower_count=tower_count,
             )
+        # 寻优输入可覆盖水泵额定功率/额定频率：P = P_rated × (f/f_rated)³
+        p = self._apply_pump_rated_overrides(
+            p,
+            data,
+            chilled_pump_count=chilled_pump_count,
+            cooling_pump_count=cooling_pump_count,
+        )
 
         # --- 读取控制变量（全部净化为有限值；缺省回退到实测值，再回退安全默认） ---
         tchw = _finite(params.get("chilled_water_temp"), _finite(data.chilled_water_temp, 7.0))
@@ -286,8 +327,21 @@ class ACEnergyModel:
             p.design_cooling_capacity * temp_factor * flow_chw_ratio * load_factor
         )
         q_evap = min(delivered, demand)
+        # 部分负荷率：相对“当前水温/流量下满负荷供冷能力”（不含负荷率锁）
+        q_full_at_conds = max(
+            p.design_cooling_capacity * temp_factor * flow_chw_ratio,
+            1e-6,
+        )
+        plr = min(max(q_evap / q_full_at_conds, 0.0), 1.0)
 
-        measured_indoor = _finite(data.indoor_temp, p.indoor_base_temp)
+        try:
+            from app.algorithms.indoor_temp import control_indoor_temp
+
+            measured_indoor = _finite(
+                control_indoor_temp(data), p.indoor_base_temp
+            )
+        except Exception:
+            measured_indoor = _finite(data.indoor_temp, p.indoor_base_temp)
         predicted_indoor = self._predict_indoor_temp(
             measured_indoor=measured_indoor,
             demand=demand,
@@ -313,10 +367,11 @@ class ACEnergyModel:
             f_cp=f_cp,
             f_fan=f_fan,
             wet_bulb=wet_bulb,
+            plr=plr,
             p=p,
         )
 
-        # --- 辅机能耗：Excel 有实测则按相似定律缩放，否则用配置额定功率 ---
+        # --- 辅机能耗：冷冻/冷却泵按额定×(f/f_rated)³；冷却塔按方案定额 ---
         chilled_pump_power = self._predict_pump_power(
             data,
             params,
@@ -393,29 +448,67 @@ class ACEnergyModel:
             return measured_indoor
 
         capacity_ratio = delivered_capacity / max(demand, 1.0)
-        if capacity_ratio + 1e-6 < 0.98:
+        indoor_span = max(hi - lo, 1e-6)
+        # 安全距离：目标约 hi-0.7（26→25.3），预测上限约 hi-0.6（≤25.4）
+        safety_target = hi - 0.7
+        safety_ceiling = hi - 0.6
+        at_hi = measured_indoor >= hi - 0.05
+        above_safety = measured_indoor >= safety_ceiling - 1e-9
+        near_hi = measured_indoor >= hi - 0.4
+
+        # 贴近硬上限或已越过安全天花板：有供冷能力时主动拉回安全目标区
+        if (at_hi or above_safety) and demand > 1e-6:
+            cool_strength = min(
+                max(control_effect, 0.0) * min(max(capacity_ratio, 0.0), 1.25),
+                1.25,
+            )
+            pull = min(0.95, 0.55 + 0.40 * cool_strength)
+            predicted = measured_indoor - (measured_indoor - safety_target) * pull
+            predicted -= max(0.0, 0.5 - chw_norm) * 0.20 * min(cool_strength, 1.0)
+            predicted = min(safety_ceiling, max(lo, predicted))
+        elif capacity_ratio + 1e-6 < 0.98:
             unmet = max(demand - delivered_capacity, 0.0)
             if lo <= measured_indoor <= hi:
-                # 现场已舒适：实测优先，避免高负荷+高水温时误判“严重欠供冷”
                 drift = min(unmet / max(p.indoor_gain, 1e-6), 0.35)
-                predicted = measured_indoor + drift
-                predicted = min(hi, max(lo, predicted))
+                # 已在安全区内：禁止向 26℃ 爬升；轻微欠供冷也粘住或略漂
+                if measured_indoor <= safety_ceiling:
+                    if capacity_ratio >= 0.70:
+                        predicted = measured_indoor
+                    else:
+                        soft = min(drift, 0.05) * max(0.0, 0.85 - capacity_ratio)
+                        predicted = min(safety_ceiling, measured_indoor + soft)
+                    predicted = min(safety_ceiling, max(lo, predicted))
+                elif near_hi:
+                    relief = min(max(control_effect, 0.0), 1.0) * min(
+                        capacity_ratio / 0.98, 1.0
+                    )
+                    predicted = measured_indoor + drift * (1.0 - 0.90 * relief)
+                    if capacity_ratio >= 0.80:
+                        predicted -= (measured_indoor - safety_target) * 0.45 * relief
+                    predicted = min(safety_ceiling, max(lo, predicted))
+                else:
+                    predicted = min(safety_ceiling, measured_indoor + drift * 0.2)
+                    predicted = min(hi, max(lo, predicted))
             else:
                 predicted = measured_indoor + unmet / max(p.indoor_gain, 1e-6)
         else:
-            indoor_span = max(hi - lo, 1e-6)
-            # 供冷富余度：capacity_ratio > 1 表示供冷充足，富余越多室温越低
             surplus = min(max(capacity_ratio - 1.0, 0.0), 1.0)
-            # chw 对室温的影响：chw 越低，蒸发温度越低，室温越低
             chw_effect = (chw_norm - 0.5) * indoor_span * 0.5
-            # 供冷富余对室温的下压：富余越多（负载高/流量大/水温低），室温越低
             surplus_effect = -surplus * indoor_span * 0.4 * max(control_effect, 0.1)
             equilibrium = mid + chw_effect + surplus_effect
+            # 平衡点也钳在安全天花板以下，避免“舒适带内”预测贴 26
+            equilibrium = min(safety_ceiling, max(lo, equilibrium))
 
             if lo <= measured_indoor <= hi:
-                blend = 0.35
-                predicted = (1.0 - blend) * measured_indoor + blend * equilibrium
-                predicted = min(hi + 0.5, max(lo - 0.5, predicted))
+                if measured_indoor > safety_target:
+                    blend = 0.45 if near_hi else 0.30
+                    predicted = (1.0 - blend) * measured_indoor + blend * min(
+                        equilibrium, safety_target
+                    )
+                else:
+                    blend = 0.12
+                    predicted = (1.0 - blend) * measured_indoor + blend * equilibrium
+                predicted = min(safety_ceiling, max(lo - 0.5, predicted))
             else:
                 surplus_ratio = min(
                     max((capacity_ratio - 1.0) / max(capacity_ratio, 1.0), 0.0), 1.0
@@ -423,7 +516,7 @@ class ACEnergyModel:
                 relief = control_effect * surplus_ratio
 
                 if measured_indoor > hi:
-                    predicted = measured_indoor - (measured_indoor - mid) * relief
+                    predicted = measured_indoor - (measured_indoor - safety_target) * relief
                     predicted = max(lo, predicted)
                 elif measured_indoor < lo:
                     predicted = measured_indoor + (mid - measured_indoor) * relief
@@ -435,6 +528,8 @@ class ACEnergyModel:
         if (
             outdoor_stress > 0
             and capacity_ratio < 1.05
+            and not at_hi
+            and not above_safety
             and not (lo <= measured_indoor <= hi)
         ):
             tightness = min(max(1.05 - capacity_ratio, 0.0) / 0.05, 1.0)
@@ -445,10 +540,11 @@ class ACEnergyModel:
                 * (1.0 - 0.5 * control_effect)
             )
 
-        if lo <= measured_indoor <= hi:
-            # 允许少量越界（±1℃）以保留梯度信号，使 comfort_margin_penalty 能区分
-            # "安全中间值"与"危险边界值"，避免 PSO 在边界处梯度消失。
-            predicted = min(hi + 1.0, max(lo - 1.0, predicted))
+        # 有供冷时预测室温不得贴硬上限；强制落在安全距离内
+        if capacity_ratio >= 0.75 or control_effect >= 0.35:
+            predicted = min(safety_ceiling, max(lo, predicted))
+        elif lo <= measured_indoor <= hi:
+            predicted = min(hi - 0.15, max(lo - 1.0, predicted))
         else:
             predicted = min(predicted, hi + 1.0)
 
@@ -466,6 +562,35 @@ class ACEnergyModel:
         span = max(chw_hi - chw_lo, 1e-6)
         ratio = max((chw_hi - tchw) / span, 0.0)
         return 0.5 + 0.5 * min(ratio, 1.0)
+
+    def _apply_pump_rated_overrides(
+        self,
+        p: EnergyModelParams,
+        data: DeviceData,
+        *,
+        chilled_pump_count: int | None,
+        cooling_pump_count: int | None,
+    ) -> EnergyModelParams:
+        """用寻优输入中的额定功率/频率覆盖设备配置额定值。"""
+        updates: dict = {}
+        rated_freq = _finite(getattr(data, "pump_rated_freq", 0.0), 0.0)
+        if rated_freq > 0:
+            updates["freq_rated"] = rated_freq
+        chp_n = max(
+            int(chilled_pump_count if chilled_pump_count is not None else p.chilled_pump_count),
+            0,
+        )
+        cwp_n = max(
+            int(cooling_pump_count if cooling_pump_count is not None else p.cooling_pump_count),
+            0,
+        )
+        chp_unit = _finite(getattr(data, "chilled_pump_rated_power_kw", 0.0), 0.0)
+        cwp_unit = _finite(getattr(data, "cooling_pump_rated_power_kw", 0.0), 0.0)
+        if chp_unit > 0 and chp_n > 0:
+            updates["chilled_pump_rated"] = chp_unit * chp_n
+        if cwp_unit > 0 and cwp_n > 0:
+            updates["cooling_pump_rated"] = cwp_unit * cwp_n
+        return replace(p, **updates) if updates else p
 
     def _params_for_site(
         self,
@@ -540,9 +665,33 @@ class ACEnergyModel:
                     * eq.chiller.rated_capacity_kw
                     * eq.chiller.max_load_rate
                 )
+            design_power = sum(
+                float(unit.rated_power_kw or 0.0) for unit in chillers
+            )
+            if design_power <= 0:
+                design_power = float(getattr(eq.chiller, "rated_power_kw", 0.0) or 0.0) * max(
+                    int(getattr(eq.chiller, "count", 1) or 1), 1
+                )
+            # 铭牌校准用全额额定冷量（不含 max_load_rate 折减）
+            nameplate_capacity = sum(
+                float(unit.rated_capacity_kw or 0.0) for unit in chillers
+            )
+            if nameplate_capacity <= 0:
+                nameplate_capacity = float(eq.chiller.rated_capacity_kw or 0.0) * max(
+                    int(eq.chiller.count or 1), 1
+                )
+
+            eta = p.eta_chiller
+            if nameplate_capacity > 0 and design_power > 0:
+                eta = self._calibrate_eta_from_nameplate(
+                    design_capacity=nameplate_capacity,
+                    design_power=design_power,
+                    p=p,
+                )
 
             p = replace(
                 p,
+                eta_chiller=eta,
                 chilled_pump_rated=chilled_rated,
                 cooling_pump_rated=cooling_rated,
                 chilled_pump_count=chilled_pump_count,
@@ -552,6 +701,7 @@ class ACEnergyModel:
                 cooling_tower_fan_rated=tower_power,
                 cooling_tower_count=tower_count,
                 design_cooling_capacity=design_capacity,
+                design_chiller_power=design_power,
             )
             try:
                 from app.algorithms.constraints import SafetyConstraints
@@ -625,16 +775,7 @@ class ACEnergyModel:
                 pass
         return p
 
-    # 单台水泵现场典型功率区间（kW）；预测列按单台展示
-    _PUMP_UNIT_POWER_MIN = 40.0
-    _PUMP_UNIT_POWER_MAX = 50.0
     _TOWER_SCHEME5_NOMINAL_KW = 70.0
-
-    @classmethod
-    def _clamp_pump_unit_kw(cls, per_unit: float, site_scale: bool = True) -> float:
-        if site_scale:
-            return min(max(per_unit, cls._PUMP_UNIT_POWER_MIN), cls._PUMP_UNIT_POWER_MAX)
-        return min(max(per_unit, 0.0), cls._PUMP_UNIT_POWER_MAX)
 
     def _predict_pump_power(
         self,
@@ -646,41 +787,15 @@ class ACEnergyModel:
         rated_total: float,
         p: EnergyModelParams,
     ) -> float:
-        """冷冻/冷却泵功率（合计 kW）：Excel 实测优先，按单台相似定律缩放，单台钳位 40~50 kW。"""
-        from app.services.excel_first_power import scale_measured_component
-        from app.services.power_baseline import infer_active_counts
+        """冷冻/冷却泵功率（合计 kW）：相似定律
 
-        power_attr = f"{kind}_pump_power"
-        freq_attr = f"{kind}_pump_freq"
-        count_key = f"{kind}_pump_count"
-        measured = _finite(getattr(data, power_attr), 0.0)
-        base_freq = _finite(getattr(data, freq_attr), 0.0)
-        active_counts = params.get("_active_counts")
-        if not isinstance(active_counts, dict):
-            active_counts = infer_active_counts(data.model_dump())
-        base_count = int(active_counts.get(count_key, new_count) or new_count)
-        new_count = max(int(new_count), 1)
-        measured_per_unit = measured / max(base_count, 1) if measured > 0 else 0.0
-        site_scale = measured_per_unit >= 38.0
-
-        scaled = scale_measured_component(
-            measured, base_freq, new_freq, base_count, new_count
-        )
-        if scaled is not None:
-            max_rise = getattr(self.p, "max_component_power_rise_pct", 0.15)
-            if measured > 0 and max_rise >= 0:
-                ref_total = measured * (new_count / max(base_count, 1))
-                cap = ref_total * (1.0 + max_rise)
-                if scaled > cap:
-                    scaled = cap
-            per_unit = self._clamp_pump_unit_kw(scaled / new_count, site_scale)
-            return round(per_unit * new_count, 4)
-        fallback = self._affinity(rated_total, new_freq, p)
-        fallback_per_unit = fallback / new_count
-        rated_per_unit = rated_total / max(new_count, 1) if rated_total > 0 else 0.0
-        site_scale = site_scale or rated_per_unit >= 38.0
-        per_unit = self._clamp_pump_unit_kw(fallback_per_unit, site_scale)
-        return round(per_unit * new_count, 4)
+        P = P_rated × (f / f_rated)³
+        其中 P_rated 为当前开启台数对应的额定功率合计（来自设备配置或输入覆盖）。
+        """
+        new_count = max(int(new_count), 0)
+        if new_count <= 0 or rated_total <= 0:
+            return 0.0
+        return round(self._affinity(rated_total, new_freq, p), 4)
 
     @classmethod
     def _tower_nominal_kw(cls, scheme_count: int) -> float:
@@ -739,6 +854,7 @@ class ACEnergyModel:
         f_cp: float,
         f_fan: float,
         wet_bulb: float,
+        plr: float,
         p: EnergyModelParams,
     ) -> tuple[float, float, float]:
         """机组功率：Excel 有实测时锚定实测，按物理模型比例缩放推荐参数。
@@ -754,6 +870,7 @@ class ACEnergyModel:
             f_cp=f_cp,
             f_fan=f_fan,
             wet_bulb=wet_bulb,
+            plr=plr,
             p=p,
         )
         # 多轮仿真可保留首轮现场实测功率作为校准锚点；当前 chiller_power
@@ -777,7 +894,6 @@ class ACEnergyModel:
                 cooling_pump_count=int(baseline.get("cooling_pump_count", p.cooling_pump_count)),
                 tower_count=int(baseline.get("cooling_tower_count", p.cooling_tower_count)),
             )
-        tchw_b = _finite(baseline.get("chilled_water_temp"), tchw)
         f_chp_b = _finite(baseline.get("chilled_pump_freq"), f_chp)
         f_cp_b = _finite(baseline.get("cooling_pump_freq"), f_cp)
         f_fan_b = _finite(baseline.get("cooling_tower_fan_freq"), f_fan)
@@ -785,6 +901,23 @@ class ACEnergyModel:
         if load_b <= 0:
             load_b = 80.0
         load_b = min(max(load_b, 0.0), 100.0)
+        reference_outdoor_temp = _finite(
+            getattr(data, "chiller_power_reference_outdoor_temp", 0.0),
+            0.0,
+        )
+        reference_outdoor_humidity = _finite(
+            getattr(data, "chiller_power_reference_outdoor_humidity", 0.0),
+            0.0,
+        )
+        if reference_outdoor_temp <= 0:
+            reference_outdoor_temp = _finite(data.outdoor_temp, 30.0)
+        if reference_outdoor_humidity <= 0:
+            reference_outdoor_humidity = _finite(data.outdoor_humidity, 60.0)
+        # 基线冷水必须用现场/基线运行冷水，不能用查表值替代。
+        # 否则实测 8.5℃、查表 9℃ 时，即使控制量不变也会 ratio>1，主机功率被抬高。
+        tchw_b = _finite(baseline.get("chilled_water_temp"), 0.0)
+        if tchw_b <= 0:
+            tchw_b = _finite(data.chilled_water_temp, tchw)
         temp_factor_b = self._cooling_temp_factor(tchw_b, base_p)
         flow_chw_b = max(
             (base_p.chilled_pump_count / max(base_p.chilled_pump_total_count, 1))
@@ -798,18 +931,11 @@ class ACEnergyModel:
             * (load_b / 100.0)
         )
         q_evap_base = min(delivered_b, max(demand, 0.0))
-        reference_outdoor_temp = _finite(
-            getattr(data, "chiller_power_reference_outdoor_temp", 0.0),
-            0.0,
+        q_full_b = max(
+            base_p.design_cooling_capacity * temp_factor_b * flow_chw_b,
+            1e-6,
         )
-        reference_outdoor_humidity = _finite(
-            getattr(data, "chiller_power_reference_outdoor_humidity", 0.0),
-            0.0,
-        )
-        if reference_outdoor_temp <= 0:
-            reference_outdoor_temp = _finite(data.outdoor_temp, 30.0)
-        if reference_outdoor_humidity <= 0:
-            reference_outdoor_humidity = _finite(data.outdoor_humidity, 60.0)
+        plr_b = min(max(q_evap_base / q_full_b, 0.0), 1.0)
         wet_bulb_base = self._wet_bulb(
             reference_outdoor_temp, reference_outdoor_humidity
         )
@@ -821,10 +947,40 @@ class ACEnergyModel:
             # 多轮模拟中，基线使用首轮实测室外工况；当前工况使用实时室外温湿度。
             # 因而室外升温会反映为冷凝侧增耗，不会在同一湿球温度比值中相互抵消。
             wet_bulb=wet_bulb_base,
+            plr=plr_b,
             p=base_p,
         )
         if model_base > 0:
-            scaled = measured * (model_new / model_base)
+            raw_ratio = model_new / model_base
+            # 只要有实测主机功率，就限制缩放带宽，但须允许室外/负荷驱动的真实升功率
+            has_measured = measured > 1e-6
+            load_new = _finite(params.get("chiller_load_pct"), _finite(data.chiller_load, 80.0))
+            controls_near_baseline = (
+                abs(f_chp - f_chp_b) < 0.6
+                and abs(f_cp - f_cp_b) < 0.6
+                and abs(tchw - tchw_b) < 0.2
+                and abs(load_new - load_b) < 1.5
+                and int(params.get("chilled_pump_count", p.chilled_pump_count))
+                == int(baseline.get("chilled_pump_count", p.chilled_pump_count))
+                and int(params.get("cooling_pump_count", p.cooling_pump_count))
+                == int(baseline.get("cooling_pump_count", p.cooling_pump_count))
+                and int(params.get("cooling_tower_count", p.cooling_tower_count))
+                == int(baseline.get("cooling_tower_count", p.cooling_tower_count))
+            )
+            max_rise = getattr(self.p, "max_component_power_rise_pct", 0.25)
+            if max_rise < 0:
+                max_rise = 0.25
+            max_rise = min(max(max_rise, 0.05), 0.50)
+            if has_measured:
+                if controls_near_baseline:
+                    # 控制不变：主要反映室外湿球/负荷变化，信任模型相对变化
+                    ratio = min(max(raw_ratio, 0.88), 1.0 + max_rise)
+                else:
+                    # 有调参：允许更大相对变化，仍用配置涨幅帽兜底
+                    ratio = min(max(raw_ratio, 0.80), 1.0 + max_rise)
+            else:
+                ratio = raw_ratio
+            scaled = measured * ratio
             # 设备配置中的冷机均为已启用设备，当前策略没有冷机启停变量；
             # 因此主机台数固定运行时，不能因模型比例缩放降到非物理低功率。
             try:
@@ -838,15 +994,52 @@ class ACEnergyModel:
                 max(float(p.min_running_chiller_power_ratio), 0.0),
                 1.0,
             )
+            if has_measured:
+                min_ratio = max(min_ratio, 0.85)
             running_floor = per_unit_measured * running_count * min_ratio
             scaled = max(scaled, running_floor)
-            max_rise = getattr(self.p, "max_component_power_rise_pct", 0.15)
-            if measured > 0 and max_rise >= 0:
+            if measured > 0:
                 cap = measured * (1.0 + max_rise)
                 if scaled > cap:
                     scaled = cap
             return cooling_water_temp, cop, scaled
         return cooling_water_temp, cop, model_new
+
+    @staticmethod
+    def _calibrate_eta_from_nameplate(
+        design_capacity: float,
+        design_power: float,
+        p: EnergyModelParams,
+    ) -> float:
+        """用铭牌冷量/电功率把 eta 校准到设计工况附近的卡诺修正系数。
+
+        铭牌 COP 异常偏高（如统计口径含非压缩机功率）时钳位，避免 eta>1。
+        """
+        if design_capacity <= 0 or design_power <= 0:
+            return p.eta_chiller
+        target_cop = design_capacity / design_power
+        t_evap_k = (p.design_chw_temp - p.evap_approach) + _KELVIN
+        t_cond_k = (p.design_cw_temp + p.cond_approach) + _KELVIN
+        carnot = t_evap_k / max(t_cond_k - t_evap_k, 1.0)
+        if carnot <= 0:
+            return p.eta_chiller
+        eta = target_cop / carnot
+        # 物理上 eta 为「实际/卡诺」分数；异常铭牌时回退配置值方向并钳位
+        return min(max(eta, 0.30), 0.85)
+
+    def _eir_fplr(self, plr: float, p: EnergyModelParams | None = None) -> float:
+        """部分负荷电功率比：P/P_full ≈ a + b·PLR + c·PLR² + d·PLR³。
+
+        PLR=1 时归一化为 1；低负荷时 EIRFPLR/PLR > 1，表示比功率升高。
+        """
+        p = p or self.p
+        x = min(max(plr, 0.10), 1.0)
+        raw = p.plr_eir_a + p.plr_eir_b * x + p.plr_eir_c * (x**2) + p.plr_eir_d * (x**3)
+        # 强制满负荷点为 1，避免系数配置漂移
+        at_full = p.plr_eir_a + p.plr_eir_b + p.plr_eir_c + p.plr_eir_d
+        if at_full > 1e-6:
+            raw = raw / at_full
+        return max(raw, 0.05)
 
     def _affinity(self, rated_power: float, freq: float, p: EnergyModelParams | None = None) -> float:
         """风机水泵相似定律：P = P_rated * (f / f_rated)³。"""
@@ -876,13 +1069,15 @@ class ACEnergyModel:
         f_cp: float,
         f_fan: float,
         wet_bulb: float,
+        plr: float = 1.0,
         p: EnergyModelParams | None = None,
     ) -> tuple[float, float, float]:
         """定点迭代求解冷却水温、COP、机组功率。
 
         冷凝侧排热 Q_reject = Q_evap + W_compressor，而 W_compressor 又依赖
         由排热决定的冷凝温度，故用少量迭代收敛（3~5 次足够稳定）。
-        返回 (冷却水温, COP, 机组功率)。
+        部分负荷用 EIRFPLR 修正：P = (Q/COP_carnot) * (EIRFPLR/PLR)。
+        返回 (冷却水温, 有效COP, 机组功率)。
         """
         p = p or self.p
         approach = self._tower_approach(f_fan, p)
@@ -895,8 +1090,13 @@ class ACEnergyModel:
         )  # 下限保护，防止除零/发散
 
         t_evap_k = (tchw - p.evap_approach) + _KELVIN
+        plr_safe = min(max(plr, 0.10), 1.0)
+        if p.enable_part_load_curve:
+            plr_power_factor = self._eir_fplr(plr_safe, p) / plr_safe
+        else:
+            plr_power_factor = 1.0
 
-        chiller_power = q_evap / 4.0  # 初值：假设 COP≈4
+        chiller_power = (q_evap / 4.0) * plr_power_factor  # 初值：假设 COP≈4
         cooling_water_temp = wet_bulb + approach
         cop = 4.0
 
@@ -909,10 +1109,13 @@ class ACEnergyModel:
             t_cond_k = (cooling_water_temp + p.cond_approach) + _KELVIN
 
             denom = max(t_cond_k - t_evap_k, 1.0)  # 防止温差过小导致 COP 爆炸
-            cop = p.eta_chiller * t_evap_k / denom
-            cop = max(cop, 1.5)  # 工程下限，避免非物理极端值
+            cop_carnot = p.eta_chiller * t_evap_k / denom
+            cop_carnot = max(cop_carnot, 1.5)  # 工程下限，避免非物理极端值
 
-            new_power = q_evap / cop
+            # 线性部分负荷功率 × 离心机低负荷比功率抬升
+            new_power = (q_evap / cop_carnot) * plr_power_factor
+            # 有效 COP（含部分负荷）：供展示与节能率解释
+            cop = q_evap / max(new_power, 1e-6) if q_evap > 0 else cop_carnot
             # 收敛判据
             if abs(new_power - chiller_power) < 1e-4:
                 chiller_power = new_power

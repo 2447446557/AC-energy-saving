@@ -122,11 +122,10 @@ class SafetyConstraints:
     ) -> float:
         """解析本次寻优/下发的冷水出水温度（℃）。
 
-        以查表值为中心，结果必须落在查表 ±finetune 内。
-        offset≈0 且实测已在带内时，粘住实测冷水，避免闭环把上一轮推荐（如 12.5℃）
-        无故拉回查表中心（12.0℃）导致增耗。
+        以室外温度区间查表为基准（可叠加 PSO 微调 offset），结果落在查表 ±finetune 内。
+        当控制室温已接近舒适上限时：禁止相对查表/实测抬高冷水（减冷量），
+        避免预测室温顶在舒适上限、安全裕量消失。
         """
-        del measured_indoor  # 室温裕量由 comfort_margin_penalty 约束，不在此改冷水
         lookup = self.resolve_chilled_water_temp(outdoor_temp)
         chw_min, chw_max = self.chilled_water_temp_range()
         finetune = self.chw_finetune.max_delta
@@ -140,20 +139,28 @@ class SafetyConstraints:
 
         band_lo = max(chw_min, lookup - finetune)
         band_hi = min(chw_max, lookup + finetune)
+        chw = min(max(lookup + off, band_lo), band_hi)
+
         try:
             measured = float(measured_chw)
         except (TypeError, ValueError):
-            measured = lookup
+            measured = 0.0
         if not math.isfinite(measured):
-            measured = lookup
+            measured = 0.0
+        try:
+            indoor = float(measured_indoor)
+        except (TypeError, ValueError):
+            indoor = 0.0
+        if not math.isfinite(indoor):
+            indoor = 0.0
 
-        if abs(off) <= 1e-12:
-            if band_lo - 1e-9 <= measured <= band_hi + 1e-9:
-                return min(max(measured, band_lo), band_hi)
-            return min(max(lookup, band_lo), band_hi)
-
-        chw = lookup + off
-        return min(max(chw, band_lo), band_hi)
+        ceiling = self.effective_comfort_ceiling(outdoor_temp, indoor)
+        # 已触及/越过安全天花板：禁止抬冷水减冷量，先把室温拉回安全距离
+        near_hot = indoor >= ceiling - 0.05
+        if near_hot and measured > 0:
+            chw = min(chw, measured)
+            chw = min(max(chw, band_lo), band_hi)
+        return chw
 
     def sticky_chilled_water_offset(
         self, outdoor_temp: float, measured_chw: float
@@ -183,7 +190,10 @@ class SafetyConstraints:
     def effective_comfort_ceiling(
         self, outdoor_temp: float, measured_indoor: float
     ) -> float:
-        """预测室温允许的最高值（℃），低于舒适区上限并留预防裕量。"""
+        """预测室温允许的最高值（℃），须明显低于舒适硬上限并留安全距离。
+
+        默认约距上限 0.7℃（26→25.3）；总裕量封顶 0.9℃，避免压到过度供冷。
+        """
         lo, hi = self.indoor_temp_range
         margin = self.comfort_margin.base_from_ceiling
         try:
@@ -201,7 +211,17 @@ class SafetyConstraints:
             indoor = (lo + hi) / 2.0
         if math.isfinite(indoor) and indoor > hi - self.comfort_margin.indoor_proximity_threshold:
             margin += self.comfort_margin.indoor_proximity_extra
+        # 至少留 0.6℃ 安全距离（26→≤25.4），最多 0.9℃（≥25.1）
+        margin = min(max(margin, 0.6), 0.9)
         return max(lo, hi - margin)
+
+    def safety_indoor_target(
+        self, outdoor_temp: float, measured_indoor: float
+    ) -> float:
+        """寻优/预测应瞄准的室内温度目标（℃），略低于安全天花板。"""
+        floor = self.effective_comfort_floor(outdoor_temp, measured_indoor)
+        ceiling = self.effective_comfort_ceiling(outdoor_temp, measured_indoor)
+        return max(floor, ceiling - 0.15)
 
     def effective_comfort_floor(
         self, outdoor_temp: float, measured_indoor: float
@@ -270,11 +290,19 @@ class SafetyConstraints:
         *,
         cap_load_at_measured: bool = False,
         floor_load_at_measured: bool = False,
+        lock_chiller_load: bool = True,
+        lock_cooling_tower_freq: bool = True,
         cap_pumps_at_measured: bool = False,
         measured_chilled_pump_freq: float = 0.0,
         measured_cooling_pump_freq: float = 0.0,
+        measured_cooling_tower_fan_freq: float = 0.0,
+        min_chilled_pump_freq: float = 0.0,
+        min_cooling_pump_freq: float = 0.0,
     ) -> dict[str, tuple[float, float]]:
-        """返回 PSO 搜索边界（已叠加室外分档下限与设备配置）。"""
+        """返回 PSO 搜索边界（已叠加室外分档下限、设备配置与本次输入最低频率）。
+
+        现场策略：主机负荷、冷却塔频率定额不调；仅搜索冷水微调与冷冻/冷却泵频率。
+        """
         device = self._current_bounds()
         floors = self.operating_floors.resolve(outdoor_temp)
         finetune = self.chw_finetune.max_delta
@@ -290,14 +318,30 @@ class SafetyConstraints:
         if cap_load_at_measured and measured_load_pct > 0:
             load_ceiling = min(load_ceiling, measured_load_pct)
         if floor_load_at_measured and measured_load_pct > 0:
-            # 室温已靠近/越过预防性上限时，不允许通过下调主机负荷“节能”；
-            # 先保留当前制冷能力，待室温回到安全裕量后再释放下调空间。
             load_floor = max(load_floor, min(measured_load_pct, load_ceiling))
+        # 主机负荷不参与寻优：上下界钳为当前实测负荷
+        if lock_chiller_load and measured_load_pct > 0:
+            locked = min(max(measured_load_pct, 0.0), load_ceiling if load_ceiling > 0 else 100.0)
+            load_floor = locked
+            load_ceiling = locked
 
         chp_lo = max(device["chilled_pump_freq"][0], floors.chilled_pump_freq)
         chp_hi = device["chilled_pump_freq"][1]
         cwp_lo = max(device["cooling_pump_freq"][0], floors.cooling_pump_freq)
         cwp_hi = device["cooling_pump_freq"][1]
+        # 寻优输入中的最低频率：可抬高本次搜索下限，但不能超过设备上限
+        try:
+            input_chp_min = float(min_chilled_pump_freq or 0.0)
+        except (TypeError, ValueError):
+            input_chp_min = 0.0
+        try:
+            input_cwp_min = float(min_cooling_pump_freq or 0.0)
+        except (TypeError, ValueError):
+            input_cwp_min = 0.0
+        if input_chp_min > 0:
+            chp_lo = max(chp_lo, input_chp_min)
+        if input_cwp_min > 0:
+            cwp_lo = max(cwp_lo, input_cwp_min)
         if cap_pumps_at_measured:
             if measured_chilled_pump_freq > 0:
                 chp_hi = min(chp_hi, measured_chilled_pump_freq)
@@ -310,12 +354,27 @@ class SafetyConstraints:
         if load_floor > load_ceiling:
             load_floor = load_ceiling
 
+        tower_lo, tower_hi = device["cooling_tower_fan_freq"]
+        if lock_cooling_tower_freq:
+            try:
+                tower_now = float(measured_cooling_tower_fan_freq or 0.0)
+            except (TypeError, ValueError):
+                tower_now = 0.0
+            if tower_now > 0:
+                tower_lo = tower_hi = tower_now
+            elif tower_lo == tower_hi:
+                pass  # 设备已定频
+            else:
+                # 无实测时用设备区间中点锁定，避免寻优改塔频
+                mid = 0.5 * (tower_lo + tower_hi)
+                tower_lo = tower_hi = mid
+
         return {
             "chilled_water_temp_offset": (-finetune, finetune),
             "chiller_load_pct": (load_floor, load_ceiling),
             "chilled_pump_freq": (chp_lo, chp_hi),
             "cooling_pump_freq": (cwp_lo, cwp_hi),
-            "cooling_tower_fan_freq": device["cooling_tower_fan_freq"],
+            "cooling_tower_fan_freq": (tower_lo, tower_hi),
         }
 
     def bounds_context_for_data(self, device_data: dict[str, Any]) -> dict[str, Any]:
@@ -329,14 +388,6 @@ class SafetyConstraints:
         except (TypeError, ValueError):
             load = 0.0
         try:
-            indoor = float(device_data.get("indoor_temp") or 0.0)
-        except (TypeError, ValueError):
-            indoor = 0.0
-        comfortable = self.is_in_comfort_band(indoor)
-        near_or_above_ceiling = indoor >= self.effective_comfort_ceiling(
-            outdoor, indoor
-        )
-        try:
             chp = float(device_data.get("chilled_pump_freq") or 0.0)
         except (TypeError, ValueError):
             chp = 0.0
@@ -344,14 +395,32 @@ class SafetyConstraints:
             cwp = float(device_data.get("cooling_pump_freq") or 0.0)
         except (TypeError, ValueError):
             cwp = 0.0
+        try:
+            chp_min = float(device_data.get("chilled_pump_min_freq") or 0.0)
+        except (TypeError, ValueError):
+            chp_min = 0.0
+        try:
+            cwp_min = float(device_data.get("cooling_pump_min_freq") or 0.0)
+        except (TypeError, ValueError):
+            cwp_min = 0.0
+        try:
+            tower_freq = float(device_data.get("cooling_tower_fan_freq") or 0.0)
+        except (TypeError, ValueError):
+            tower_freq = 0.0
         return {
             "outdoor_temp": outdoor,
             "measured_load_pct": load,
-            "cap_load_at_measured": comfortable,
-            "floor_load_at_measured": near_or_above_ceiling,
+            # 主机负荷、冷却塔频率一律锁定，不再因舒适态放开负荷搜索
+            "cap_load_at_measured": True,
+            "floor_load_at_measured": True,
+            "lock_chiller_load": True,
+            "lock_cooling_tower_freq": True,
             "cap_pumps_at_measured": False,
             "measured_chilled_pump_freq": chp,
             "measured_cooling_pump_freq": cwp,
+            "measured_cooling_tower_fan_freq": tower_freq,
+            "min_chilled_pump_freq": chp_min,
+            "min_cooling_pump_freq": cwp_min,
         }
 
     @staticmethod

@@ -1,8 +1,0 @@
-# 取最近 10 条工况数据，每条都跑一次寻优
-python _full_test.py --batch 10
-
-# 取最近 20 条
-python _full_test.py --batch 20
-
-# 自定义输出文件名前缀（生成 batch_test.txt / batch_test.json）
-python _full_test.py --batch 10 --prefix batch_test

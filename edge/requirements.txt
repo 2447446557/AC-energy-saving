@@ -27,6 +27,10 @@ scikit-opt>=0.6.6
 numpy>=1.26.0
 scipy>=1.11.0
 
+# 黑盒功率预测（LightGBM；与白盒并行，供训练/对比，暂不替换 PSO 目标）
+lightgbm>=4.3.0
+scikit-learn>=1.4.0
+
 # 现场数据批量导入（Excel/CSV 上传）
 pandas>=2.2.0
 openpyxl>=3.1.0

@@ -5,14 +5,64 @@ from __future__ import annotations
 from typing import Any
 
 
+def _pump_rated_unit_kw(device_data: dict[str, Any], kind: str, fallback: float) -> float:
+    key = f"{kind}_pump_rated_power_kw"
+    value = float(device_data.get(key) or 0.0)
+    return value if value > 0 else max(float(fallback or 0.0), 0.0)
+
+
+def _pump_rated_freq(device_data: dict[str, Any]) -> float:
+    value = float(device_data.get("pump_rated_freq") or 0.0)
+    return value if value > 0 else 50.0
+
+
+def scheme_max(schemes: list[int] | None, installed: int) -> int:
+    values = [int(s) for s in (schemes or []) if int(s) > 0]
+    if values:
+        return max(1, min(max(values), max(installed, 1)))
+    return max(1, installed)
+
+
 def measured_baseline_breakdown(device_data: dict[str, Any]) -> dict[str, float] | None:
-    """Excel 已汇总各部件功率时，用实测值作为模型基线（避免额定功率配置偏差）。"""
+    """部件功率齐全时汇总基线；冷冻/冷却泵按立方律（不采信脏 kW）。"""
     chiller = float(device_data.get("chiller_power") or 0.0)
-    chilled = float(device_data.get("chilled_pump_power") or 0.0)
-    cooling = float(device_data.get("cooling_pump_power") or 0.0)
     tower = float(device_data.get("cooling_tower_fan_power") or 0.0)
     terminal = float(device_data.get("terminal_fan_power") or 0.0)
-    if chiller <= 0 or chilled <= 0 or cooling <= 0 or tower <= 0:
+    if chiller <= 0 or tower <= 0:
+        return None
+
+    chilled = float(device_data.get("chilled_pump_power") or 0.0)
+    cooling = float(device_data.get("cooling_pump_power") or 0.0)
+    try:
+        from app.services.equipment_config import equipment_config_service
+
+        eq = equipment_config_service.get_config()
+        rated_freq = _pump_rated_freq(device_data)
+        chp_unit = _pump_rated_unit_kw(
+            device_data, "chilled", eq.chilled_pump.motor_power_kw
+        )
+        cwp_unit = _pump_rated_unit_kw(
+            device_data, "cooling", eq.cooling_pump.motor_power_kw
+        )
+        chp_freq = float(device_data.get("chilled_pump_freq") or 0.0)
+        cwp_freq = float(device_data.get("cooling_pump_freq") or 0.0)
+        chp_n = int(device_data.get("chilled_pump_running_count") or 0)
+        cwp_n = int(device_data.get("cooling_pump_running_count") or 0)
+        if chp_n <= 0:
+            chp_n = scheme_max(eq.chilled_pump.active_count_schemes, eq.chilled_pump.count)
+        if cwp_n <= 0:
+            cwp_n = scheme_max(eq.cooling_pump.active_count_schemes, eq.cooling_pump.count)
+        if chp_freq <= 0:
+            chp_n = 0
+        if cwp_freq <= 0:
+            cwp_n = 0
+        chilled = chp_n * chp_unit * (chp_freq / rated_freq) ** 3
+        cooling = cwp_n * cwp_unit * (cwp_freq / rated_freq) ** 3
+    except Exception:
+        if chilled <= 0 or cooling <= 0:
+            return None
+
+    if chilled <= 0 or cooling <= 0:
         return None
     if terminal <= 0:
         try:
@@ -37,7 +87,11 @@ def measured_baseline_breakdown(device_data: dict[str, Any]) -> dict[str, float]
 
 
 def infer_active_counts(device_data: dict[str, Any]) -> dict[str, int]:
-    """根据实测辅机功率/频率反推当前开启台数，用于基线能耗对比。"""
+    """推断当前开启台数（用于基线对比与离散方案下限）。
+
+    优先使用输入中的 running_count；否则按立方律单台功率反推；
+    频率存在但无法反推时，取允许方案中的最大台数（而非一律装机台数）。
+    """
     try:
         from app.services.equipment_config import equipment_config_service
 
@@ -45,29 +99,41 @@ def infer_active_counts(device_data: dict[str, Any]) -> dict[str, int]:
     except Exception:
         return {"chilled_pump_count": 1, "cooling_pump_count": 1, "cooling_tower_count": 5}
 
+    rated_freq = _pump_rated_freq(device_data)
     counts: dict[str, int] = {}
     for kind, pump in (("chilled", eq.chilled_pump), ("cooling", eq.cooling_pump)):
+        explicit = int(device_data.get(f"{kind}_pump_running_count") or 0)
+        scheme_hi = scheme_max(pump.active_count_schemes, pump.count)
+        if explicit > 0:
+            counts[f"{kind}_pump_count"] = max(1, min(explicit, pump.count))
+            continue
+
         power = float(device_data.get(f"{kind}_pump_power") or 0.0)
         freq = float(device_data.get(f"{kind}_pump_freq") or 0.0)
-        if power > 0 and freq > 0 and pump.motor_power_kw > 0:
-            single = pump.motor_power_kw * (freq / 50.0) ** 3
-            inferred = int(round(power / single)) if single > 0 else pump.count
-            counts[f"{kind}_pump_count"] = max(1, min(inferred, pump.count))
-        elif power > 0 and freq > 0:
-            counts[f"{kind}_pump_count"] = max(1, pump.count)
+        unit_rated = _pump_rated_unit_kw(device_data, kind, pump.motor_power_kw)
+        if power > 0 and freq > 0 and unit_rated > 0:
+            single = unit_rated * (freq / rated_freq) ** 3
+            inferred = int(round(power / single)) if single > 1e-9 else scheme_hi
+            counts[f"{kind}_pump_count"] = max(1, min(inferred, pump.count, scheme_hi))
+        elif freq > 0:
+            counts[f"{kind}_pump_count"] = scheme_hi
         else:
-            counts[f"{kind}_pump_count"] = max(1, pump.count)
+            counts[f"{kind}_pump_count"] = 1
 
     tower_power = float(device_data.get("cooling_tower_fan_power") or 0.0)
     enabled = [t for t in eq.cooling_towers if t.enabled]
     if tower_power > 0 and enabled:
-        # 按功率匹配最接近的允许方案
         schemes = sorted(set(eq.cooling_tower_schemes or [len(enabled)]))
         best = schemes[0]
         best_diff = float("inf")
         for n in schemes:
             n = max(0, min(int(n), len(enabled)))
-            scheme_power = sum(t.motor_power_kw for t in enabled[:n])
+            if n >= 5:
+                scheme_power = 70.0
+            elif n >= 3:
+                scheme_power = 70.0 * n / 5.0
+            else:
+                scheme_power = sum(t.motor_power_kw for t in enabled[:n])
             diff = abs(scheme_power - tower_power)
             if diff < best_diff:
                 best_diff = diff

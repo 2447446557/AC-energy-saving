@@ -154,10 +154,30 @@ async def batch_upload_optimize(
                 or fb.get("outdoor_humidity")
                 or 0.0
             )
-            fb["chiller_power"] = round(prev_result.predicted_chiller_power, 2)
-            fb["indoor_temp"] = round(prev_result.predicted_indoor_temp, 2)
+            # 闭环主机功率：允许随预测微调，但禁止相对首轮锚点持续上抬形成“越寻越费”
+            pred_chiller = float(prev_result.predicted_chiller_power or 0.0)
+            ref_chiller = float(fb.get("chiller_power_reference") or 0.0)
+            if ref_chiller > 1e-6 and pred_chiller > 0:
+                fb["chiller_power"] = round(min(pred_chiller, ref_chiller * 1.03), 2)
+            else:
+                fb["chiller_power"] = round(pred_chiller, 2)
+            # 闭环室温回写：钳在安全天花板以下，禁止把下一轮输入又贴回 26℃
+            pred_indoor = float(prev_result.predicted_indoor_temp or 0.0)
+            try:
+                from app.algorithms.constraints import SafetyConstraints
+
+                _c = SafetyConstraints()
+                _ceiling = _c.effective_comfort_ceiling(
+                    float(fb.get("outdoor_temp") or 30.0), pred_indoor
+                )
+                pred_indoor = min(pred_indoor, _ceiling)
+            except Exception:
+                pred_indoor = min(pred_indoor, 25.4)
+            fb["indoor_temp"] = round(pred_indoor, 2)
             chp_n = max(int(prev_result.chilled_pump_count or 0), 1)
             cwp_n = max(int(prev_result.cooling_pump_count or 0), 1)
+            fb["chilled_pump_running_count"] = chp_n
+            fb["cooling_pump_running_count"] = cwp_n
             fb["chilled_pump_power"] = round(prev_result.chilled_pump_power * chp_n, 2)
             fb["cooling_pump_power"] = round(prev_result.cooling_pump_power * cwp_n, 2)
             fb["cooling_tower_fan_power"] = round(prev_result.cooling_tower_power, 2)
@@ -208,6 +228,8 @@ async def batch_upload_optimize(
                 physics_baseline_power = physics_breakdown.total_power
                 optimized_params = {
                     "chilled_water_temp": result.chilled_water_temp,
+                    "chilled_water_temp_offset": result.chilled_water_temp_offset,
+                    "chiller_load_pct": result.chiller_load_pct,
                     "chilled_pump_freq": result.chilled_pump_freq,
                     "chilled_pump_count": result.chilled_pump_count,
                     "cooling_pump_freq": result.cooling_pump_freq,

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from app.api.v1 import control, data, equipment, optimize, settings, status, system
+from app.api.v1 import control, data, equipment, ml_power, optimize, settings, status, system
 
 
 def create_v1_router() -> APIRouter:
@@ -13,6 +13,9 @@ def create_v1_router() -> APIRouter:
     router.include_router(system.router, prefix="/system", tags=["系统"])
     router.include_router(
         optimize.router, prefix="/optimize", tags=["寻优"]
+    )
+    router.include_router(
+        ml_power.router, prefix="/ml-power", tags=["LightGBM功率模型"]
     )
     router.include_router(data.router, prefix="/data", tags=["数据"])
     router.include_router(

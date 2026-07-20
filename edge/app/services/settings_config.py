@@ -41,27 +41,27 @@ class OutdoorOperatingFloors(BaseModel):
 
     below_25: OperatingFloorBand = Field(
         default_factory=lambda: OperatingFloorBand(
-            chilled_pump_freq=35.0, cooling_pump_freq=35.0, chiller_load_pct=40.0
+            chilled_pump_freq=32.0, cooling_pump_freq=32.0, chiller_load_pct=40.0
         )
     )
     range_25_29: OperatingFloorBand = Field(
         default_factory=lambda: OperatingFloorBand(
-            chilled_pump_freq=38.0, cooling_pump_freq=38.0, chiller_load_pct=50.0
+            chilled_pump_freq=34.0, cooling_pump_freq=34.0, chiller_load_pct=45.0
         )
     )
     range_29_33: OperatingFloorBand = Field(
         default_factory=lambda: OperatingFloorBand(
-            chilled_pump_freq=40.0, cooling_pump_freq=42.0, chiller_load_pct=65.0
+            chilled_pump_freq=36.0, cooling_pump_freq=38.0, chiller_load_pct=55.0
         )
     )
     range_33_37: OperatingFloorBand = Field(
         default_factory=lambda: OperatingFloorBand(
-            chilled_pump_freq=40.0, cooling_pump_freq=45.0, chiller_load_pct=75.0
+            chilled_pump_freq=38.0, cooling_pump_freq=42.0, chiller_load_pct=70.0
         )
     )
     above_37: OperatingFloorBand = Field(
         default_factory=lambda: OperatingFloorBand(
-            chilled_pump_freq=42.0, cooling_pump_freq=45.0, chiller_load_pct=85.0
+            chilled_pump_freq=40.0, cooling_pump_freq=45.0, chiller_load_pct=80.0
         )
     )
 
@@ -86,12 +86,13 @@ class OutdoorOperatingFloors(BaseModel):
 class ComfortMarginConfig(BaseModel):
     """舒适区预防性裕量：预测室温不得过于接近上限或下限。"""
 
-    base_from_ceiling: float = Field(default=0.5, ge=0.0, le=2.0)
+    # 默认距舒适上限约 0.7℃（26→目标天花板约 25.3），保证安全距离区间
+    base_from_ceiling: float = Field(default=0.7, ge=0.0, le=2.0)
     base_from_floor: float = Field(default=0.3, ge=0.0, le=2.0)
     outdoor_ref_temp: float = Field(default=29.0, ge=0.0, le=50.0)
-    outdoor_extra_per_degree: float = Field(default=0.1, ge=0.0, le=1.0)
+    outdoor_extra_per_degree: float = Field(default=0.05, ge=0.0, le=1.0)
     indoor_proximity_threshold: float = Field(default=0.3, ge=0.0, le=2.0)
-    indoor_proximity_extra: float = Field(default=0.15, ge=0.0, le=1.0)
+    indoor_proximity_extra: float = Field(default=0.1, ge=0.0, le=1.0)
 
 
 class ChilledWaterFinetune(BaseModel):
@@ -121,7 +122,11 @@ class ChilledWaterTempTable(BaseModel):
     above_37: float = Field(default=8.0, ge=0.0, le=30.0)
 
     def resolve(self, outdoor_temp: float) -> float:
-        """根据室外温度（℃）查表返回冷水出水温度（℃）。"""
+        """根据室外温度（℃）查表返回冷水出水温度（℃）。
+
+        在 33℃ 分界附近做约 ±0.3℃ 线性过渡，避免室外温小幅波动时
+        冷水在两档间跳变，进而造成主机功率/节能率剧烈抖动。
+        """
         try:
             t = float(outdoor_temp)
         except (TypeError, ValueError):
@@ -132,8 +137,12 @@ class ChilledWaterTempTable(BaseModel):
             return self.below_25
         if t < 29.0:
             return self.range_25_29
-        if t < 33.0:
+        # 32.7~33.3：29~33 与 33~37 两档过渡
+        if t < 32.7:
             return self.range_29_33
+        if t < 33.3:
+            alpha = (t - 32.7) / 0.6
+            return self.range_29_33 * (1.0 - alpha) + self.range_33_37 * alpha
         if t < 37.0:
             return self.range_33_37
         return self.above_37
@@ -168,7 +177,7 @@ class BatchDefaultsConfig(BaseModel):
 
     outdoor_temp: float = Field(default=30.0, ge=-30.0, le=50.0)
     outdoor_humidity: float = Field(default=60.0, ge=0.0, le=100.0)
-    indoor_temp: float = Field(default=27.0, ge=10.0, le=40.0)
+    indoor_temp: float = Field(default=25.0, ge=10.0, le=40.0)
     indoor_humidity: float = Field(default=55.0, ge=0.0, le=100.0)
     terminal_fan_power: float = Field(
         default=0.0,
@@ -217,7 +226,14 @@ class EnergyModelConfig(BaseModel):
     outdoor_stress_ref: float = Field(default=29.0, ge=0.0, le=50.0)
     outdoor_load_coupling: float = Field(default=0.02, ge=0.0, le=0.2)
     min_running_chiller_power_ratio: float = Field(default=0.65, ge=0.0, le=1.0)
-    max_component_power_rise_pct: float = Field(default=0.15, ge=0.0, le=1.0)
+    max_component_power_rise_pct: float = Field(default=0.30, ge=0.0, le=1.0)
+    enable_part_load_curve: bool = True
+    plr_eir_a: float = Field(default=0.338, ge=0.0, le=2.0)
+    plr_eir_b: float = Field(default=0.284, ge=-2.0, le=2.0)
+    plr_eir_c: float = Field(default=0.378, ge=-2.0, le=2.0)
+    plr_eir_d: float = Field(default=0.0, ge=-2.0, le=2.0)
+    design_chw_temp: float = Field(default=7.0, ge=1.0, le=20.0)
+    design_cw_temp: float = Field(default=30.0, ge=10.0, le=45.0)
 
 
 class AppSettingsConfig(BaseModel):
@@ -283,7 +299,7 @@ class SettingsConfigService:
             batch_defaults=BatchDefaultsConfig(
                 outdoor_temp=float(batch_raw.get("outdoor_temp", 30.0)),
                 outdoor_humidity=float(batch_raw.get("outdoor_humidity", 60.0)),
-                indoor_temp=float(batch_raw.get("indoor_temp", 27.0)),
+                indoor_temp=float(batch_raw.get("indoor_temp", 25.0)),
                 indoor_humidity=float(batch_raw.get("indoor_humidity", 55.0)),
                 terminal_fan_power=float(batch_raw.get("terminal_fan_power", 0.0)),
             ),
@@ -328,8 +344,17 @@ class SettingsConfigService:
                     energy_raw.get("min_running_chiller_power_ratio", 0.65)
                 ),
                 max_component_power_rise_pct=float(
-                    energy_raw.get("max_component_power_rise_pct", 0.15)
+                    energy_raw.get("max_component_power_rise_pct", 0.30)
                 ),
+                enable_part_load_curve=bool(
+                    energy_raw.get("enable_part_load_curve", True)
+                ),
+                plr_eir_a=float(energy_raw.get("plr_eir_a", 0.338)),
+                plr_eir_b=float(energy_raw.get("plr_eir_b", 0.284)),
+                plr_eir_c=float(energy_raw.get("plr_eir_c", 0.378)),
+                plr_eir_d=float(energy_raw.get("plr_eir_d", 0.0)),
+                design_chw_temp=float(energy_raw.get("design_chw_temp", 7.0)),
+                design_cw_temp=float(energy_raw.get("design_cw_temp", 30.0)),
             ),
         )
         settings.constraints = self._normalize_constraints(settings.constraints)
@@ -410,6 +435,15 @@ class SettingsConfigService:
             "max_component_power_rise_pct": round(
                 settings.energy_model.max_component_power_rise_pct, 4
             ),
+            "enable_part_load_curve": bool(
+                settings.energy_model.enable_part_load_curve
+            ),
+            "plr_eir_a": round(settings.energy_model.plr_eir_a, 4),
+            "plr_eir_b": round(settings.energy_model.plr_eir_b, 4),
+            "plr_eir_c": round(settings.energy_model.plr_eir_c, 4),
+            "plr_eir_d": round(settings.energy_model.plr_eir_d, 4),
+            "design_chw_temp": round(settings.energy_model.design_chw_temp, 2),
+            "design_cw_temp": round(settings.energy_model.design_cw_temp, 2),
         }
 
         self._path.parent.mkdir(parents=True, exist_ok=True)

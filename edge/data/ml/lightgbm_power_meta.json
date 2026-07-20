@@ -1,0 +1,59 @@
+{
+  "target": "total_power",
+  "feature_columns": [
+    "outdoor_temp",
+    "outdoor_humidity",
+    "indoor_temp",
+    "indoor_humidity",
+    "indoor_load",
+    "chiller_load",
+    "chilled_water_temp",
+    "cooling_water_temp",
+    "chilled_pump_freq",
+    "cooling_pump_freq",
+    "cooling_tower_fan_freq",
+    "chilled_pump_running_count",
+    "cooling_pump_running_count",
+    "terminal_fan_power"
+  ],
+  "metrics": {
+    "n_train": 84,
+    "n_valid": 18,
+    "n_test": 18,
+    "mae": 3.2866,
+    "rmse": 4.4192,
+    "mape": 0.5233,
+    "r2": 0.90965,
+    "target": "total_power",
+    "trained_at": "2026-07-17T01:13:01.552177+00:00",
+    "feature_columns": [
+      "outdoor_temp",
+      "outdoor_humidity",
+      "indoor_temp",
+      "indoor_humidity",
+      "indoor_load",
+      "chiller_load",
+      "chilled_water_temp",
+      "cooling_water_temp",
+      "chilled_pump_freq",
+      "cooling_pump_freq",
+      "cooling_tower_fan_freq",
+      "chilled_pump_running_count",
+      "cooling_pump_running_count",
+      "terminal_fan_power"
+    ],
+    "best_iteration": 178
+  },
+  "params": {
+    "objective": "regression",
+    "metric": "l2",
+    "learning_rate": 0.05,
+    "num_leaves": 31,
+    "feature_fraction": 0.9,
+    "bagging_fraction": 0.8,
+    "bagging_freq": 1,
+    "min_data_in_leaf": 10,
+    "verbosity": -1,
+    "seed": 42
+  }
+}

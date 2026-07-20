@@ -387,7 +387,7 @@
                     <input id="constraint-tower-max" type="number" step="0.1" value="45">
                 </div>
             </div>
-            <div class="hint">冷水出水温度按室外温度区间查表确定（不再由寻优优化）；泵/塔实际寻优边界还会与上方「设备配置」中的频率范围取交集；定频冷却塔会锁定为 fixed_freq。</div>
+            <div class="hint">寻优可调：冷水出水温度（查表±微调）、冷冻泵/冷却泵频率与台数。固定不调：主机负荷、冷却塔频率/台数/功率（定额保持现场当前）。泵边界与「设备配置」频率范围取交集。</div>
 
             <h2 class="section-title">Excel 批量导入缺省值</h2>
             <div class="form-grid">
@@ -401,7 +401,7 @@
                 </div>
                 <div>
                     <label>缺省室内温度 ℃</label>
-                    <input id="default-indoor-temp" type="number" step="0.1" value="27">
+                    <input id="default-indoor-temp" type="number" step="0.1" value="25">
                 </div>
                 <div>
                     <label>缺省室内湿度 %</label>
@@ -464,15 +464,15 @@
                 <input id="optimize-input-file" type="file" accept=".xls,.xlsx,.csv">
                 <button type="button" class="secondary" id="btn-fill-from-excel" onclick="fillOptimizeInputsFromExcel()">上传并填充输入框</button>
             </div>
-            <div id="optimize-import-summary" class="hint">支持现场多级表头趋势文件；将解析「运行状态=运行」的最后一行，并逐台填充冷水机组/冷冻泵/冷却泵/冷却塔。</div>
+            <div id="optimize-import-summary" class="hint">支持现场多级表头趋势文件；将解析「运行状态=运行」的最后一行并填充。寻优只调冷水温度与冷冻/冷却泵；主机负荷与冷却塔定额不变。</div>
 
             <h2 class="section-title">环境与负荷</h2>
             <div class="form-grid">
-                <div><label>室外温度 ℃</label><input id="in-outdoor-temp" type="number" step="0.1" value="32"></div>
+                <div><label>室外温度 ℃</label><input id="in-outdoor-temp" type="number" step="0.1" value="30"></div>
                 <div><label>室外湿度 %</label><input id="in-outdoor-humidity" type="number" step="0.1" value="60"></div>
                 <div><label>室内温度 ℃</label><input id="in-indoor-temp" type="number" step="0.1" value="25"></div>
                 <div><label>室内湿度 %</label><input id="in-indoor-humidity" type="number" step="0.1" value="55"></div>
-                <div><label>室内负荷 kW</label><input id="in-indoor-load" type="number" step="0.1" value="300"></div>
+                <div><label>室内负荷 kW</label><input id="in-indoor-load" type="number" step="0.1" value="" placeholder="按设备额定冷量自动估算"></div>
             </div>
 
             <h2 class="section-title">冷水机组（逐台）</h2>
@@ -492,25 +492,33 @@
             </div>
 
             <h2 class="section-title">冷冻泵（逐台）</h2>
+            <div class="hint">无需填写功率：当前功率 = (当前频率 / 额定频率)³ × 额定功率（自动计算）。「寻优最低频率」填 0 表示仅按系统分档地板/设备下限寻优，不要再额外抬高。</div>
+            <div class="form-grid" style="margin-bottom:8px;">
+                <div><label>寻优最低频率 Hz</label><input id="in-chilled-pump-min-freq" type="number" step="0.1" min="0" value="0" title="0=不额外抬高；&gt;0 时推荐频率不得低于此值"></div>
+            </div>
             <div class="scroll-table">
                 <table>
                     <thead>
-                        <tr><th>设备</th><th>频率 Hz</th><th>功率 kW</th><th>电流 A</th></tr>
+                        <tr><th>设备</th><th>额定功率 kW</th><th>额定频率 Hz</th><th>当前频率 Hz</th><th>当前功率 kW（自动）</th><th>电流 A</th></tr>
                     </thead>
                     <tbody id="optimize-chilled-pumps-table">
-                        <tr><td colspan="4" style="text-align:center; color:#999;">加载设备配置中...</td></tr>
+                        <tr><td colspan="6" style="text-align:center; color:#999;">加载设备配置中...</td></tr>
                     </tbody>
                 </table>
             </div>
 
             <h2 class="section-title">冷却泵（逐台）</h2>
+            <div class="hint">无需填写功率：当前功率 = (当前频率 / 额定频率)³ × 额定功率（自动计算）。「寻优最低频率」填 0 表示仅按系统分档地板/设备下限寻优，不要再额外抬高。</div>
+            <div class="form-grid" style="margin-bottom:8px;">
+                <div><label>寻优最低频率 Hz</label><input id="in-cooling-pump-min-freq" type="number" step="0.1" min="0" value="0" title="0=不额外抬高；&gt;0 时推荐频率不得低于此值"></div>
+            </div>
             <div class="scroll-table">
                 <table>
                     <thead>
-                        <tr><th>设备</th><th>频率 Hz</th><th>功率 kW</th><th>电流 A</th></tr>
+                        <tr><th>设备</th><th>额定功率 kW</th><th>额定频率 Hz</th><th>当前频率 Hz</th><th>当前功率 kW（自动）</th><th>电流 A</th></tr>
                     </thead>
                     <tbody id="optimize-cooling-pumps-table">
-                        <tr><td colspan="4" style="text-align:center; color:#999;">加载设备配置中...</td></tr>
+                        <tr><td colspan="6" style="text-align:center; color:#999;">加载设备配置中...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -554,8 +562,8 @@
                     <input id="optimize-weather-range" type="number" min="0.5" max="15" step="0.5" value="3" style="width:56px;">
                 </label>
             </div>
-            <div id="optimize-action-status" class="action-status">填写参数后点击上方按钮；单次寻优约 3~10 秒，结果在下方「寻优输出结果」区域展示。</div>
-            <div class="hint">现场 CSV/Excel 数据可先按字段填入这里，也可以直接在下面上传批量寻优。多次寻优会将每轮推荐值与预测工况作为下一轮输入，模拟逐步执行推荐后的闭环过程；勾选「模拟室外温变化」时，每轮室外温度会在基准附近小幅随机波动（冷水出水温度随室外温查表联动）。</div>
+            <div id="optimize-action-status" class="action-status">填写参数后点击上方按钮；单次寻优约 3~10 秒，结果在下方「寻优输出结果」区域展示。多次寻优会将每轮推荐值作为下一轮输入。</div>
+            <div class="hint">现场 CSV/Excel 数据可先按字段填入这里。多次寻优会将每轮推荐值与预测工况作为下一轮输入，模拟逐步执行推荐后的闭环过程；勾选「模拟室外温变化」时，每轮室外温度会在基准附近小幅随机波动（冷水出水温度随室外温查表联动）。</div>
         </div>
 
         <h2 class="section-title" id="optimize-output-section">寻优输出结果</h2>
@@ -657,6 +665,36 @@
             </div>
         </div>
 
+        <h2 class="section-title collapsible-header expanded" id="ml-power-header" onclick="toggleCollapse('ml-power-body', 'ml-power-header')">LightGBM 黑盒功率模型</h2>
+        <div class="card collapsible-body" id="ml-power-body">
+            <div class="hint">用现场运行数据训练功率预测模型（不替代 PSO）。训练后可估算总功率，并与白盒对比。推荐设定仍由上方寻优给出。</div>
+            <div class="form-grid">
+                <div>
+                    <label>训练文件（.xls / .xlsx / .csv）</label>
+                    <input id="ml-train-file" type="file" accept=".xls,.xlsx,.csv">
+                </div>
+                <div>
+                    <label>预测目标</label>
+                    <select id="ml-train-target">
+                        <option value="total_power" selected>总功率 total_power</option>
+                        <option value="chiller_power">主机功率 chiller_power</option>
+                    </select>
+                </div>
+                <div>
+                    <label>最多训练行数</label>
+                    <input id="ml-train-max-rows" type="number" min="30" max="100000" step="1" value="20000">
+                </div>
+            </div>
+            <div class="actions">
+                <button type="button" onclick="trainLightgbmFromFile()">上传并训练</button>
+                <button type="button" class="secondary" onclick="refreshLightgbmStatus()">刷新模型状态</button>
+                <button type="button" class="secondary" onclick="predictLightgbmFromForm()">用当前输入预测功率</button>
+                <button type="button" class="secondary" onclick="compareLightgbmWhitebox()">白盒 vs 黑盒对比</button>
+            </div>
+            <div id="ml-power-status" class="hint">模型状态未加载。</div>
+            <div id="ml-power-result" class="hint"></div>
+        </div>
+
         <h2 class="section-title collapsible-header expanded" id="multi-run-section" onclick="toggleCollapse('multi-run-body', 'multi-run-section')">多次寻优过程</h2>
         <div class="card collapsible-body" id="multi-run-body">
             <div class="scroll-table">
@@ -691,74 +729,6 @@
                         <tr><td colspan="22" style="text-align:center; color:#999;">尚未执行多次寻优</td></tr>
                     </tbody>
                 </table>
-            </div>
-        </div>
-
-        <h2 class="section-title">Excel/CSV 批量寻优</h2>
-        <div class="card">
-            <div class="form-grid">
-                <div>
-                    <label>运行趋势文件（.xls / .xlsx / .csv）</label>
-                    <input id="batch-file" type="file" accept=".xls,.xlsx,.csv">
-                </div>
-                <div>
-                    <label>最多处理运行行数</label>
-                    <input id="batch-max-rows" type="number" min="1" max="10000" step="1" value="1000">
-                </div>
-                <div>
-                    <label>页面最多显示结果数</label>
-                    <input id="batch-max-results" type="number" min="1" max="1000" step="1" value="200">
-                </div>
-            </div>
-            <div class="actions">
-                <button type="button" onclick="uploadBatchOptimize()">上传并批量寻优</button>
-            </div>
-            <div class="hint">只会处理 Excel 中“运行状态/寻优运行状态/状态”等字段值包含“运行”的行；其他行自动跳过。</div>
-            <div id="batch-summary" class="hint">尚未上传文件。</div>
-            <div class="scroll-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>行号</th>
-                            <th>时间</th>
-                            <th>机组负载%</th>
-                            <th>Excel汇总功率</th>
-                            <th>模型基线功率</th>
-                            <th>当前冷冻泵Hz</th>
-                            <th>当前冷却泵Hz</th>
-                            <th>推荐冷水℃</th>
-                            <th>冷冻泵台数</th>
-                            <th>推荐冷冻泵Hz</th>
-                            <th>冷却泵台数</th>
-                            <th>推荐冷却泵Hz</th>
-                            <th>推荐冷却塔台数</th>
-                            <th>预测总功率</th>
-                            <th>预测室内℃</th>
-                            <th>预测主机kW</th>
-                            <th>相对模型基线节能%</th>
-                            <th>数据质量</th>
-                        </tr>
-                    </thead>
-                    <tbody id="batch-table">
-                        <tr><td colspan="18" style="text-align:center; color:#999;">暂无批量结果</td></tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="detail-grid">
-                <div>
-                    <h2 class="section-title">选中行：Excel 原始数据（全部列）</h2>
-                    <div class="result-box tall" id="batch-raw-detail">点击表格某一行查看。</div>
-                </div>
-            </div>
-            <div class="detail-grid two-col">
-                <div>
-                    <h2 class="section-title">选中行：寻优输入溯源（含缺省/替换/近似）</h2>
-                    <div class="result-box tall" id="batch-input-detail">点击表格某一行查看。</div>
-                </div>
-                <div>
-                    <h2 class="section-title">选中行：寻优输出与计算审计</h2>
-                    <div class="result-box tall" id="batch-output-detail">点击表格某一行查看。</div>
-                </div>
             </div>
         </div>
 
@@ -825,7 +795,6 @@
             return Number.isFinite(value) ? value : 0;
         }
 
-        let batchResultsCache = [];
         let optimizeEquipmentConfig = null;
         let equipmentDocument = null;
         let optimizeInputDefaults = null;
@@ -838,17 +807,29 @@
             return !Number.isFinite(number);
         }
 
+        /** 水泵相似定律：P = P_rated × (f / f_rated)³ */
+        function pumpPowerFromRated(ratedKw, freqHz, ratedFreqHz) {
+            const rated = Math.max(Number(ratedKw) || 0, 0);
+            const freq = Math.max(Number(freqHz) || 0, 0);
+            const fRated = Math.max(Number(ratedFreqHz) || 50, 1e-6);
+            const ratio = freq / fRated;
+            return rated * ratio * ratio * ratio;
+        }
+
         function buildOptimizeInputDefaultsFromConfig(cfg, settings) {
             const batch = (settings && settings.batch_defaults) || {};
             const defaults = {
                 outdoor_temp: batch.outdoor_temp ?? 30,
                 outdoor_humidity: batch.outdoor_humidity ?? 60,
-                indoor_temp: batch.indoor_temp ?? 27,
+                indoor_temp: batch.indoor_temp ?? 25,
                 indoor_humidity: batch.indoor_humidity ?? 55,
                 terminal_fan_power: batch.terminal_fan_power || (settings && settings.energy_model && settings.energy_model.terminal_fan_default) || 2,
                 // 冷水出水温度现在按室外温度查表，这里仅给一个展示默认值
                 chilled_water_temp: 10,
-                cooling_water_temp: 32
+                cooling_water_temp: 32,
+                // 0 = 不额外抬高新优下限（避免与设备min/分档地板三层叠压）
+                chilled_pump_min_freq: 0,
+                cooling_pump_min_freq: 0
             };
             if (cfg && cfg.chiller) {
                 const loadPct = Math.max(10, Math.min(100, (cfg.chiller.max_load_rate || 1) * 100 * 0.8));
@@ -906,10 +887,6 @@
             };
             const cfg = optimizeEquipmentConfig;
             if (!cfg) return units;
-            const pumpPower = (motorKw, freq) => {
-                const ratio = Math.max(Number(freq) || 0, 0) / 50;
-                return Number(motorKw || 0) * ratio * ratio * ratio;
-            };
             const estimateChillerPower = (loadPct, chCfg) => {
                 const cap = Number(chCfg && chCfg.rated_capacity_kw) || Number(cfg.chiller.rated_capacity_kw) || 0;
                 const mlr = Number(chCfg && chCfg.max_load_rate) || Number(cfg.chiller.max_load_rate) || 0.8;
@@ -918,6 +895,10 @@
             };
             const chillerCfgUnits = (equipmentDocument && equipmentDocument.units || [])
                 .filter(u => u.unit_type === 'chiller' && u.enabled !== false);
+            const chilledCfgUnits = (equipmentDocument && equipmentDocument.units || [])
+                .filter(u => u.unit_type === 'chilled_pump' && u.enabled !== false);
+            const coolingCfgUnits = (equipmentDocument && equipmentDocument.units || [])
+                .filter(u => u.unit_type === 'cooling_pump' && u.enabled !== false);
             units.chillers = units.chillers.map((unit, index) => {
                 const chCfg = chillerCfgUnits[index] || cfg.chiller;
                 const load = isEmptyInputValue(unit.load) ? (data.chiller_load || 0) : unit.load;
@@ -927,14 +908,37 @@
                 return Object.assign({}, unit, {load: load, power: power});
             });
             units.chilled_pumps = units.chilled_pumps.map((unit, index) => {
+                const cfgUnit = chilledCfgUnits[index] || {};
+                const ratedPower = isEmptyInputValue(unit.rated_power_kw)
+                    ? (cfgUnit.motor_power_kw || cfg.chilled_pump.motor_power_kw || 0)
+                    : unit.rated_power_kw;
+                const ratedFreq = isEmptyInputValue(unit.rated_freq)
+                    ? 50
+                    : unit.rated_freq;
                 const freq = isEmptyInputValue(unit.freq) ? (data.chilled_pump_freq || cfg.chilled_pump.min_freq) : unit.freq;
-                const power = isEmptyInputValue(unit.power) ? pumpPower(cfg.chilled_pump.motor_power_kw, freq) : unit.power;
-                return Object.assign({}, unit, {freq: freq, power: power});
+                // 泵功率一律由频率计算，忽略外部输入的 kW
+                return Object.assign({}, unit, {
+                    rated_power_kw: ratedPower,
+                    rated_freq: ratedFreq,
+                    freq: freq,
+                    power: pumpPowerFromRated(ratedPower, freq, ratedFreq)
+                });
             });
-            units.cooling_pumps = units.cooling_pumps.map(unit => {
+            units.cooling_pumps = units.cooling_pumps.map((unit, index) => {
+                const cfgUnit = coolingCfgUnits[index] || {};
+                const ratedPower = isEmptyInputValue(unit.rated_power_kw)
+                    ? (cfgUnit.motor_power_kw || cfg.cooling_pump.motor_power_kw || 0)
+                    : unit.rated_power_kw;
+                const ratedFreq = isEmptyInputValue(unit.rated_freq)
+                    ? 50
+                    : unit.rated_freq;
                 const freq = isEmptyInputValue(unit.freq) ? (data.cooling_pump_freq || cfg.cooling_pump.min_freq) : unit.freq;
-                const power = isEmptyInputValue(unit.power) ? pumpPower(cfg.cooling_pump.motor_power_kw, freq) : unit.power;
-                return Object.assign({}, unit, {freq: freq, power: power});
+                return Object.assign({}, unit, {
+                    rated_power_kw: ratedPower,
+                    rated_freq: ratedFreq,
+                    freq: freq,
+                    power: pumpPowerFromRated(ratedPower, freq, ratedFreq)
+                });
             });
             const enabledTowers = (cfg.cooling_towers || []).filter(t => t.enabled);
             units.cooling_towers = units.cooling_towers.map((unit, index) => {
@@ -975,28 +979,53 @@
         function renderOptimizeUnitTable(tableId, kind, units) {
             const tbody = document.getElementById(tableId);
             if (!tbody) return;
+            const isPump = kind === 'chilled' || kind === 'cooling';
             if (!units || !units.length) {
-                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#999;">暂无设备</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="' + (isPump ? 6 : 4) + '" style="text-align:center; color:#999;">暂无设备</td></tr>';
+                return;
+            }
+            if (isPump) {
+                tbody.innerHTML = units.map((unit, index) => {
+                    const ratedPower = Number(unit.rated_power_kw ?? 0);
+                    const ratedFreq = Number(unit.rated_freq ?? 50) || 50;
+                    const freq = Number(unit.freq ?? 0);
+                    const power = pumpPowerFromRated(ratedPower, freq, ratedFreq);
+                    return '<tr>' +
+                    '<td><input id="unit-' + kind + '-name-' + index + '" value="' + escapeHtml(unit.label || unit.name || (kind + (index + 1))) + '"></td>' +
+                    '<td><input type="number" step="0.1" id="unit-' + kind + '-rated-power-' + index + '" value="' + ratedPower + '" oninput="onPumpRatedOrFreqChanged(\'' + kind + '\',' + index + ')"></td>' +
+                    '<td><input type="number" step="0.1" id="unit-' + kind + '-rated-freq-' + index + '" value="' + ratedFreq + '" oninput="onPumpRatedOrFreqChanged(\'' + kind + '\',' + index + ')"></td>' +
+                    '<td><input type="number" step="0.1" id="unit-' + kind + '-freq-' + index + '" value="' + freq + '" oninput="onPumpRatedOrFreqChanged(\'' + kind + '\',' + index + ')"></td>' +
+                    '<td><input type="number" step="0.001" id="unit-' + kind + '-power-' + index + '" value="' + power.toFixed(3) + '" readonly title="由频率与额定功率自动计算，无需填写"></td>' +
+                    '<td><input type="number" step="0.1" id="unit-' + kind + '-current-' + index + '" value="' + (unit.current ?? 0) + '"></td>' +
+                    '</tr>';
+                }).join('');
                 return;
             }
             tbody.innerHTML = units.map((unit, index) =>
                 '<tr>' +
                 '<td><input id="unit-' + kind + '-name-' + index + '" value="' + escapeHtml(unit.label || unit.name || (kind + (index + 1))) + '"></td>' +
-                '<td><input type="number" step="0.1" id="unit-' + kind + '-freq-' + index + '" value="' + (unit.freq ?? 0) + '"></td>' +
-                '<td><input type="number" step="0.1" id="unit-' + kind + '-power-' + index + '" value="' + (unit.power ?? 0) + '"></td>' +
+                '<td><input type="number" step="0.1" id="unit-' + kind + '-freq-' + index + '" value="' + (unit.freq ?? 0) + '" oninput="recalculateSystemTotalPower()"></td>' +
+                '<td><input type="number" step="0.1" id="unit-' + kind + '-power-' + index + '" value="' + (unit.power ?? 0) + '" oninput="recalculateSystemTotalPower()"></td>' +
                 '<td><input type="number" step="0.1" id="unit-' + kind + '-current-' + index + '" value="' + (unit.current ?? 0) + '"></td>' +
                 '</tr>'
             ).join('');
+        }
+
+        function onPumpRatedOrFreqChanged(kind, index) {
+            const ratedPower = num('unit-' + kind + '-rated-power-' + index);
+            const ratedFreq = num('unit-' + kind + '-rated-freq-' + index) || 50;
+            const freq = num('unit-' + kind + '-freq-' + index);
+            const powerEl = document.getElementById('unit-' + kind + '-power-' + index);
+            if (powerEl) {
+                powerEl.value = pumpPowerFromRated(ratedPower, freq, ratedFreq).toFixed(3);
+            }
+            recalculateSystemTotalPower();
         }
 
         function defaultOptimizeUnitsFromConfig(cfg, deviceData, useRatedWhenMissing, documentUnits) {
             const data = deviceData || {};
             const chilledLabels = ['东', '西', '3', '4'];
             const coolingLabels = ['东', '西', '3', '4'];
-            const pumpPower = (motorKw, freq) => {
-                const ratio = Math.max(Number(freq) || 0, 0) / 50;
-                return Number(motorKw || 0) * ratio * ratio * ratio;
-            };
             const estimateChillerUnitPower = (loadPct, chCfg) => {
                 const cap = Number(chCfg && chCfg.rated_capacity_kw) || Number(cfg.chiller.rated_capacity_kw) || 0;
                 const mlr = Number(chCfg && chCfg.max_load_rate) || Number(cfg.chiller.max_load_rate) || 0.8;
@@ -1023,9 +1052,7 @@
                 const enabledCooling = documentUnits.filter(u => u.unit_type === 'cooling_pump' && u.enabled !== false);
                 const enabledTowers = documentUnits.filter(u => u.unit_type === 'cooling_tower' && u.enabled !== false);
                 let chilledFreq = Number(data.chilled_pump_freq || 0);
-                let chilledPower = Number(data.chilled_pump_power || 0);
                 let coolingFreq = Number(data.cooling_pump_freq || 0);
-                let coolingPower = Number(data.cooling_pump_power || 0);
                 if (useRatedWhenMissing && isEmptyInputValue(chilledFreq)) {
                     chilledFreq = enabledChilled.length ? enabledChilled[0].min_freq : cfg.chilled_pump.min_freq;
                 }
@@ -1033,28 +1060,28 @@
                     coolingFreq = enabledCooling.length ? enabledCooling[0].min_freq : cfg.cooling_pump.min_freq;
                 }
                 const chilled = enabledChilled.map(unit => {
-                    let power = enabledChilled.length ? chilledPower / enabledChilled.length : chilledPower;
-                    if (useRatedWhenMissing && isEmptyInputValue(power)) {
-                        power = pumpPower(unit.motor_power_kw, chilledFreq);
-                    }
+                    const ratedPower = Number(unit.motor_power_kw || cfg.chilled_pump.motor_power_kw || 0);
+                    const ratedFreq = 50;
                     return {
                         name: unit.name,
                         label: unit.name,
+                        rated_power_kw: ratedPower,
+                        rated_freq: ratedFreq,
                         freq: chilledFreq,
-                        power: power,
+                        power: pumpPowerFromRated(ratedPower, chilledFreq, ratedFreq),
                         current: 0
                     };
                 });
                 const cooling = enabledCooling.map(unit => {
-                    let power = enabledCooling.length ? coolingPower / enabledCooling.length : coolingPower;
-                    if (useRatedWhenMissing && isEmptyInputValue(power)) {
-                        power = pumpPower(unit.motor_power_kw, coolingFreq);
-                    }
+                    const ratedPower = Number(unit.motor_power_kw || cfg.cooling_pump.motor_power_kw || 0);
+                    const ratedFreq = 50;
                     return {
                         name: unit.name,
                         label: unit.name,
+                        rated_power_kw: ratedPower,
+                        rated_freq: ratedFreq,
                         freq: coolingFreq,
-                        power: power,
+                        power: pumpPowerFromRated(ratedPower, coolingFreq, ratedFreq),
                         current: 0
                     };
                 });
@@ -1094,36 +1121,34 @@
             const chilledCount = Math.max(0, Math.round(cfg.chilled_pump.count || 0));
             const coolingCount = Math.max(0, Math.round(cfg.cooling_pump.count || 0));
             let chilledFreq = Number(data.chilled_pump_freq || 0);
-            let chilledPower = Number(data.chilled_pump_power || 0);
             let coolingFreq = Number(data.cooling_pump_freq || 0);
-            let coolingPower = Number(data.cooling_pump_power || 0);
             if (useRatedWhenMissing && isEmptyInputValue(chilledFreq)) chilledFreq = cfg.chilled_pump.min_freq;
             if (useRatedWhenMissing && isEmptyInputValue(coolingFreq)) coolingFreq = cfg.cooling_pump.min_freq;
             for (let i = 0; i < chilledCount; i += 1) {
                 const suffix = chilledLabels[i] || String(i + 1);
-                let power = chilledCount ? chilledPower / chilledCount : chilledPower;
-                if (useRatedWhenMissing && isEmptyInputValue(power)) {
-                    power = pumpPower(cfg.chilled_pump.motor_power_kw, chilledFreq);
-                }
+                const ratedPower = Number(cfg.chilled_pump.motor_power_kw || 0);
+                const ratedFreq = 50;
                 chilled.push({
                     name: cfg.chilled_pump.name + '_' + suffix,
                     label: cfg.chilled_pump.name + '_' + suffix,
+                    rated_power_kw: ratedPower,
+                    rated_freq: ratedFreq,
                     freq: chilledFreq,
-                    power: power,
+                    power: pumpPowerFromRated(ratedPower, chilledFreq, ratedFreq),
                     current: 0
                 });
             }
             for (let i = 0; i < coolingCount; i += 1) {
                 const suffix = coolingLabels[i] || String(i + 1);
-                let power = coolingCount ? coolingPower / coolingCount : coolingPower;
-                if (useRatedWhenMissing && isEmptyInputValue(power)) {
-                    power = pumpPower(cfg.cooling_pump.motor_power_kw, coolingFreq);
-                }
+                const ratedPower = Number(cfg.cooling_pump.motor_power_kw || 0);
+                const ratedFreq = 50;
                 cooling.push({
                     name: cfg.cooling_pump.name + '_' + suffix,
                     label: cfg.cooling_pump.name + '_' + suffix,
+                    rated_power_kw: ratedPower,
+                    rated_freq: ratedFreq,
                     freq: coolingFreq,
-                    power: power,
+                    power: pumpPowerFromRated(ratedPower, coolingFreq, ratedFreq),
                     current: 0
                 });
             }
@@ -1166,18 +1191,40 @@
             const tbody = document.getElementById(OPTIMIZE_UNIT_TABLE_IDS[kind]);
             if (!tbody) return [];
             const rows = Array.from(tbody.querySelectorAll('tr'));
-            return rows.map((_, index) => ({
-                name: document.getElementById('unit-' + kind + '-name-' + index)?.value || '',
-                label: document.getElementById('unit-' + kind + '-name-' + index)?.value || '',
-                freq: num('unit-' + kind + '-freq-' + index),
-                power: num('unit-' + kind + '-power-' + index),
-                current: num('unit-' + kind + '-current-' + index)
-            })).filter(item => item.name);
+            const isPump = kind === 'chilled' || kind === 'cooling';
+            return rows.map((_, index) => {
+                const item = {
+                    name: document.getElementById('unit-' + kind + '-name-' + index)?.value || '',
+                    label: document.getElementById('unit-' + kind + '-name-' + index)?.value || '',
+                    freq: num('unit-' + kind + '-freq-' + index),
+                    power: num('unit-' + kind + '-power-' + index),
+                    current: num('unit-' + kind + '-current-' + index)
+                };
+                if (isPump) {
+                    item.rated_power_kw = num('unit-' + kind + '-rated-power-' + index);
+                    item.rated_freq = num('unit-' + kind + '-rated-freq-' + index) || 50;
+                    // 提交前再算一遍，确保不以旧功率为准
+                    item.power = pumpPowerFromRated(item.rated_power_kw, item.freq, item.rated_freq);
+                }
+                return item;
+            }).filter(item => item.name);
         }
 
         function syncUnitsToDeviceScalars(units, data) {
             units = units || {};
             data = data || {};
+            const recalcPumpGroup = (items, freqKey) => {
+                const avgFreq = Number(data[freqKey] || 0);
+                return (items || []).map(item => {
+                    const ratedPower = Number(item.rated_power_kw || 0);
+                    const ratedFreq = Number(item.rated_freq || 50) || 50;
+                    const freq = Number(item.freq || 0) > 0 ? Number(item.freq) : avgFreq;
+                    return Object.assign({}, item, {
+                        freq: freq,
+                        power: pumpPowerFromRated(ratedPower, freq, ratedFreq)
+                    });
+                });
+            };
             const scaleGroup = (items, totalKey, freqKey) => {
                 const list = (items || []).map(item => Object.assign({}, item));
                 const target = Number(data[totalKey] || 0);
@@ -1215,8 +1262,8 @@
             };
             return {
                 chillers: scaleChillerGroup(units.chillers, 'chiller_load', 'chiller_power'),
-                chilled_pumps: scaleGroup(units.chilled_pumps, 'chilled_pump_power', 'chilled_pump_freq'),
-                cooling_pumps: scaleGroup(units.cooling_pumps, 'cooling_pump_power', 'cooling_pump_freq'),
+                chilled_pumps: recalcPumpGroup(units.chilled_pumps, 'chilled_pump_freq'),
+                cooling_pumps: recalcPumpGroup(units.cooling_pumps, 'cooling_pump_freq'),
                 cooling_towers: scaleGroup(units.cooling_towers, 'cooling_tower_fan_power', 'cooling_tower_fan_freq')
             };
         }
@@ -1281,73 +1328,7 @@
             return sorted;
         }
 
-        function showBatchDetail(index) {
-            const item = batchResultsCache[index];
-            if (!item) return;
 
-            document.getElementById('batch-raw-detail').textContent =
-                JSON.stringify(sortedObject(item.raw || {}), null, 2);
-
-            const audit = item.input_audit || {};
-            document.getElementById('batch-input-detail').textContent = JSON.stringify({
-                row_number: item.row_number,
-                resolved_input: item.input || {},
-                field_provenance: (audit.fields || []).map(f => ({
-                    字段: f.label,
-                    最终值: f.value,
-                    来源: f.source_label,
-                    Excel列: f.excel_column || '—',
-                    说明: f.detail || '—',
-                    是否替换缺省: f.substituted ? '是' : '否',
-                    可用缺省值: f.default_available ?? '—',
-                    标记为缺省: f.in_defaulted_list ? '是' : '否'
-                })),
-                来自Excel: audit.from_excel || [],
-                被替换或推算: audit.substituted_or_derived || [],
-                缺失字段: audit.missing_in_excel || [],
-                缺省字段列表: audit.defaulted_fields || [],
-                总功率分解: audit.total_power_parts || {},
-                总功率公式: audit.total_power_formula || '',
-                总功率合计: audit.total_power_sum
-            }, null, 2);
-
-            document.getElementById('batch-output-detail').textContent = JSON.stringify({
-                一_推荐控制参数: item.result || {},
-                二_预测工况: {
-                    predicted_power: item.result && item.result.predicted_power,
-                    baseline_power: item.result && item.result.baseline_power,
-                    predicted_indoor_temp: item.result && item.result.predicted_indoor_temp,
-                    predicted_chiller_power: item.result && item.result.predicted_chiller_power,
-                    predicted_cooling_water_temp: item.result && item.result.predicted_cooling_water_temp,
-                    predicted_cop: item.result && item.result.predicted_cop,
-                    energy_saving_rate: item.result && item.result.energy_saving_rate,
-                    optimize_duration_sec: item.result && item.result.duration
-                },
-                三_功率对比: item.pipeline_audit ? item.pipeline_audit.power_comparison : {
-                    excel_total: item.measured_total_power,
-                    display_baseline: item.model_baseline_power,
-                    physics_baseline: item.physics_baseline_power,
-                    predicted_optimized: item.result && item.result.predicted_power,
-                    saving_vs_excel_baseline_pct: item.saving_rate,
-                    saving_vs_measured_pct: item.saving_rate_vs_measured,
-                    optimizer_internal_saving_pct: item.optimizer_internal_saving_rate
-                },
-                四_当前工况参数: item.baseline_params || {},
-                五_推荐工况参数: item.optimized_params || {},
-                六_基线功率分解: item.baseline_breakdown || {},
-                七_优化功率分解: item.optimized_breakdown || {},
-                八_链路自检: item.pipeline_audit || {},
-                九_数据质量警告: (item.data_quality && item.data_quality.warnings) || [],
-                十_是否可用于控制: item.data_quality && item.data_quality.reliable_for_control,
-                十一_计算说明: {
-                    Excel汇总: '机组+冷冻泵+冷却泵+冷却塔+末端(Excel实测/推算)',
-                    模型基线: '优先Excel各部件加总+末端缺省2kW',
-                    优化预测: '自研物理模型(PSO)；泵/塔/机组有Excel实测时按实测锚定缩放',
-                    表格节能率: '相对Excel对齐基线 (model_baseline - predicted) / model_baseline',
-                    寻优器内部节能率: 'result.energy_saving_rate，相对物理模型基线'
-                }
-            }, null, 2);
-        }
 
         function renderOptimizeOutputs(r) {
             if (!r) return;
@@ -1374,41 +1355,7 @@
             }
         }
 
-        function renderBatchTable(results) {
-            batchResultsCache = results || [];
-            const tbody = document.getElementById('batch-table');
-            if (!batchResultsCache.length) {
-                tbody.innerHTML = '<tr><td colspan="18" style="text-align:center; color:#999;">无可展示结果</td></tr>';
-                return;
-            }
-            tbody.innerHTML = batchResultsCache.map((item, index) => {
-                const input = item.input || {};
-                const result = item.result || {};
-                const quality = item.data_quality || {};
-                const qualityText = quality.reliable_for_control ? '完整' : '有默认/近似';
-                return '<tr class="clickable" onclick="showBatchDetail(' + index + ')">' +
-                    '<td>' + item.row_number + '</td>' +
-                    '<td>' + escapeHtml(input.timestamp || '') + '</td>' +
-                    '<td>' + fmt(input.chiller_load, 1) + '</td>' +
-                    '<td>' + fmt(item.measured_total_power, 2) + '</td>' +
-                    '<td>' + fmt(item.model_baseline_power, 2) + '</td>' +
-                    '<td>' + fmt(input.chilled_pump_freq, 2) + '</td>' +
-                    '<td>' + fmt(input.cooling_pump_freq, 2) + '</td>' +
-                    '<td>' + fmt(result.chilled_water_temp, 2) + '</td>' +
-                    '<td>' + (result.chilled_pump_count ?? '--') + '</td>' +
-                    '<td>' + fmt(result.chilled_pump_freq, 2) + '</td>' +
-                    '<td>' + (result.cooling_pump_count ?? '--') + '</td>' +
-                    '<td>' + fmt(result.cooling_pump_freq, 2) + '</td>' +
-                    '<td>' + (result.cooling_tower_count ?? '--') + '</td>' +
-                    '<td>' + fmt(result.predicted_power, 2) + '</td>' +
-                    '<td>' + fmt(result.predicted_indoor_temp, 2) + '</td>' +
-                    '<td>' + fmt(result.predicted_chiller_power, 2) + '</td>' +
-                    '<td>' + fmt(item.saving_rate ?? result.energy_saving_rate, 2) + '</td>' +
-                    '<td>' + qualityText + '</td>' +
-                    '</tr>';
-            }).join('');
-            showBatchDetail(0);
-        }
+
 
         function calcChillerCop(capacity, power) {
             if (power > 0 && capacity > 0) {
@@ -1693,6 +1640,26 @@
                 (doc.cooling_tower_schemes || cfg.cooling_tower_schemes || [0, 3, 5]).join(',');
             renderEquipmentUnitTables(doc.units || []);
             renderOptimizeEquipmentUnits(defaultOptimizeUnitsFromConfig(cfg, {}, true, doc.units));
+            // 设备配置加载后：寻优最低频率默认 0（不额外抬高）；仅空白时填充
+            const chpMinEl = document.getElementById('in-chilled-pump-min-freq');
+            const cwpMinEl = document.getElementById('in-cooling-pump-min-freq');
+            const defaultChpMin = (optimizeInputDefaults && optimizeInputDefaults.chilled_pump_min_freq != null)
+                ? optimizeInputDefaults.chilled_pump_min_freq
+                : 0;
+            const defaultCwpMin = (optimizeInputDefaults && optimizeInputDefaults.cooling_pump_min_freq != null)
+                ? optimizeInputDefaults.cooling_pump_min_freq
+                : 0;
+            if (chpMinEl && isEmptyInputValue(chpMinEl.value)) {
+                chpMinEl.value = defaultChpMin;
+            }
+            if (cwpMinEl && isEmptyInputValue(cwpMinEl.value)) {
+                cwpMinEl.value = defaultCwpMin;
+            }
+            // 空白室内负荷用设备推导值填充
+            const loadEl = document.getElementById('in-indoor-load');
+            if (loadEl && isEmptyInputValue(loadEl.value) && optimizeInputDefaults && optimizeInputDefaults.indoor_load > 0) {
+                loadEl.value = optimizeInputDefaults.indoor_load;
+            }
             recalculateSystemTotalPower();
             const storage = json.data.storage || {};
             document.getElementById('config-message').textContent =
@@ -1787,6 +1754,8 @@
             'in-indoor-load': 'indoor_load',
             'in-chilled-water-temp': 'chilled_water_temp',
             'in-cooling-water-temp': 'cooling_water_temp',
+            'in-chilled-pump-min-freq': 'chilled_pump_min_freq',
+            'in-cooling-pump-min-freq': 'cooling_pump_min_freq',
             'in-terminal-fan-power': 'terminal_fan_power',
             'in-total-power': 'total_power'
         };
@@ -1811,7 +1780,65 @@
             }
         }
 
-        /** 多次寻优：在上一轮室外温/湿度基础上做小幅随机游走，模拟天气缓慢变化。 */
+        function collectDeviceData() {
+            const chillerUnits = collectOptimizeUnits('chiller');
+            const chilledUnits = collectOptimizeUnits('chilled');
+            const coolingUnits = collectOptimizeUnits('cooling');
+            const towerUnits = collectOptimizeUnits('tower');
+            const chillerLoad = avgNonZero(chillerUnits.map(u => u.load));
+            const chillerPower = sumValues(chillerUnits.map(u => u.power));
+            const chilledPumpFreq = avgNonZero(chilledUnits.map(u => u.freq));
+            const chilledPumpPower = sumValues(chilledUnits.map(u => u.power));
+            const coolingPumpFreq = avgNonZero(coolingUnits.map(u => u.freq));
+            const coolingPumpPower = sumValues(coolingUnits.map(u => u.power));
+            const chilledRatedPower = avgNonZero(chilledUnits.map(u => u.rated_power_kw));
+            const coolingRatedPower = avgNonZero(coolingUnits.map(u => u.rated_power_kw));
+            const chilledRunning = chilledUnits.filter(u => Number(u.freq || 0) > 0).length;
+            const coolingRunning = coolingUnits.filter(u => Number(u.freq || 0) > 0).length;
+            const chilledMinFreq = num('in-chilled-pump-min-freq');
+            const coolingMinFreq = num('in-cooling-pump-min-freq');
+            const pumpRatedFreq = avgNonZero(
+                chilledUnits.concat(coolingUnits).map(u => u.rated_freq).filter(v => v > 0)
+            ) || 50;
+            const towerFreq = avgNonZero(towerUnits.map(u => u.freq));
+            const towerPower = sumValues(towerUnits.map(u => u.power));
+            const terminalPower = num('in-terminal-fan-power');
+            const totalPower = chillerPower + chilledPumpPower + coolingPumpPower + towerPower + terminalPower;
+            return {
+                timestamp: new Date().toISOString(),
+                outdoor_temp: num('in-outdoor-temp'),
+                outdoor_humidity: num('in-outdoor-humidity'),
+                indoor_temp: num('in-indoor-temp'),
+                indoor_humidity: num('in-indoor-humidity'),
+                indoor_load: num('in-indoor-load'),
+                chiller_load: chillerLoad,
+                chiller_power: chillerPower,
+                chilled_water_temp: num('in-chilled-water-temp'),
+                cooling_water_temp: num('in-cooling-water-temp'),
+                chilled_pump_freq: chilledPumpFreq,
+                chilled_pump_power: chilledPumpPower,
+                chilled_pump_rated_power_kw: chilledRatedPower,
+                chilled_pump_running_count: chilledRunning,
+                chilled_pump_min_freq: chilledMinFreq,
+                cooling_pump_freq: coolingPumpFreq,
+                cooling_pump_power: coolingPumpPower,
+                cooling_pump_rated_power_kw: coolingRatedPower,
+                cooling_pump_running_count: coolingRunning,
+                cooling_pump_min_freq: coolingMinFreq,
+                pump_rated_freq: pumpRatedFreq,
+                cooling_tower_fan_freq: towerFreq,
+                cooling_tower_fan_power: towerPower,
+                terminal_fan_power: terminalPower,
+                total_power: totalPower,
+                equipment_units: {
+                    chillers: chillerUnits,
+                    chilled_pumps: chilledUnits,
+                    cooling_pumps: coolingUnits,
+                    cooling_towers: towerUnits
+                }
+            };
+        }
+
         function driftOutdoorWeather(prevTemp, prevHumidity, opts) {
             const step = Math.max(0.1, Number(opts.step) || 0.5);
             const range = Math.max(step, Number(opts.range) || 3);
@@ -2011,6 +2038,9 @@
                 const form = new FormData();
                 form.append('file', fileInput.files[0]);
                 const res = await fetch('/api/v1/optimize/import-preview', {method: 'POST', body: form});
+                if (!res.ok) {
+                    throw new Error('接口返回 HTTP ' + res.status + '，请确认边缘服务已启动（默认 http://localhost:8000）');
+                }
                 const json = await res.json();
                 if (json.code !== 0 || !json.data || !json.data.device_data) {
                     throw new Error(json.message || '未能解析有效运行行');
@@ -2026,7 +2056,11 @@
                     (filled.length ? '；缺省/配置补齐字段：' + Array.from(new Set(filled)).join('、') : '');
                 setOptimizeActionStatus('Excel 最后一行运行数据已填入输入框。', 'success');
             } catch (e) {
-                setOptimizeActionStatus('Excel 填充失败：' + e, 'error');
+                const msg = String(e && e.message ? e.message : e);
+                const hint = /Failed to fetch|NetworkError|load failed/i.test(msg)
+                    ? '（常见原因：边缘服务未启动，或页面不是从 http://localhost:8000 打开的）'
+                    : '';
+                setOptimizeActionStatus('Excel 填充失败：' + msg + hint, 'error');
             } finally {
                 setOptimizeButtonsDisabled(false);
             }
@@ -2088,7 +2122,33 @@
             return res.json();
         }
 
-        function         renderMultiRunTable(history) {
+        async function runOptimizeFromInputs() {
+            const box = document.getElementById('optimize-result');
+            setOptimizeButtonsDisabled(true);
+            setOptimizeActionStatus('寻优计算中，请稍候（约 3~10 秒）...');
+            box.textContent = '寻优计算中...';
+            try {
+                const json = await callOptimizeApi(collectDeviceData());
+                if (json.code === 0 && json.data) {
+                    const r = json.data;
+                    renderOptimizeOutputs(r);
+                    box.textContent = JSON.stringify(r, null, 2);
+                    setOptimizeActionStatus('寻优完成。推荐值与预测工况已更新，详见下方结果。', 'success');
+                    scrollToOptimizeOutput(false);
+                    fetchStatus();
+                } else {
+                    box.textContent = '寻优失败：' + JSON.stringify(json, null, 2);
+                    setOptimizeActionStatus('寻优失败：' + (json.message || '未知错误'), 'error');
+                }
+            } catch (e) {
+                box.textContent = '请求失败：' + e;
+                setOptimizeActionStatus('请求失败：' + e, 'error');
+            } finally {
+                setOptimizeButtonsDisabled(false);
+            }
+        }
+
+        function renderMultiRunTable(history) {
             const tbody = document.getElementById('multi-run-table');
             if (!tbody) return;
             if (!history || !history.length) {
@@ -2129,32 +2189,6 @@
                     '<td>' + fmt(result.duration, 2) + '</td>' +
                     '</tr>';
             }).join('');
-        }
-
-        async function runOptimizeFromInputs() {
-            const box = document.getElementById('optimize-result');
-            setOptimizeButtonsDisabled(true);
-            setOptimizeActionStatus('寻优计算中，请稍候（约 3~10 秒）...');
-            box.textContent = '寻优计算中...';
-            try {
-                const json = await callOptimizeApi(collectDeviceData());
-                if (json.code === 0 && json.data) {
-                    const r = json.data;
-                    renderOptimizeOutputs(r);
-                    box.textContent = JSON.stringify(r, null, 2);
-                    setOptimizeActionStatus('寻优完成。推荐值与预测工况已更新，详见下方结果。', 'success');
-                    scrollToOptimizeOutput(false);
-                    fetchStatus();
-                } else {
-                    box.textContent = '寻优失败：' + JSON.stringify(json, null, 2);
-                    setOptimizeActionStatus('寻优失败：' + (json.message || '未知错误'), 'error');
-                }
-            } catch (e) {
-                box.textContent = '请求失败：' + e;
-                setOptimizeActionStatus('请求失败：' + e, 'error');
-            } finally {
-                setOptimizeButtonsDisabled(false);
-            }
         }
 
         async function runOptimizeMultipleFromInputs() {
@@ -2290,10 +2324,114 @@
             }
         }
 
+        async function refreshLightgbmStatus() {
+            const el = document.getElementById('ml-power-status');
+            try {
+                const res = await fetch('/api/v1/ml-power/status');
+                const json = await res.json();
+                if (json.code !== 0 || !json.data) {
+                    el.textContent = '读取失败：' + (json.message || 'unknown');
+                    return;
+                }
+                const d = json.data;
+                const m = d.metrics || {};
+                el.textContent = '就绪=' + (d.ready ? '是' : '否')
+                    + '；lightgbm包=' + (d.lightgbm_available ? '已安装' : '未安装')
+                    + '；目标=' + (d.target || '--')
+                    + '；MAE=' + (m.mae != null ? m.mae : '--')
+                    + '；RMSE=' + (m.rmse != null ? m.rmse : '--')
+                    + '；R²=' + (m.r2 != null ? m.r2 : '--')
+                    + '；训练样本=' + (m.n_train != null ? m.n_train : '--');
+            } catch (e) {
+                el.textContent = '读取失败：' + e;
+            }
+        }
+
+        async function trainLightgbmFromFile() {
+            const fileInput = document.getElementById('ml-train-file');
+            const resultEl = document.getElementById('ml-power-result');
+            if (!fileInput.files || !fileInput.files.length) {
+                resultEl.textContent = '请先选择训练用 Excel/CSV。';
+                return;
+            }
+            const fd = new FormData();
+            fd.append('file', fileInput.files[0]);
+            fd.append('target', document.getElementById('ml-train-target').value || 'total_power');
+            fd.append('max_rows', document.getElementById('ml-train-max-rows').value || '20000');
+            resultEl.textContent = '训练中，请稍候...';
+            try {
+                const res = await fetch('/api/v1/ml-power/train/upload', { method: 'POST', body: fd });
+                const json = await res.json();
+                if (json.code !== 0) {
+                    resultEl.textContent = '训练失败：' + (json.message || 'unknown');
+                    return;
+                }
+                const m = (json.data && json.data.metrics) || {};
+                resultEl.textContent = '训练完成：解析'
+                    + (json.data.parsed_rows || 0) + ' 行，有效训练 '
+                    + (json.data.trained_rows || 0) + ' 行；测试集 MAE='
+                    + m.mae + '，RMSE=' + m.rmse + '，R²=' + m.r2;
+                refreshLightgbmStatus();
+            } catch (e) {
+                resultEl.textContent = '训练失败：' + e;
+            }
+        }
+
+        async function predictLightgbmFromForm() {
+            const resultEl = document.getElementById('ml-power-result');
+            try {
+                const deviceData = collectDeviceData();
+                const res = await fetch('/api/v1/ml-power/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ device_data: deviceData })
+                });
+                const json = await res.json();
+                if (json.code !== 0) {
+                    resultEl.textContent = '预测失败：' + (json.message || 'unknown');
+                    return;
+                }
+                resultEl.textContent = 'LightGBM 预测'
+                    + (json.data.target === 'chiller_power' ? '主机功率' : '总功率')
+                    + '=' + json.data.predicted_power + ' kW';
+            } catch (e) {
+                resultEl.textContent = '预测失败：' + e;
+            }
+        }
+
+        async function compareLightgbmWhitebox() {
+            const resultEl = document.getElementById('ml-power-result');
+            try {
+                const deviceData = collectDeviceData();
+                const res = await fetch('/api/v1/ml-power/compare-whitebox', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ device_data: deviceData })
+                });
+                const json = await res.json();
+                if (json.code !== 0) {
+                    resultEl.textContent = '对比失败：' + (json.message || 'unknown');
+                    return;
+                }
+                const w = json.data.whitebox || {};
+                const b = json.data.lightgbm || {};
+                resultEl.textContent = '白盒总功率=' + (w.predicted_power != null ? w.predicted_power : '--')
+                    + ' kW；黑盒=' + (b.predicted_power != null ? b.predicted_power : '--')
+                    + ' kW；差(黑-白)=' + (json.data.delta_black_minus_white_kw != null ? json.data.delta_black_minus_white_kw : '--')
+                    + ' kW。' + (json.data.remark || '');
+            } catch (e) {
+                resultEl.textContent = '对比失败：' + e;
+            }
+        }
+
         window.runOptimizeFromInputs = runOptimizeFromInputs;
-        window.loadRealtimeToInputs = loadRealtimeToInputs;
         window.runOptimizeMultipleFromInputs = runOptimizeMultipleFromInputs;
+        window.loadRealtimeToInputs = loadRealtimeToInputs;
         window.fillOptimizeInputsFromExcel = fillOptimizeInputsFromExcel;
+        window.trainLightgbmFromFile = trainLightgbmFromFile;
+        window.refreshLightgbmStatus = refreshLightgbmStatus;
+        window.predictLightgbmFromForm = predictLightgbmFromForm;
+        window.compareLightgbmWhitebox = compareLightgbmWhitebox;
 
         document.addEventListener('input', (event) => {
             if (!event.target || !event.target.id) return;
@@ -2308,61 +2446,7 @@
             }
         });
 
-        async function uploadBatchOptimize() {
-            const fileInput = document.getElementById('batch-file');
-            if (!fileInput.files || fileInput.files.length === 0) {
-                document.getElementById('batch-summary').textContent = '请先选择 Excel/CSV 文件。';
-                return;
-            }
-            const maxRows = Number(document.getElementById('batch-max-rows').value || 1000);
-            const maxResults = Number(document.getElementById('batch-max-results').value || 200);
-            const form = new FormData();
-            form.append('file', fileInput.files[0]);
-            document.getElementById('batch-summary').textContent = '批量寻优运行中，请稍候...';
-            try {
-                const res = await fetch('/api/v1/optimize/batch-upload?max_rows=' + maxRows + '&max_results=' + maxResults, {
-                    method: 'POST',
-                    body: form
-                });
-                const json = await res.json();
-                if (json.code === 0 && json.data) {
-                    const d = json.data;
-                    if (d.results && d.results.length > 0) {
-                        const first = d.results[0];
-                        const r = first.result;
-                        renderOptimizeOutputs(r);
-                        document.getElementById('optimize-result').textContent = JSON.stringify({
-                            result: r,
-                            measured_total_power: first.measured_total_power,
-                            model_baseline_power: first.model_baseline_power,
-                            saving_rate: first.saving_rate,
-                            saving_rate_vs_measured: first.saving_rate_vs_measured,
-                            baseline_breakdown: first.baseline_breakdown,
-                            optimized_breakdown: first.optimized_breakdown,
-                            data_quality: first.data_quality
-                        }, null, 2);
-                    }
-                    const lines = [
-                        '文件: ' + d.filename,
-                        '总行数: ' + d.total_rows,
-                        '运行行数: ' + d.running_rows,
-                        '实际处理: ' + d.processed_rows,
-                        '成功/失败/超时: ' + d.success_count + ' / ' + d.failed_count + ' / ' + d.timeout_count,
-                        '非运行跳过: ' + d.skipped_not_running,
-                        '无效跳过: ' + d.skipped_invalid,
-                        '缺失字段: ' + (d.missing_fields || []).join(', '),
-                        '使用默认值字段: ' + (d.defaulted_fields || []).join(', ')
-                    ];
-                    document.getElementById('batch-summary').textContent = lines.join(' | ');
-                    renderBatchTable(d.results || []);
-                    fetchStatus();
-                } else {
-                    document.getElementById('batch-summary').textContent = '批量寻优失败：' + JSON.stringify(json, null, 2);
-                }
-            } catch (e) {
-                document.getElementById('batch-summary').textContent = '上传失败：' + e;
-            }
-        }
+
 
         let optimizeAppSettings = null;
 
@@ -2401,6 +2485,22 @@
                 if (chwTempInput && isEmptyInputValue(chwTempInput.value)) {
                     chwTempInput.value = optimizeInputDefaults.chilled_water_temp;
                 }
+                const envMap = {
+                    'in-outdoor-temp': 'outdoor_temp',
+                    'in-outdoor-humidity': 'outdoor_humidity',
+                    'in-indoor-temp': 'indoor_temp',
+                    'in-indoor-humidity': 'indoor_humidity',
+                    'in-indoor-load': 'indoor_load',
+                    'in-chilled-pump-min-freq': 'chilled_pump_min_freq',
+                    'in-cooling-pump-min-freq': 'cooling_pump_min_freq'
+                };
+                Object.keys(envMap).forEach(function(id) {
+                    const el = document.getElementById(id);
+                    const key = envMap[id];
+                    if (el && isEmptyInputValue(el.value) && optimizeInputDefaults[key] != null) {
+                        el.value = optimizeInputDefaults[key];
+                    }
+                });
             }
         }
 
@@ -2479,6 +2579,7 @@
         fetchStatus();
         loadEquipmentConfig();
         loadAppSettings();
+        refreshLightgbmStatus();
         setInterval(fetchStatus, 5000);
         (function initCollapsibleSections() {
             const jsonBody = document.getElementById('optimize-result-body');
