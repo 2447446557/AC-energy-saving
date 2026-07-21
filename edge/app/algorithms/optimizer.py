@@ -17,13 +17,15 @@
 
 目标函数 = 能耗模型总功率
           + 舒适度惩罚（室内温度越界，软约束）
+          + 定值变化 / 欠供冷 / PLR 甜点软惩罚（ChillStream 可借鉴）
           + 硬约束越界极大惩罚（保险，正常被 lb/ub 拦截）
 
 工程化鲁棒设计：
 - 寻优超时：子线程执行 + 墙钟超时，超时立即兜底，杜绝阻塞主调度。
 - 收敛失败：结果非有限 / 未改进 / 抛异常，一律降级为兜底。
 - 数据熔断：上游数据清洗判定连续异常时，直接切回安全固定参数。
-- 参数平滑：最优解经阶梯平滑后输出，保护设备。
+- 参数平滑：最优解经阶梯平滑后输出，保护设备；结果区分 PSO 推荐值与实发值。
+- 短时负荷 EWMA 预测后再寻优；可选 LightGBM 旁路节能对照。
 - 局部最优规避：多粒子 + 惯性权重 + 适度迭代，兼顾收敛速度与全局性。
 """
 
@@ -41,6 +43,15 @@ import numpy as np
 from loguru import logger
 from sko.PSO import PSO
 
+from app.algorithms.chillstream_features import (
+    FALLBACK_RULES,
+    LoadForecastState,
+    blackbox_baseline_power,
+    merge_feature_config,
+    plr_sweet_spot_penalty,
+    setpoint_change_penalty,
+    unmet_cooling_penalty,
+)
 from app.algorithms.constraints import VAR_ORDER, SafetyConstraints
 from app.algorithms.energy_model import ACEnergyModel
 from app.algorithms.fallback import SafeOutputGuard
@@ -128,6 +139,8 @@ class PSOOptimizer:
         if timeout_seconds is None:
             timeout_seconds = float(cfg.get("timeout_seconds", 60))
         self._timeout = timeout_seconds
+        self._load_forecast = LoadForecastState()
+        self._inspired_cfg = merge_feature_config(cfg.get("inspired"))
 
     def apply_runtime_settings(self, config: dict | None = None) -> None:
         """热更新寻优任务参数（超时等），不重建 PSO 实例。"""
@@ -151,6 +164,10 @@ class PSOOptimizer:
                     setattr(self, attr, cast(pso_cfg[key]))
                 except (TypeError, ValueError):
                     pass
+        self._inspired_cfg = merge_feature_config(optimize_cfg.get("inspired"))
+
+    def _inspired_config(self) -> dict[str, Any]:
+        return self._inspired_cfg if isinstance(self._inspired_cfg, dict) else merge_feature_config(None)
 
     # ---------- IOptimizer 协议实现 ----------
 
@@ -158,6 +175,7 @@ class PSOOptimizer:
         """执行一次寻优，返回带兜底保障的最优控制参数。"""
         start = time.time()
         task_id = str(uuid.uuid4())
+        forecast_indoor_load = 0.0
 
         # --- 解析工况数据 ---
         try:
@@ -165,7 +183,11 @@ class PSOOptimizer:
         except Exception as e:
             logger.error(f"寻优输入解析失败: {e}")
             return self._fallback_result(
-                task_id, "failed", f"输入解析失败:{e}", start
+                task_id,
+                "failed",
+                f"输入解析失败:{e}",
+                start,
+                fallback_rule="parse_error",
             )
 
         # --- 数据熔断优先级最高：连续异常直接切固定参数 ---
@@ -174,7 +196,13 @@ class PSOOptimizer:
         )():
             params = self._guard.fallback_params("数据熔断")
             return self._build_result(
-                task_id, "failed", data, params, start, remark="数据连续异常熔断，切回安全固定参数"
+                task_id,
+                "failed",
+                data,
+                params,
+                start,
+                remark="数据连续异常熔断，切回安全固定参数",
+                fallback_rule="circuit_break",
             )
 
         # --- 基线能耗（当前实测控制参数下的能耗，用于计算节能率） ---
@@ -236,7 +264,30 @@ class PSOOptimizer:
                     start,
                     0.0,
                     remark="缺实测功率，保持现有设定",
+                    fallback_rule="no_power",
+                    forecast_indoor_load=forecast_indoor_load,
                 )
+
+        # --- 短时负荷 EWMA：定时闭环用；force/批量跳过，避免行间串味 ---
+        inspired = self._inspired_config()
+        opt_data = data
+        measured_indoor_load = float(data.indoor_load or 0.0)
+        use_load_forecast = (
+            bool(inspired.get("enabled"))
+            and bool(inspired.get("load_forecast_enabled"))
+            and not bool(getattr(request, "force", False))
+        )
+        if use_load_forecast:
+            forecast_indoor_load = self._load_forecast.update(
+                measured_indoor_load, float(inspired.get("load_forecast_alpha", 0.35))
+            )
+            if abs(forecast_indoor_load - measured_indoor_load) > 1e-6:
+                opt_data = data.model_copy(update={"indoor_load": forecast_indoor_load})
+            else:
+                forecast_indoor_load = measured_indoor_load
+        else:
+            forecast_indoor_load = measured_indoor_load
+
         try:
             try:
                 model_baseline = self._predict_with_context(
@@ -258,23 +309,37 @@ class PSOOptimizer:
                 )
             )
 
-            # --- 运行 PSO（带超时） ---
+            # --- 运行 PSO（带超时）；负荷预测作用于 opt_data ---
             try:
-                best_params, best_y, converged = self._run_pso_with_timeout(data)
+                best_params, best_y, converged = self._run_pso_with_timeout(opt_data)
             except Exception as e:
                 logger.error(f"PSO 寻优异常: {e}", exc_info=True)
                 params = self._guard.fallback_params(f"寻优异常:{e}")
                 return self._build_result(
-                    task_id, "failed", data, params, start, baseline_power,
+                    task_id,
+                    "failed",
+                    data,
+                    params,
+                    start,
+                    baseline_power,
                     remark=f"寻优异常，已兜底:{e}",
+                    fallback_rule="exception",
+                    forecast_indoor_load=forecast_indoor_load,
                 )
 
             if best_params is None:
                 # 超时
                 params = self._guard.fallback_params("寻优超时")
                 return self._build_result(
-                    task_id, "timeout", data, params, start, baseline_power,
+                    task_id,
+                    "timeout",
+                    data,
+                    params,
+                    start,
+                    baseline_power,
                     remark=f"寻优超时(>{self._timeout}s)，已兜底",
+                    fallback_rule="timeout",
+                    forecast_indoor_load=forecast_indoor_load,
                 )
 
             # --- 收敛/合法性校验 ---
@@ -305,12 +370,31 @@ class PSOOptimizer:
             ):
                 params = self._guard.fallback_params("收敛失败/结果非法")
                 return self._build_result(
-                    task_id, "failed", data, params, start, baseline_power,
+                    task_id,
+                    "failed",
+                    data,
+                    params,
+                    start,
+                    baseline_power,
                     remark="寻优收敛失败或结果非法，已兜底",
+                    fallback_rule="invalid",
+                    forecast_indoor_load=forecast_indoor_load,
                 )
 
             # --- 有效解：登记 + 阶梯平滑输出 ---
             self._guard.register_good(best_params)
+            recommended = self._finalize_control_params(data, best_params)
+            recommended["chilled_pump_count"] = self._snap_pump_count(
+                "chilled",
+                best_params.get("chilled_pump_count", 1),
+                require_positive=data.indoor_load > 10,
+            )
+            recommended["cooling_pump_count"] = self._snap_pump_count(
+                "cooling",
+                best_params.get("cooling_pump_count", 1),
+                require_positive=data.indoor_load > 10,
+            )
+            recommended["cooling_tower_count"] = self._fixed_tower_count(data)
             urgent = self._is_comfort_at_risk(data)
             # 手动寻优/多次闭环模拟（force=True）跳过阶梯平滑，直接展示 PSO 最优解；
             # 现场自动下发仍走平滑，保护设备。
@@ -380,11 +464,52 @@ class PSOOptimizer:
                 remark = f"{remark}; {guard_remark}" if remark else guard_remark
             if gate_remark:
                 remark = f"{remark}; {gate_remark}" if remark else gate_remark
+            if (
+                use_load_forecast
+                and abs(forecast_indoor_load - measured_indoor_load) > 0.5
+            ):
+                load_note = (
+                    f"负荷EWMA={forecast_indoor_load:.1f}kW"
+                    f"(实测{measured_indoor_load:.1f})"
+                )
+                remark = f"{remark}; {load_note}" if remark else load_note
+
+            bb_power, bb_saving = self._blackbox_compare(
+                data, current_full, smoothed, inspired
+            )
             return self._build_result(
-                task_id, "success", data, smoothed, start, baseline_power, remark=remark
+                task_id,
+                "success",
+                data,
+                smoothed,
+                start,
+                baseline_power,
+                remark=remark,
+                recommended=recommended,
+                forecast_indoor_load=forecast_indoor_load,
+                blackbox_baseline_power=bb_power,
+                blackbox_saving_rate=bb_saving,
+                fallback_rule="ok",
             )
         finally:
             self._run_site_params_cache = {}
+
+    def _blackbox_compare(
+        self,
+        data: DeviceData,
+        current: dict[str, float],
+        applied: dict[str, float],
+        inspired: dict[str, Any],
+    ) -> tuple[float, float]:
+        """LightGBM 旁路：当前设定 vs 实发方案的黑盒功率对照。"""
+        if not inspired.get("enabled") or not inspired.get("blackbox_baseline_enabled"):
+            return 0.0, 0.0
+        cur_p, ok1 = blackbox_baseline_power(data, current)
+        opt_p, ok2 = blackbox_baseline_power(data, applied)
+        if not (ok1 and ok2) or cur_p <= 1e-6:
+            return 0.0, 0.0
+        saving = (cur_p - opt_p) / cur_p * 100.0
+        return round(cur_p, 3), round(saving, 2)
 
     # ---------- PSO 执行 ----------
 
@@ -651,6 +776,20 @@ class PSOOptimizer:
             pump_bias_chp_lo = 0.0
             pump_bias_cwp_lo = 0.0
 
+        inspired = self._inspired_config()
+        inspired_on = bool(inspired.get("enabled"))
+        try:
+            current_snap = self._finalize_control_params(
+                data, self._current_params(data)
+            )
+        except Exception:
+            current_snap = {
+                "chilled_water_temp": float(data.chilled_water_temp or 7.0),
+                "chilled_pump_freq": float(data.chilled_pump_freq or 35.0),
+                "cooling_pump_freq": float(data.cooling_pump_freq or 35.0),
+            }
+        demand_kw = max(float(data.indoor_load or 0.0), 0.0)
+
         def evaluate(params: dict[str, float]) -> float:
             cache_key = tuple(
                 round(float(params.get(var, 0.0)), 3)
@@ -688,6 +827,28 @@ class PSOOptimizer:
                     cost += _PUMP_FLOOR_BIAS_KW_PER_HZ * (
                         max(0.0, chp - pump_bias_chp_lo)
                         + max(0.0, cwp - pump_bias_cwp_lo)
+                    )
+                # ChillStream 可借鉴：定值跳变 / 欠供冷 / PLR 甜点软惩罚
+                if inspired_on:
+                    cost += setpoint_change_penalty(
+                        params,
+                        current_snap,
+                        weight=float(inspired.get("setpoint_change_weight", 0.0)),
+                        chw_scale=float(inspired.get("chw_change_scale", 1.0)),
+                        freq_scale=float(inspired.get("freq_change_scale", 5.0)),
+                    )
+                    cost += unmet_cooling_penalty(
+                        float(breakdown.delivered_cooling or 0.0),
+                        demand_kw,
+                        weight=float(inspired.get("unmet_cooling_weight", 0.0)),
+                    )
+                    # 与主机功率同一口径：ElectricEIR PLR1
+                    plr = float(getattr(breakdown, "plr1", 0.0) or 0.0)
+                    cost += plr_sweet_spot_penalty(
+                        plr,
+                        lo=float(inspired.get("plr_sweet_lo", 0.30)),
+                        hi=float(inspired.get("plr_sweet_hi", 0.55)),
+                        weight=float(inspired.get("plr_sweet_weight", 0.0)),
                     )
                 search_vars = {var: params.get(var, 0.0) for var in VAR_ORDER}
                 cost += _HARD_PENALTY_WEIGHT * constraints.hard_violation(
@@ -811,7 +972,12 @@ class PSOOptimizer:
 
             eq = equipment_config_service.get_config()
             enabled_count = len([tower for tower in eq.cooling_towers if tower.enabled])
-            schemes = sorted({max(0, int(s)) for s in eq.cooling_tower_schemes})
+            schemes = sorted(
+                {
+                    max(0, min(int(s), enabled_count))
+                    for s in (eq.cooling_tower_schemes or [enabled_count])
+                }
+            )
             return schemes or [enabled_count]
         except Exception:
             return [5]
@@ -1540,8 +1706,16 @@ class PSOOptimizer:
         start: float,
         baseline_power: float = 0.0,
         remark: str = "",
+        recommended: dict[str, float] | None = None,
+        forecast_indoor_load: float = 0.0,
+        blackbox_baseline_power: float = 0.0,
+        blackbox_saving_rate: float = 0.0,
+        fallback_rule: str = "",
     ) -> OptimizeResult:
-        """依据最终控制参数构造 OptimizeResult（含预测能耗与节能率）。"""
+        """依据最终控制参数构造 OptimizeResult（含预测能耗与节能率）。
+
+        params = 实发（平滑/硬闸后）；recommended = PSO 原始推荐（可选）。
+        """
         params = self._ensure_clipped_params(data, params)
         # 兜底/异常路径下 params 可能缺失 chilled_water_temp，按室外温度查表补齐
         if "chilled_water_temp" not in params:
@@ -1637,6 +1811,17 @@ class PSOOptimizer:
         tower_power = (
             breakdown.cooling_tower_fan_power if breakdown else self._cooling_tower_power(tower_count)
         )
+
+        rule_label = FALLBACK_RULES.get(fallback_rule, "")
+        if rule_label and fallback_rule not in ("", "ok"):
+            remark = f"[{rule_label}] {remark}".strip() if remark else f"[{rule_label}]"
+
+        rec = recommended or {}
+        rec_chw = rec.get("chilled_water_temp")
+        rec_chp = rec.get("chilled_pump_freq")
+        rec_cwp = rec.get("cooling_pump_freq")
+        rec_tower = rec.get("cooling_tower_fan_freq")
+
         return OptimizeResult(
             task_id=task_id,
             status=status,
@@ -1665,13 +1850,34 @@ class PSOOptimizer:
             ),
             predicted_cop=round(breakdown.cop, 3) if breakdown else 0.0,
             energy_saving_rate=round(saving, 2),
+            recommended_chilled_water_temp=(
+                round(float(rec_chw), 2) if rec_chw is not None else None
+            ),
+            recommended_chilled_pump_freq=(
+                round(float(rec_chp), 2) if rec_chp is not None else None
+            ),
+            recommended_cooling_pump_freq=(
+                round(float(rec_cwp), 2) if rec_cwp is not None else None
+            ),
+            recommended_cooling_tower_fan_freq=(
+                round(float(rec_tower), 2) if rec_tower is not None else None
+            ),
+            forecast_indoor_load=round(float(forecast_indoor_load or 0.0), 2),
+            blackbox_baseline_power=round(float(blackbox_baseline_power or 0.0), 3),
+            blackbox_saving_rate=round(float(blackbox_saving_rate or 0.0), 2),
+            fallback_rule=fallback_rule or "",
             duration=round(time.time() - start, 4),
             optimized_at=datetime.now(),
             remark=remark,
         )
 
     def _fallback_result(
-        self, task_id: str, status: str, remark: str, start: float
+        self,
+        task_id: str,
+        status: str,
+        remark: str,
+        start: float,
+        fallback_rule: str = "",
     ) -> OptimizeResult:
         """无有效工况时的纯兜底结果（固定参数）。"""
         params = self._guard.fallback_params(remark)
@@ -1689,6 +1895,9 @@ class PSOOptimizer:
             params["chilled_water_temp_offset"] = 0.0
         chp_n = int(params["chilled_pump_count"])
         cwp_n = int(params["cooling_pump_count"])
+        rule_label = FALLBACK_RULES.get(fallback_rule, "")
+        if rule_label and fallback_rule not in ("", "ok"):
+            remark = f"[{rule_label}] {remark}".strip() if remark else f"[{rule_label}]"
         return OptimizeResult(
             task_id=task_id,
             status=status,
@@ -1718,6 +1927,7 @@ class PSOOptimizer:
             ),
             predicted_power=0.0,
             energy_saving_rate=0.0,
+            fallback_rule=fallback_rule or "",
             duration=round(time.time() - start, 4),
             optimized_at=datetime.now(),
             remark=remark,

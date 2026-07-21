@@ -34,8 +34,11 @@ async def get_app_config():
 
 
 @router.put("/config")
-async def update_app_config(settings: AppSettingsConfig):
-    """更新全部可编辑业务配置，下一次寻优立即生效。"""
+async def update_app_config(payload: dict):
+    """更新业务配置：与现有配置深合并，避免前端漏传字段冲掉 ElectricEIR 等参数。"""
+    current = settings_config_service.get_app_settings().model_dump()
+    merged = _deep_merge_dict(current, payload if isinstance(payload, dict) else {})
+    settings = AppSettingsConfig(**merged)
     saved = settings_config_service.save_app_settings(settings)
     reload_runtime_settings()
     updated = config_document_updated_at("app_settings")
@@ -50,6 +53,17 @@ async def update_app_config(settings: AppSettingsConfig):
         },
         message="系统配置已保存到数据库",
     )
+
+
+def _deep_merge_dict(base: dict, patch: dict) -> dict:
+    """递归合并：patch 覆盖 base；嵌套 dict 继续合并，其余类型直接替换。"""
+    out = dict(base)
+    for key, value in (patch or {}).items():
+        if isinstance(value, dict) and isinstance(out.get(key), dict):
+            out[key] = _deep_merge_dict(out[key], value)
+        else:
+            out[key] = value
+    return out
 
 
 @router.get("/strategy")

@@ -78,6 +78,45 @@ def test_app_config_round_trip():
     assert settings["constraints"]["chilled_water_temp_table"]["above_37"] == 8.0
     assert settings["energy_model"]["terminal_fan_default"] == 2.0
 
+    # 深合并：部分 PUT 不得冲掉 ElectricEIR / inspired
+    put2 = client.put(
+        "/api/v1/settings/config",
+        json={
+            "optimize": {
+                "enabled": True,
+                "interval_minutes": 10,
+                "timeout_seconds": 60,
+                "inspired": {
+                    "enabled": True,
+                    "setpoint_change_weight": 12.0,
+                    "plr_sweet_weight": 20.0,
+                    "blackbox_baseline_enabled": False,
+                },
+            },
+            "energy_model": {
+                "eta_chiller": 0.5,
+                "terminal_fan_default": 2.0,
+                "indoor_base_temp": 24.5,
+                "indoor_gain": 25.0,
+                "plr_min": 0.18,
+                "enable_cap_fun_t": True,
+            },
+        },
+    )
+    assert put2.status_code == 200
+    get2 = client.get("/api/v1/settings/config")
+    s2 = get2.json()["data"]["settings"]
+    assert s2["optimize"]["inspired"]["setpoint_change_weight"] == 12.0
+    assert s2["optimize"]["inspired"]["plr_sweet_weight"] == 20.0
+    assert s2["energy_model"]["plr_min"] == 0.18
+    assert s2["energy_model"]["plr_eir_a"] == 0.338  # 未被残缺 payload 冲掉
+
+    from app.services.settings_config import get_merged_business_config, reload_runtime_settings
+
+    reload_runtime_settings()
+    merged = get_merged_business_config()
+    assert merged["optimize"]["inspired"]["setpoint_change_weight"] == 12.0
+
     from app.services.settings_config import settings_config_service
 
     defaults = settings_config_service.get_batch_defaults()
@@ -102,14 +141,46 @@ def test_app_config_round_trip():
             "enabled": True,
             "interval_minutes": 10,
             "timeout_seconds": 60,
+            "inspired": {
+                "enabled": True,
+                "setpoint_change_weight": 8.0,
+                "plr_sweet_weight": 15.0,
+            },
         },
         "energy_model": {
             "eta_chiller": 0.5,
             "terminal_fan_default": 2.0,
             "indoor_base_temp": 24.5,
             "indoor_gain": 25.0,
+            "plr_min": 0.15,
         },
     })
+
+
+def test_reload_runtime_settings_updates_inspired_weights():
+    """热更新后 inspired 权重须进入 PSOOptimizer，不得被 get_merged 丢掉。"""
+    from app.algorithms.optimizer import PSOOptimizer
+    from app.algorithms.constraints import SafetyConstraints
+    from app.algorithms.energy_model import ACEnergyModel
+    from app.algorithms.fallback import SafeOutputGuard
+    from app.main import set_optimizer
+    from app.services.settings_config import reload_runtime_settings, settings_config_service
+
+    opt = PSOOptimizer(
+        energy_model=ACEnergyModel(),
+        constraints=SafetyConstraints(),
+        guard=SafeOutputGuard(SafetyConstraints()),
+        timeout_seconds=60,
+    )
+    set_optimizer(opt)
+    settings = settings_config_service.get_app_settings()
+    settings.optimize.inspired.setpoint_change_weight = 11.5
+    settings_config_service.save_app_settings(settings)
+    reload_runtime_settings()
+    assert opt._inspired_cfg["setpoint_change_weight"] == 11.5
+    settings.optimize.inspired.setpoint_change_weight = 8.0
+    settings_config_service.save_app_settings(settings)
+    reload_runtime_settings()
 
 
 def test_reload_runtime_settings_updates_optimizer_timeout():

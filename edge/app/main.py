@@ -9,8 +9,8 @@
 6. 启动定时任务（APScheduler）
 7. uvicorn.run()
 
-算法模块通过 set_* 注入，默认使用 stub。
-Cursor 后续替换为真实实现。
+算法模块通过 set_* 注入；启动时 bootstrap 加载真实实现，
+失败时回退 stub（保证服务可起，便于模拟联调）。
 """
 
 from __future__ import annotations

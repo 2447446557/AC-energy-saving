@@ -250,7 +250,7 @@
                 </div>
                 <div>
                     <label>冷却塔开启方案（逗号分隔）</label>
-                    <input id="tower-schemes" value="0,3,5">
+                    <input id="tower-schemes" value="0,1,2">
                 </div>
             </div>
 
@@ -601,9 +601,11 @@
             <div class="card">
                 <h2>冷却塔频率</h2>
                 <div class="value" id="out-tower">--</div>
-                <div class="sub">定频 Hz</div>
+                <div class="sub">定频 Hz（实发）</div>
             </div>
         </div>
+        <div class="hint" id="out-rec-vs-applied">主数值为实发（平滑/硬闸后）；若与 PSO 原始推荐不同会在此对照显示。</div>
+        <div class="hint" id="out-inspired-meta"></div>
 
         <h2 class="section-title">预测工况（推荐参数下的模型推算）</h2>
         <div class="grid">
@@ -1353,6 +1355,40 @@
             if (savingEl) {
                 savingEl.style.color = Number(r.energy_saving_rate) < 0 ? '#c0392b' : '';
             }
+            const recHint = document.getElementById('out-rec-vs-applied');
+            if (recHint) {
+                const parts = [];
+                const pair = (label, applied, rec) => {
+                    if (rec == null || rec === '' || !Number.isFinite(Number(rec))) return;
+                    if (Math.abs(Number(applied) - Number(rec)) < 0.05) return;
+                    parts.push(label + ' 实发 ' + fmt(applied, 2) + ' / PSO推荐 ' + fmt(rec, 2));
+                };
+                pair('冷水出水', r.chilled_water_temp, r.recommended_chilled_water_temp);
+                pair('冷冻泵频', r.chilled_pump_freq, r.recommended_chilled_pump_freq);
+                pair('冷却泵频', r.cooling_pump_freq, r.recommended_cooling_pump_freq);
+                pair('塔风机频', r.cooling_tower_fan_freq, r.recommended_cooling_tower_fan_freq);
+                recHint.textContent = parts.length
+                    ? ('推荐 vs 实发：' + parts.join('；'))
+                    : '主数值为实发（平滑/硬闸后）；与 PSO 原始推荐一致或未区分。';
+            }
+            const meta = document.getElementById('out-inspired-meta');
+            if (meta) {
+                const bits = [];
+                if (Number(r.forecast_indoor_load) > 0) {
+                    bits.push('负荷EWMA ' + fmt(r.forecast_indoor_load, 1) + ' kW');
+                }
+                if (Number(r.blackbox_baseline_power) > 0) {
+                    bits.push(
+                        '黑盒基线 ' + fmt(r.blackbox_baseline_power, 2) + ' kW'
+                        + ' / 黑盒节能率 ' + fmt(r.blackbox_saving_rate, 2) + ' %'
+                    );
+                }
+                if (r.fallback_rule && r.fallback_rule !== 'ok') {
+                    bits.push('回退规则 ' + r.fallback_rule);
+                }
+                if (r.remark) bits.push(r.remark);
+                meta.textContent = bits.join(' · ');
+            }
         }
 
 
@@ -1637,7 +1673,7 @@
             document.getElementById('cooling-schemes').value =
                 (doc.cooling_pump_schemes || cfg.cooling_pump.active_count_schemes || [1, 2]).join(',');
             document.getElementById('tower-schemes').value =
-                (doc.cooling_tower_schemes || cfg.cooling_tower_schemes || [0, 3, 5]).join(',');
+                (doc.cooling_tower_schemes || cfg.cooling_tower_schemes || [0, 1, 2]).join(',');
             renderEquipmentUnitTables(doc.units || []);
             renderOptimizeEquipmentUnits(defaultOptimizeUnitsFromConfig(cfg, {}, true, doc.units));
             // 设备配置加载后：寻优最低频率默认 0（不额外抬高）；仅空白时填充
@@ -2570,7 +2606,8 @@
             });
             const json = await res.json();
             if (json.code === 0) {
-                applyAppSettingsToPage(payload);
+                // 用服务端深合并后的完整配置回填，避免冲掉 inspired / ElectricEIR 等未编辑字段
+                applyAppSettingsToPage(json.data.settings || payload);
             }
             document.getElementById('settings-message').textContent =
                 json.code === 0 ? '系统配置已保存，下一次寻优立即生效。' : '保存失败：' + json.message;

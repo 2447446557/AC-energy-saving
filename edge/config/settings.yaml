@@ -1,30 +1,48 @@
 optimize:
-  enabled: false
+  enabled: true
   interval_minutes: 10
   timeout_seconds: 60
+  inspired:
+    enabled: true
+    setpoint_change_weight: 8.0
+    chw_change_scale: 1.0
+    freq_change_scale: 5.0
+    unmet_cooling_weight: 2.0
+    plr_sweet_lo: 0.3
+    plr_sweet_hi: 0.55
+    plr_sweet_weight: 15.0
+    load_forecast_enabled: true
+    load_forecast_alpha: 0.35
+    blackbox_baseline_enabled: false
 batch_defaults:
-  outdoor_temp: 29.3
-  outdoor_humidity: 70.0
-  indoor_temp: 25.0
+  outdoor_temp: 30.0
+  outdoor_humidity: 60.0
+  indoor_temp: 27.0
   indoor_humidity: 55.0
   terminal_fan_power: 0.0
 energy_model:
   eta_chiller: 0.5
-  terminal_fan_default: 0.0
+  terminal_fan_default: 2.0
   indoor_base_temp: 24.5
   indoor_gain: 25.0
   outdoor_indoor_coupling: 0.06
   outdoor_stress_ref: 29.0
   outdoor_load_coupling: 0.02
   min_running_chiller_power_ratio: 0.65
-  # 允许室外/负荷驱动的主机功率升幅（相对实测锚定）；+6℃ 室外约可升 25%~30%
-  max_component_power_rise_pct: 0.30
-  # 离心机部分负荷 EIR 曲线（低负荷比功率升高）
+  max_component_power_rise_pct: 0.3
   enable_part_load_curve: true
   plr_eir_a: 0.338
   plr_eir_b: 0.284
   plr_eir_c: 0.378
   plr_eir_d: 0.0
+  plr_min: 0.15
+  plr_min_unl: 0.3
+  enable_cap_fun_t: true
+  cap_fun_t_chw: 0.01
+  cap_fun_t_cw: 0.02
+  cap_fun_t_min: 0.7
+  cap_fun_t_max: 1.15
+  tower_approach_water_k: 2.0
   design_chw_temp: 7.0
   design_cw_temp: 30.0
 simulator:
@@ -38,10 +56,10 @@ mqtt:
   publish_interval_seconds: 5
 constraints:
   chilled_water_temp_table:
-    below_25: 12.0
-    range_25_29: 11.0
+    below_25: 14.0
+    range_25_29: 12.0
     range_29_33: 10.0
-    range_33_37: 8.0
+    range_33_37: 9.0
     above_37: 8.0
   chilled_water_finetune:
     max_delta: 0.5
@@ -74,11 +92,11 @@ constraints:
     indoor_proximity_threshold: 0.3
     indoor_proximity_extra: 0.1
   pump_frequency:
-    min: 32.0
+    min: 25.0
     max: 50.0
   cooling_tower_fan_frequency:
-    min: 32.0
-    max: 50.0
+    min: 20.0
+    max: 45.0
   indoor_temp:
     min: 24.0
     max: 26.0

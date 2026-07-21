@@ -1,6 +1,7 @@
 """控制接口（下发控制指令）
 
-Trae 仅做接口封装与参数透传，实际下发逻辑由 Cursor 实现。
+模拟测试阶段：只接收并回执成功，不写 DDC。
+现场部署时再接入真实下发驱动。
 """
 
 from __future__ import annotations
@@ -17,16 +18,11 @@ router = APIRouter()
 
 @router.post("/send")
 async def send_control(command: ControlCommand):
-    """下发控制指令
-
-    Trae 仅做接口封装，实际下发至 DDC 的逻辑由 Cursor 实现。
-    """
-    # TODO: Cursor 实现实际下发逻辑
-    # 当前 stub：直接返回成功
+    """下发控制指令（模拟阶段 stub：不下发 DDC）。"""
     result = ControlResult(
         device_id=command.device_id,
         success=True,
-        message="stub: 控制指令已接收（待 Cursor 实现实际下发）",
+        message="sim: 控制指令已接收（模拟阶段未下发 DDC）",
         executed_at=datetime.now(),
     )
     return success(result.model_dump(mode="json"))

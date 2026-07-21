@@ -295,7 +295,8 @@ def test_batch_upload_only_optimizes_running_rows():
     assert result["cooling_pump_count"] in (1, 2)
     assert result["cooling_pump_power"] > 0
     assert result["cooling_tower_fan_freq"] == 50.0
-    assert result["cooling_tower_count"] in (3, 5)
+    # 模拟装机 2 台塔：保持当前运行台数（定额不调），允许 1~2
+    assert result["cooling_tower_count"] in (1, 2)
     assert result["cooling_tower_power"] > 0
 
 

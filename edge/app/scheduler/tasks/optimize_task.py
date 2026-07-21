@@ -17,14 +17,11 @@ def run_optimize() -> None:
 
     流程：
     1. 获取最新工况数据
-    2. 数据清洗（stub）
-    3. 执行寻优（stub）
-    4. 约束校验（stub）
+    2. 数据清洗（熔断感知）
+    3. 执行寻优（阶梯平滑开启，force=False）
+    4. 约束校验
     5. 保存记录
-    6. 下发控制（stub）
-
-    注意：Trae 仅做调度与调用串联，
-    寻优/清洗/约束/下发的核心逻辑由 Cursor 实现。
+    6. 控制下发（模拟阶段不下发 DDC，仅落库）
     """
     logger.info("===== 寻优任务开始 =====")
 
@@ -49,7 +46,7 @@ def run_optimize() -> None:
             logger.warning("无工况数据，跳过寻优")
             return
 
-        # 2. 数据清洗（stub，Cursor 实现）
+        # 2. 数据清洗
         from app.schemas.device import DeviceData
 
         raw_data = json.loads(latest.raw_data)
@@ -73,11 +70,11 @@ def run_optimize() -> None:
                 ),
             )
 
-        # 3. 执行寻优（stub，Cursor 实现）
+        # 3. 执行寻优（模拟/定时路径走平滑，保护设备）
         optimizer = get_optimizer()
         request = OptimizeRequest(
             device_data=cleaned_data.model_dump(mode="json"),
-            force=True,
+            force=False,
         )
         result = optimizer.optimize(request)
 

@@ -43,21 +43,44 @@ def _save_optimize_result(result: OptimizeResult, input_snapshot: str = "") -> N
 
 @router.post("/run")
 async def run_optimize(request: OptimizeRequest):
-    """触发寻优
+    """触发寻优：先清洗工况，再 PSO；支持 force 跳过平滑（批量/对比场景）。"""
+    from app.main import get_data_cleaner, get_optimizer
+    from app.schemas.device import DeviceData
 
-    Trae 仅做接口封装与参数透传，
-    实际寻优算法由 Cursor 实现（当前为 stub）。
-    """
-    # 延迟导入，避免循环依赖
-    from app.main import get_optimizer
+    cleaner = get_data_cleaner()
+    try:
+        cleaned = cleaner.clean(DeviceData(**request.device_data))
+        device_payload = cleaned.model_dump(mode="json")
+    except Exception:
+        device_payload = request.device_data
+
+    report = getattr(cleaner, "last_report", None)
+    if report and getattr(report, "is_anomalous_sample", False):
+        level = "CRITICAL" if getattr(report, "circuit_broken", False) else "WARNING"
+        storage.save_alarm(
+            level=level,
+            category="data",
+            message=(
+                "手动寻优工况异常: "
+                f"缺失补全={getattr(report, 'missing_fixed', 0)}, "
+                f"跳变过滤={getattr(report, 'spikes_filtered', 0)}, "
+                f"连续异常={getattr(report, 'consecutive_anomalies', 0)}"
+            ),
+        )
 
     optimizer = get_optimizer()
-    result = optimizer.optimize(request)
+    result = optimizer.optimize(
+        OptimizeRequest(
+            device_data=device_payload,
+            initial_params=request.initial_params,
+            force=request.force,
+        )
+    )
 
     # 保存寻优记录
     _save_optimize_result(
         result,
-        input_snapshot=json.dumps(request.device_data, ensure_ascii=False),
+        input_snapshot=json.dumps(device_payload, ensure_ascii=False),
     )
     storage.save_operation_log(
         action="optimize_run",
@@ -118,7 +141,7 @@ async def batch_upload_optimize(
     max_results: int = Query(default=200, ge=1, le=1000),
 ):
     """上传 Excel/CSV 运行趋势文件，对“运行状态=运行”的行批量寻优。"""
-    from app.main import get_energy_model, get_optimizer
+    from app.main import get_data_cleaner, get_energy_model, get_optimizer
     from app.services.power_baseline import current_operating_params, measured_baseline_breakdown
     from app.services.input_audit import build_pipeline_audit
 
@@ -126,6 +149,13 @@ async def batch_upload_optimize(
     parsed = parse_runtime_file(content, file.filename or "upload")
     optimizer = get_optimizer()
     energy_model = get_energy_model()
+    cleaner = get_data_cleaner()
+    # 批量与定时闭环隔离：重置负荷 EWMA 与清洗器状态，避免历史行串味
+    forecast = getattr(optimizer, "_load_forecast", None)
+    if forecast is not None and hasattr(forecast, "reset"):
+        forecast.reset()
+    if hasattr(cleaner, "reset"):
+        cleaner.reset()
 
     results = []
     success_count = 0
@@ -199,7 +229,17 @@ async def batch_upload_optimize(
             fb["cooling_water_temp"] = round(prev_result.predicted_cooling_water_temp, 2)
             item["device_data"] = fb
 
-        request = OptimizeRequest(device_data=item["device_data"], force=True)
+        # 与 /run 对齐：先清洗再寻优（批量 force=True，不推进负荷 EWMA）
+        device_payload = item["device_data"]
+        try:
+            from app.schemas.device import DeviceData
+
+            cleaned = cleaner.clean(DeviceData(**device_payload))
+            device_payload = cleaned.model_dump(mode="json")
+        except Exception:
+            pass
+
+        request = OptimizeRequest(device_data=device_payload, force=True)
         result = optimizer.optimize(request)
         prev_result = result
         processed += 1
@@ -212,15 +252,15 @@ async def batch_upload_optimize(
 
         _save_optimize_result(
             result,
-            input_snapshot=json.dumps(item["device_data"], ensure_ascii=False),
+            input_snapshot=json.dumps(device_payload, ensure_ascii=False),
         )
         if len(results) < max_results:
             from app.schemas.device import DeviceData
 
-            measured_total = float(item["device_data"].get("total_power") or 0.0)
-            data = DeviceData(**item["device_data"])
-            baseline_params = current_operating_params(item["device_data"])
-            measured_baseline = measured_baseline_breakdown(item["device_data"])
+            measured_total = float(device_payload.get("total_power") or 0.0)
+            data = DeviceData(**device_payload)
+            baseline_params = current_operating_params(device_payload)
+            measured_baseline = measured_baseline_breakdown(device_payload)
             physics_baseline_power = 0.0
             optimized_params = None
             try:
@@ -321,7 +361,7 @@ async def batch_upload_optimize(
                     f"缺少室内温湿度，已用缺省（{batch_defaults['indoor_temp']}℃/"
                     f"{batch_defaults['indoor_humidity']}%RH）"
                 )
-            if item["device_data"].get("terminal_fan_power", 0.0) == 0:
+            if device_payload.get("terminal_fan_power", 0.0) == 0:
                 warnings.append(
                     f"缺少末端风机功率（各楼层/末端空调箱风机），预测仅计入默认{terminal_default}kW"
                 )
@@ -330,7 +370,7 @@ async def batch_upload_optimize(
                 {
                     "row_number": item["row_number"],
                     "raw": item.get("raw", {}),
-                    "input": item["device_data"],
+                    "input": device_payload,
                     "field_sources": field_sources,
                     "input_audit": item.get("input_audit", {}),
                     "defaulted_fields": defaulted_fields,

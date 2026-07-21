@@ -39,6 +39,9 @@ async def get_status():
             "last_optimize_saving_rate": (
                 latest_optimize.energy_saving_rate if latest_optimize else 0.0
             ),
+            "last_optimize_remark": (
+                latest_optimize.remark if latest_optimize else ""
+            ),
             "device_count": 1,
             "online_device_count": 1,
             "recent_alarm_count": len(recent_alarms),

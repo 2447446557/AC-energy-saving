@@ -41,7 +41,7 @@ class EquipmentDocument(BaseModel):
     units: list[EquipmentUnitConfig] = Field(default_factory=list)
     chilled_pump_schemes: list[int] = Field(default_factory=lambda: [1, 2])
     cooling_pump_schemes: list[int] = Field(default_factory=lambda: [1, 2])
-    cooling_tower_schemes: list[int] = Field(default_factory=lambda: [0, 3, 5])
+    cooling_tower_schemes: list[int] = Field(default_factory=lambda: [0, 1, 2])
 
 
 class BatchUnitPatch(BaseModel):

@@ -30,7 +30,24 @@ def _search_mid_params(c: SafetyConstraints, outdoor: float = 20.0, load: float 
 
 class TestConstraints:
     def setup_method(self):
-        self.c = SafetyConstraints()
+        # 固定查表，避免被本地 SQLite app_settings 污染断言
+        self.c = SafetyConstraints(
+            {
+                "constraints": {
+                    "chilled_water_temp_table": {
+                        "below_25": 14.0,
+                        "range_25_29": 12.0,
+                        "range_29_33": 10.0,
+                        "range_33_37": 9.0,
+                        "above_37": 8.0,
+                    },
+                    "chilled_water_finetune": {"max_delta": 0.5},
+                    "pump_frequency": {"min": 25.0, "max": 50.0},
+                    "cooling_tower_fan_frequency": {"min": 20.0, "max": 45.0},
+                    "indoor_temp": {"min": 24.0, "max": 26.0},
+                }
+            }
+        )
 
     def test_validate_pass(self):
         params = _search_mid_params(self.c, outdoor=20.0)
@@ -70,23 +87,34 @@ class TestConstraints:
             assert ub[i] == bounds[var][1]
 
     def test_resolve_chilled_water_temp(self):
-        """冷水出水温度按室外温度查表确定"""
+        """冷水出水温度按室外温度查表确定（33℃ 附近有软过渡）。"""
         assert self.c.resolve_chilled_water_temp(20.0) == 14.0   # < 25
         assert self.c.resolve_chilled_water_temp(25.0) == 12.0   # 25~29
-        assert self.c.resolve_chilled_water_temp(29.0) == 10.0   # 29~33
-        assert self.c.resolve_chilled_water_temp(33.0) == 9.0    # 33~37
+        assert self.c.resolve_chilled_water_temp(29.0) == 10.0   # 29~32.7
+        assert self.c.resolve_chilled_water_temp(32.0) == 10.0
+        # 32.7~33.3 线性过渡：33℃ 正好在中点 → 9.5
+        assert self.c.resolve_chilled_water_temp(33.0) == pytest.approx(9.5)
+        assert self.c.resolve_chilled_water_temp(34.0) == 9.0    # 33.3~37
         assert self.c.resolve_chilled_water_temp(37.0) == 8.0    # >= 37
-        assert self.c.resolve_chilled_water_temp(40.0) == 8.0    # >= 37
+        assert self.c.resolve_chilled_water_temp(40.0) == 8.0
 
-    def test_resolve_chilled_water_sticks_in_band(self):
-        """offset=0 且实测在查表±0.5 带内时，粘住实测，避免闭环回弹。"""
-        # outdoor 27 → lookup 12；实测 12.5 在带内
-        assert self.c.resolve_chilled_water_for_control(27.0, 12.5, 26.0, 0.0) == 12.5
-        # 带外实测（现场 12℃，查表 10℃）→ 回落到查表中心
+    def test_resolve_chilled_water_for_control_and_sticky(self):
+        """控制值 = 查表+offset（钳在±微调带）；粘住实测由 sticky_offset 负责。"""
+        # outdoor 27 → lookup 12；offset=0 → 查表中心
+        assert self.c.resolve_chilled_water_for_control(27.0, 12.5, 26.0, 0.0) == 12.0
+        # 带外实测不影响 resolve（仍用查表+offset）
         assert self.c.resolve_chilled_water_for_control(30.9, 12.0, 26.0, 0.0) == 10.0
-        # 显式 offset 仍相对查表生效
+        # 显式 offset 相对查表生效
         assert self.c.resolve_chilled_water_for_control(27.0, 12.5, 26.0, 0.5) == 12.5
         assert self.c.resolve_chilled_water_for_control(27.0, 12.5, 26.0, -0.5) == 11.5
+        # 粘住：实测在查表±0.5 带内时回传 sticky offset
+        off, sticky = self.c.sticky_chilled_water_offset(27.0, 12.5)
+        assert sticky == 12.5
+        assert off == pytest.approx(0.5)
+        # 带外实测 → 回落到查表中心
+        off2, sticky2 = self.c.sticky_chilled_water_offset(30.9, 12.0)
+        assert sticky2 == 10.0
+        assert off2 == pytest.approx(0.0)
 
     def test_comfort_penalty(self):
         # 适宜温度区间内惩罚为 0（不追中心点）
@@ -298,10 +326,10 @@ class TestEnergyModel:
         assert high > low  # 频率越高水泵功率越大（立方律）
         assert high == pytest.approx(low * (50.0 / 25.0) ** 3, rel=1e-3)
 
-    def test_pump_power_from_measured_excel(self):
-        """Excel 实测功率优先，单台钳位 40~50 kW。"""
+    def test_pump_power_from_affinity_law(self):
+        """冷冻/冷却泵按额定×(f/f_rated)³，不采信输入实测泵功率。"""
         data = _base_data()
-        data.chilled_pump_power = 81.2
+        data.chilled_pump_power = 81.2  # 故意给偏离值，应被忽略
         data.cooling_pump_power = 83.2
         data.chilled_pump_freq = 42.0
         data.cooling_pump_freq = 42.0
@@ -314,8 +342,9 @@ class TestEnergyModel:
                 cooling_pump_count=2,
             ),
         )
-        assert 40.0 <= bd.chilled_pump_power / 2 <= 50.0
-        assert 40.0 <= bd.cooling_pump_power / 2 <= 50.0
+        # 模拟阶段 equipment.json：泵额定 7.5 kW/台
+        assert bd.chilled_pump_power == pytest.approx(2 * 7.5 * (40.0 / 50.0) ** 3, rel=0.15)
+        assert bd.cooling_pump_power == pytest.approx(2 * 7.5 * (42.0 / 50.0) ** 3, rel=0.15)
 
     def test_tower_power_fixed_70_for_scheme5(self):
         data = _base_data()
@@ -326,6 +355,137 @@ class TestEnergyModel:
 
     def test_wet_bulb_not_exceed_dry_bulb(self):
         assert self.m._wet_bulb(32.0, 60.0) <= 32.0
+
+    def test_hotter_condenser_raises_chiller_power(self):
+        """冷却泵流量降低 → 冷凝侧恶化 → 机组功率上升（ElectricEIR 温区）。"""
+        data = _base_data()
+        data.chiller_power = 0.0  # 纯物理模型，避开实测锚定
+        low_flow = self.m.predict(data, self._p(cooling_pump_freq=25.0)).chiller_power
+        high_flow = self.m.predict(data, self._p(cooling_pump_freq=50.0)).chiller_power
+        assert low_flow > high_flow
+
+    def test_plr_unload_floor_prevents_power_collapse(self):
+        """PLR 低于 plr_min_unl 时功率不低于卸载地板（热气旁通）。"""
+        from app.algorithms.energy_model import EnergyModelParams
+
+        p = EnergyModelParams(
+            design_cooling_capacity=100.0,
+            eta_chiller=0.5,
+            plr_min=0.15,
+            plr_min_unl=0.30,
+            enable_part_load_curve=True,
+            enable_cap_fun_t=False,
+            cooling_tower_count=5,
+            cooling_pump_count=1,
+            cooling_pump_total_count=1,
+        )
+        wet = 25.0
+        _, _, p_at_unl, _ = self.m._solve_condenser(
+            q_evap=30.0, tchw=7.0, f_cp=50.0, f_fan=50.0, wet_bulb=wet,
+            flow_chw_ratio=1.0, p=p,
+        )
+        _, _, p_below, _ = self.m._solve_condenser(
+            q_evap=20.0, tchw=7.0, f_cp=50.0, f_fan=50.0, wet_bulb=wet,
+            flow_chw_ratio=1.0, p=p,
+        )
+        # PLR1=0.2 → PLR2=0.3, CR=1，与 PLR1=0.3 同卸载点，功率应接近
+        assert p_below == pytest.approx(p_at_unl, rel=0.08)
+        _, _, p_cycle, _ = self.m._solve_condenser(
+            q_evap=10.0, tchw=7.0, f_cp=50.0, f_fan=50.0, wet_bulb=wet,
+            flow_chw_ratio=1.0, p=p,
+        )
+        # CR≈0.667，应明显低于满 CR 卸载功率，但不坍塌到近零
+        assert p_cycle > p_at_unl * 0.40
+        assert p_cycle < p_at_unl * 0.95
+
+    def test_linear_eir_when_part_load_curve_disabled(self):
+        """关闭曲线时 EIRFPLR=PLR2，半负荷功率约为一半（恒 COP），不得≈满功率。"""
+        from app.algorithms.energy_model import EnergyModelParams
+
+        p = EnergyModelParams(
+            design_cooling_capacity=100.0,
+            eta_chiller=0.5,
+            plr_min=0.10,
+            plr_min_unl=0.10,
+            enable_part_load_curve=False,
+            enable_cap_fun_t=False,
+            cooling_tower_count=5,
+            cooling_pump_count=1,
+            cooling_pump_total_count=1,
+        )
+        wet = 25.0
+        _, _, p_full, _ = self.m._solve_condenser(
+            q_evap=100.0, tchw=7.0, f_cp=50.0, f_fan=50.0, wet_bulb=wet,
+            flow_chw_ratio=1.0, p=p,
+        )
+        _, _, p_half, _ = self.m._solve_condenser(
+            q_evap=50.0, tchw=7.0, f_cp=50.0, f_fan=50.0, wet_bulb=wet,
+            flow_chw_ratio=1.0, p=p,
+        )
+        assert p_half / p_full == pytest.approx(0.5, rel=0.12)
+
+    def test_q_ava_scales_with_chilled_flow(self):
+        """冷冻水流量进入 Q_ava：同 PLR 时功率随流量近似同比变化。"""
+        from app.algorithms.energy_model import EnergyModelParams
+
+        p = EnergyModelParams(
+            design_cooling_capacity=100.0,
+            eta_chiller=0.5,
+            enable_part_load_curve=True,
+            enable_cap_fun_t=False,
+            plr_min=0.10,
+            plr_min_unl=0.10,
+            cooling_tower_count=5,
+            cooling_pump_count=1,
+            cooling_pump_total_count=1,
+        )
+        wet = 25.0
+        # PLR1 = 40/100 = 0.4 与 20/50 = 0.4，功率应近似减半
+        _, _, p_full_flow, _ = self.m._solve_condenser(
+            q_evap=40.0, tchw=7.0, f_cp=50.0, f_fan=50.0, wet_bulb=wet,
+            flow_chw_ratio=1.0, p=p,
+        )
+        _, _, p_half_flow, _ = self.m._solve_condenser(
+            q_evap=20.0, tchw=7.0, f_cp=50.0, f_fan=50.0, wet_bulb=wet,
+            flow_chw_ratio=0.5, p=p,
+        )
+        assert p_half_flow / p_full_flow == pytest.approx(0.5, rel=0.12)
+
+    def test_tower_approach_rises_when_cooling_flow_low(self):
+        """Scheier 式水量修正：冷却水流量比下降 → 逼近度变差。"""
+        p = self.m.p
+        full = self.m._tower_approach(50.0, p, flow_cp_ratio=1.0)
+        low = self.m._tower_approach(50.0, p, flow_cp_ratio=0.5)
+        assert low > full
+        assert low - full == pytest.approx(0.5 * p.tower_approach_water_k, rel=1e-6)
+
+    def test_tower_approach_penalty_relative_to_installed(self):
+        """台数惩罚相对装机上限，开满无罚；不再写死满配 5 台。"""
+        from app.algorithms.energy_model import EnergyModelParams
+
+        full2 = EnergyModelParams(cooling_tower_count=2, cooling_tower_total_count=2)
+        half2 = EnergyModelParams(cooling_tower_count=1, cooling_tower_total_count=2)
+        ap_full = self.m._tower_approach(50.0, full2, flow_cp_ratio=1.0)
+        ap_half = self.m._tower_approach(50.0, half2, flow_cp_ratio=1.0)
+        assert ap_half - ap_full == pytest.approx(1.2, rel=1e-6)
+
+    def test_design_point_power_regression_band(self):
+        """设计点附近功率量级可控，避免 ElectricEIR 改造后剧烈漂移。"""
+        data = _base_data()
+        data.chiller_power = 0.0
+        data.indoor_load = 100.0
+        bd = self.m.predict(
+            data,
+            self._p(
+                chilled_water_temp=7.0,
+                chiller_load_pct=100.0,
+                chilled_pump_freq=50.0,
+                cooling_pump_freq=50.0,
+                cooling_tower_fan_freq=50.0,
+            ),
+        )
+        assert 5.0 < bd.chiller_power < 250.0
+        assert bd.cop >= 1.5
 
 
 # ------------------------- 数据清洗 -------------------------
@@ -742,12 +902,19 @@ class TestPSOOptimizer:
             assert res.energy_saving_rate >= 0.0
 
     def test_cooling_tower_schemes_follow_equipment_config(self):
-        """冷却塔台数按设备配置方案（0/3/5）参与寻优，不因约 70kW 输入被硬锁。"""
+        """冷却塔方案不超过已启用台数；寻优侧台数定额不调，仅作吸附/回退。"""
         data = _base_data()
         data.cooling_tower_fan_power = 70.0
         data.indoor_load = 500.0
         schemes = self.opt._cooling_tower_schemes(data)
-        assert schemes == [0, 3, 5]
+        from app.services.equipment_config import equipment_config_service
+
+        enabled = len(
+            [t for t in equipment_config_service.get_config().cooling_towers if t.enabled]
+        )
+        assert schemes
+        assert all(0 <= s <= enabled for s in schemes)
+        assert schemes == sorted(set(schemes))
 
     def test_closed_loop_does_not_raise_power_after_saving_chw(self):
         """降温段：上一轮已推到带内偏暖冷水后，下一轮不得无故回弹增耗。"""
@@ -791,6 +958,7 @@ class TestPSOOptimizer:
         res = self.opt.optimize(self._req())
         assert res.status == "failed"
         assert "熔断" in res.remark
+        assert res.fallback_rule == "circuit_break"
 
     def test_timeout_falls_back(self):
         """PSO 超时应返回 timeout 状态并下发安全兜底参数。
@@ -813,6 +981,7 @@ class TestPSOOptimizer:
         ):
             res = opt.optimize(self._req())
         assert res.status == "timeout"
+        assert res.fallback_rule == "timeout"
         self._validate_result(res, data=_base_data(), outdoor=32.0, load=80.0)
 
 
@@ -865,3 +1034,101 @@ def test_load_surge_comfort_recovered_via_emergency_ramp():
 
     # 数周期后室内温度应回到舒适上限附近（<=26℃ 容小幅裕度）
     assert final_indoor is not None and final_indoor <= 26.1
+
+
+# ------------------------- ChillStream 可借鉴增强 -------------------------
+
+
+class TestChillStreamFeatures:
+    def test_penalties_and_ewma(self):
+        from app.algorithms.chillstream_features import (
+            LoadForecastState,
+            plr_sweet_spot_penalty,
+            setpoint_change_penalty,
+            unmet_cooling_penalty,
+        )
+
+        assert setpoint_change_penalty(
+            {"chilled_water_temp": 8.0, "chilled_pump_freq": 40.0, "cooling_pump_freq": 40.0},
+            {"chilled_water_temp": 7.0, "chilled_pump_freq": 35.0, "cooling_pump_freq": 35.0},
+            weight=8.0,
+            chw_scale=1.0,
+            freq_scale=5.0,
+        ) > 0
+        assert unmet_cooling_penalty(80.0, 100.0, weight=2.0) == pytest.approx(40.0)
+        assert plr_sweet_spot_penalty(0.4, lo=0.3, hi=0.55, weight=15.0) == 0.0
+        assert plr_sweet_spot_penalty(0.1, lo=0.3, hi=0.55, weight=15.0) > 0
+
+        # 能耗模型透出 ElectricEIR PLR1
+        em = ACEnergyModel()
+        data = _base_data()
+        data.indoor_load = 40.0
+        bd = em.predict(
+            data,
+            {
+                "chilled_water_temp": 10.0,
+                "chiller_load_pct": 80.0,
+                "chilled_pump_freq": 42.0,
+                "cooling_pump_freq": 40.0,
+                "cooling_tower_fan_freq": 50.0,
+                "chilled_pump_count": 2,
+                "cooling_pump_count": 2,
+                "cooling_tower_count": 2,
+            },
+        )
+        assert 0.0 <= bd.plr1 <= 1.0
+
+        ewma = LoadForecastState()
+        a = ewma.update(100.0, 0.35)
+        b = ewma.update(200.0, 0.35)
+        assert a == pytest.approx(100.0)
+        assert 100.0 < b < 200.0
+
+    def test_optimize_exposes_recommended_and_fallback_ok(self):
+        em = ACEnergyModel()
+        c = SafetyConstraints()
+        guard = SafeOutputGuard(c)
+        opt = PSOOptimizer(
+            em, c, guard, pop=20, max_iter=25, parallel_discrete=False
+        )
+        opt._inspired_cfg = {
+            "enabled": True,
+            "setpoint_change_weight": 8.0,
+            "chw_change_scale": 1.0,
+            "freq_change_scale": 5.0,
+            "unmet_cooling_weight": 2.0,
+            "plr_sweet_lo": 0.30,
+            "plr_sweet_hi": 0.55,
+            "plr_sweet_weight": 15.0,
+            "load_forecast_enabled": True,
+            "load_forecast_alpha": 0.5,
+            "blackbox_baseline_enabled": False,
+        }
+        data = _base_data()
+        # force=True（批量口径）不更新 EWMA：预报负荷=实测
+        opt._load_forecast.reset()
+        opt._load_forecast.update(50.0, 0.5)
+        res = opt.optimize(
+            OptimizeRequest(device_data=data.model_dump(mode="json"), force=True)
+        )
+        assert res.status == "success"
+        assert res.fallback_rule == "ok"
+        assert res.forecast_indoor_load == pytest.approx(float(data.indoor_load), rel=1e-6)
+        assert res.recommended_chilled_water_temp is not None
+        assert res.recommended_chilled_pump_freq is not None
+
+        # force=False 才推进 EWMA
+        opt._load_forecast.reset()
+        data2 = _base_data()
+        data2.indoor_load = 200.0
+        res2 = opt.optimize(
+            OptimizeRequest(device_data=data2.model_dump(mode="json"), force=False)
+        )
+        assert res2.status == "success"
+        assert res2.forecast_indoor_load == pytest.approx(200.0)
+        data3 = _base_data()
+        data3.indoor_load = 100.0
+        res3 = opt.optimize(
+            OptimizeRequest(device_data=data3.model_dump(mode="json"), force=False)
+        )
+        assert 100.0 < res3.forecast_indoor_load < 200.0

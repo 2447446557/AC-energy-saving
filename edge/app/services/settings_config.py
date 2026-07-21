@@ -207,12 +207,29 @@ class HardConstraintsConfig(BaseModel):
     )
 
 
+class InspiredOptimizeConfig(BaseModel):
+    """ChillStream 可借鉴增强（目标惩罚 / 负荷预测 / 黑盒对照）。"""
+
+    enabled: bool = True
+    setpoint_change_weight: float = Field(default=8.0, ge=0.0, le=200.0)
+    chw_change_scale: float = Field(default=1.0, ge=0.1, le=10.0)
+    freq_change_scale: float = Field(default=5.0, ge=0.5, le=30.0)
+    unmet_cooling_weight: float = Field(default=2.0, ge=0.0, le=100.0)
+    plr_sweet_lo: float = Field(default=0.30, ge=0.05, le=0.95)
+    plr_sweet_hi: float = Field(default=0.55, ge=0.10, le=1.0)
+    plr_sweet_weight: float = Field(default=15.0, ge=0.0, le=200.0)
+    load_forecast_enabled: bool = True
+    load_forecast_alpha: float = Field(default=0.35, ge=0.05, le=1.0)
+    blackbox_baseline_enabled: bool = False
+
+
 class OptimizeConfig(BaseModel):
     """定时寻优任务参数"""
 
     enabled: bool = True
     interval_minutes: int = Field(default=10, ge=1, le=1440)
     timeout_seconds: int = Field(default=60, ge=5, le=600)
+    inspired: InspiredOptimizeConfig = Field(default_factory=InspiredOptimizeConfig)
 
 
 class EnergyModelConfig(BaseModel):
@@ -232,6 +249,14 @@ class EnergyModelConfig(BaseModel):
     plr_eir_b: float = Field(default=0.284, ge=-2.0, le=2.0)
     plr_eir_c: float = Field(default=0.378, ge=-2.0, le=2.0)
     plr_eir_d: float = Field(default=0.0, ge=-2.0, le=2.0)
+    plr_min: float = Field(default=0.15, ge=0.01, le=1.0)
+    plr_min_unl: float = Field(default=0.30, ge=0.01, le=1.0)
+    enable_cap_fun_t: bool = True
+    cap_fun_t_chw: float = Field(default=0.01, ge=-0.1, le=0.1)
+    cap_fun_t_cw: float = Field(default=0.02, ge=0.0, le=0.2)
+    cap_fun_t_min: float = Field(default=0.70, ge=0.3, le=1.0)
+    cap_fun_t_max: float = Field(default=1.15, ge=1.0, le=1.5)
+    tower_approach_water_k: float = Field(default=2.0, ge=0.0, le=10.0)
     design_chw_temp: float = Field(default=7.0, ge=1.0, le=20.0)
     design_cw_temp: float = Field(default=30.0, ge=10.0, le=45.0)
 
@@ -327,6 +352,7 @@ class SettingsConfigService:
                 enabled=bool(optimize_raw.get("enabled", True)),
                 interval_minutes=int(optimize_raw.get("interval_minutes", 10)),
                 timeout_seconds=int(optimize_raw.get("timeout_seconds", 60)),
+                inspired=self._load_inspired(optimize_raw.get("inspired")),
             ),
             energy_model=EnergyModelConfig(
                 eta_chiller=float(energy_raw.get("eta_chiller", 0.50)),
@@ -353,6 +379,16 @@ class SettingsConfigService:
                 plr_eir_b=float(energy_raw.get("plr_eir_b", 0.284)),
                 plr_eir_c=float(energy_raw.get("plr_eir_c", 0.378)),
                 plr_eir_d=float(energy_raw.get("plr_eir_d", 0.0)),
+                plr_min=float(energy_raw.get("plr_min", 0.15)),
+                plr_min_unl=float(energy_raw.get("plr_min_unl", 0.30)),
+                enable_cap_fun_t=bool(energy_raw.get("enable_cap_fun_t", True)),
+                cap_fun_t_chw=float(energy_raw.get("cap_fun_t_chw", 0.01)),
+                cap_fun_t_cw=float(energy_raw.get("cap_fun_t_cw", 0.02)),
+                cap_fun_t_min=float(energy_raw.get("cap_fun_t_min", 0.70)),
+                cap_fun_t_max=float(energy_raw.get("cap_fun_t_max", 1.15)),
+                tower_approach_water_k=float(
+                    energy_raw.get("tower_approach_water_k", 2.0)
+                ),
                 design_chw_temp=float(energy_raw.get("design_chw_temp", 7.0)),
                 design_cw_temp=float(energy_raw.get("design_cw_temp", 30.0)),
             ),
@@ -412,11 +448,7 @@ class SettingsConfigService:
         )
 
         data["batch_defaults"] = settings.batch_defaults.model_dump()
-        data["optimize"] = {
-            "enabled": settings.optimize.enabled,
-            "interval_minutes": settings.optimize.interval_minutes,
-            "timeout_seconds": settings.optimize.timeout_seconds,
-        }
+        data["optimize"] = settings.optimize.model_dump(mode="json")
         data["energy_model"] = {
             "eta_chiller": round(settings.energy_model.eta_chiller, 4),
             "terminal_fan_default": round(settings.energy_model.terminal_fan_default, 4),
@@ -442,6 +474,16 @@ class SettingsConfigService:
             "plr_eir_b": round(settings.energy_model.plr_eir_b, 4),
             "plr_eir_c": round(settings.energy_model.plr_eir_c, 4),
             "plr_eir_d": round(settings.energy_model.plr_eir_d, 4),
+            "plr_min": round(settings.energy_model.plr_min, 4),
+            "plr_min_unl": round(settings.energy_model.plr_min_unl, 4),
+            "enable_cap_fun_t": bool(settings.energy_model.enable_cap_fun_t),
+            "cap_fun_t_chw": round(settings.energy_model.cap_fun_t_chw, 4),
+            "cap_fun_t_cw": round(settings.energy_model.cap_fun_t_cw, 4),
+            "cap_fun_t_min": round(settings.energy_model.cap_fun_t_min, 4),
+            "cap_fun_t_max": round(settings.energy_model.cap_fun_t_max, 4),
+            "tower_approach_water_k": round(
+                settings.energy_model.tower_approach_water_k, 4
+            ),
             "design_chw_temp": round(settings.energy_model.design_chw_temp, 2),
             "design_cw_temp": round(settings.energy_model.design_cw_temp, 2),
         }
@@ -485,6 +527,16 @@ class SettingsConfigService:
             )
         except (TypeError, ValueError):
             return ChilledWaterFinetune()
+
+    @staticmethod
+    def _load_inspired(raw: dict[str, Any] | None) -> InspiredOptimizeConfig:
+        """从 YAML/字典加载 ChillStream 增强配置；非法字段回退默认。"""
+        if not isinstance(raw, dict):
+            return InspiredOptimizeConfig()
+        try:
+            return InspiredOptimizeConfig(**raw)
+        except (TypeError, ValueError):
+            return InspiredOptimizeConfig()
 
     @staticmethod
     def _load_operating_floors(raw: dict[str, Any] | None) -> OutdoorOperatingFloors:
@@ -624,11 +676,8 @@ def get_merged_business_config() -> dict[str, Any]:
         }
         cfg["energy_model"] = settings.energy_model.model_dump()
         cfg["batch_defaults"] = settings.batch_defaults.model_dump()
-        cfg["optimize"] = {
-            "enabled": settings.optimize.enabled,
-            "interval_minutes": settings.optimize.interval_minutes,
-            "timeout_seconds": settings.optimize.timeout_seconds,
-        }
+        # 含 inspired（ChillStream 增强），供 PSOOptimizer 热更新
+        cfg["optimize"] = settings.optimize.model_dump(mode="json")
         return cfg
     except Exception as e:
         logger.debug(f"合并系统配置失败，回退 YAML: {e}")

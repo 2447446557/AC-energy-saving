@@ -93,7 +93,7 @@ def aggregate_to_equipment_config(document: EquipmentDocument) -> EquipmentConfi
         cooling_pump=cooling_pump,
         chiller=chiller,
         cooling_towers=cooling_towers,
-        cooling_tower_schemes=document.cooling_tower_schemes or [0, 3, 5],
+        cooling_tower_schemes=document.cooling_tower_schemes or [0, 1, 2],
     )
 
 
@@ -158,7 +158,7 @@ def equipment_config_to_document(config: EquipmentConfig) -> EquipmentDocument:
         units=units,
         chilled_pump_schemes=list(config.chilled_pump.active_count_schemes or [1]),
         cooling_pump_schemes=list(config.cooling_pump.active_count_schemes or [1]),
-        cooling_tower_schemes=list(config.cooling_tower_schemes or [0, 3, 5]),
+        cooling_tower_schemes=list(config.cooling_tower_schemes or [0, 1, 2]),
     )
 
 

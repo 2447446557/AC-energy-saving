@@ -390,10 +390,14 @@ class TestSimulatorScenarios:
         gen = HospitalDataGenerator(seed=7)
         for _ in range(50):
             d = gen.generate(scenario=scn)
-            for f in d.model_dump():
+            for f, value in d.model_dump().items():
                 if f == "timestamp":
                     continue
-                assert math.isfinite(getattr(d, f)), f"{f} 非有限"
+                if isinstance(value, (list, tuple, dict)):
+                    continue
+                if value is None:
+                    continue
+                assert math.isfinite(float(value)), f"{f} 非有限"
 
     def test_season_switch_extremes(self):
         gen = HospitalDataGenerator(seed=1, anomaly=AnomalyConfig(enabled=False))

@@ -64,6 +64,22 @@ class OptimizeResult(BaseModel):
     # 节能率（%）
     energy_saving_rate: float = 0.0
 
+    # 主控制字段 = 实发值（平滑/硬闸后）；下列为 PSO 原始推荐（平滑前）
+    recommended_chilled_water_temp: float | None = None
+    recommended_chilled_pump_freq: float | None = None
+    recommended_cooling_pump_freq: float | None = None
+    recommended_cooling_tower_fan_freq: float | None = None
+
+    # 短时负荷 EWMA 预测值（kW）；0 表示未启用或未计算
+    forecast_indoor_load: float = 0.0
+
+    # LightGBM 旁路对照：当前设定黑盒功率 / 相对实发方案的黑盒节能率
+    blackbox_baseline_power: float = 0.0
+    blackbox_saving_rate: float = 0.0
+
+    # AI 失效回退规则码（circuit_break / timeout / exception / invalid / ...）
+    fallback_rule: str = ""
+
     # 寻优耗时（秒）
     duration: float = 0.0
 
