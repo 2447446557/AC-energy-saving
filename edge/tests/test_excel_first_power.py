@@ -54,12 +54,14 @@ def test_energy_model_uses_affinity_pump_power():
         "cooling_tower_count": 5,
     }
     breakdown = model.predict(data, params)
-    # 模拟阶段 equipment.json：泵额定 7.5 kW/台；塔 5 台方案定额 70 kW
+    from app.services.equipment_config import equipment_config_service
+
+    eq = equipment_config_service.get_config()
     assert breakdown.chilled_pump_power == pytest.approx(
-        2 * 7.5 * (46.0 / 50.0) ** 3, rel=0.15
+        2 * eq.chilled_pump.motor_power_kw * (46.0 / 50.0) ** 3, rel=0.15
     )
     assert breakdown.cooling_pump_power == pytest.approx(
-        2 * 7.5 * (40.0 / 50.0) ** 3, rel=0.15
+        2 * eq.cooling_pump.motor_power_kw * (40.0 / 50.0) ** 3, rel=0.15
     )
     assert breakdown.cooling_tower_fan_power == 70.0
 

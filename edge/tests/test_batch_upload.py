@@ -295,8 +295,10 @@ def test_batch_upload_only_optimizes_running_rows():
     assert result["cooling_pump_count"] in (1, 2)
     assert result["cooling_pump_power"] > 0
     assert result["cooling_tower_fan_freq"] == 50.0
-    # 模拟装机 2 台塔：保持当前运行台数（定额不调），允许 1~2
-    assert result["cooling_tower_count"] in (1, 2)
+    from app.services.equipment_config import equipment_config_service
+
+    schemes = equipment_config_service.get_config().cooling_tower_schemes or [0, 1, 2]
+    assert result["cooling_tower_count"] in schemes
     assert result["cooling_tower_power"] > 0
 
 
@@ -324,13 +326,9 @@ def test_batch_upload_site_two_level_header_derives_fields():
     from app.services.equipment_config import equipment_config_service
 
     eq = equipment_config_service.get_config()
-    expected_chiller = (
-        eq.chiller.rated_capacity_kw
-        * eq.chiller.max_load_rate
-        * 79.0
-        / 100.0
-        / eq.chiller.rated_cop
-    )
+    from app.services.batch_import import _estimate_chiller_power
+
+    expected_chiller = _estimate_chiller_power(79.0, eq.chiller)
     assert first["chiller_power"] == pytest.approx(expected_chiller, rel=0.02)
     assert first["indoor_load"] > 300.0
     assert first["chilled_water_temp"] == 13.1
@@ -369,3 +367,71 @@ def test_batch_upload_reads_outdoor_from_machine_room_columns():
     assert "outdoor_temp" not in parsed["rows"][1]["defaulted_fields"]
     assert "outdoor_humidity" not in parsed["rows"][1]["defaulted_fields"]
     assert "outdoor_temp" not in parsed["defaulted_fields"]
+
+
+def _jumping_power_excel_bytes() -> bytes:
+    """构造行间总功率大幅跳变的运行表，用于验证批量默认不熔断。"""
+    rows = []
+    for i, (load, chiller_kw, total) in enumerate(
+        [
+            (83.0, 480.0, 720.0),
+            (49.0, 190.0, 400.0),
+            (52.0, 210.0, 430.0),
+            (62.0, 280.0, 570.0),
+            (79.0, 430.0, 730.0),
+            (68.0, 330.0, 600.0),
+        ],
+        start=1,
+    ):
+        rows.append(
+            {
+                "寻优运行状态": "运行",
+                "室外温度 ℃": 28.0 + i * 0.2,
+                "室外湿度 %": 65.0,
+                "室内温度 ℃": 25.0,
+                "室内湿度 %": 55.0,
+                "室内负荷 kW": 2500.0,
+                "机组负载 %": load,
+                "机组功率 kW": chiller_kw,
+                "冷水出水温度 ℃": 12.0,
+                "冷却水出水温度 ℃": 32.0,
+                "当前冷冻泵频率 Hz": 40.0,
+                "当前冷冻泵功率 kW": 100.0,
+                "当前冷却泵频率 Hz": 38.0,
+                "当前冷却泵功率 kW": 80.0,
+                "冷却塔频率 Hz": 50.0,
+                "冷却塔总功率 kW": 33.0,
+                "末端风机功率 kW": 2.0,
+                "系统总功率 kW": total,
+            }
+        )
+    df = pd.DataFrame(rows)
+    buffer = BytesIO()
+    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False)
+    return buffer.getvalue()
+
+
+def test_batch_upload_independent_rows_no_circuit_break():
+    """Excel 趋势回放默认逐行独立：大跳变不应触发数据熔断。"""
+    response = _client().post(
+        "/api/v1/optimize/batch-upload?max_rows=6&max_results=6&closed_loop=false",
+        files={
+            "file": (
+                "jump.xls",
+                _jumping_power_excel_bytes(),
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        },
+    )
+    assert response.status_code == 200
+    data = response.json()["data"]
+    assert data["closed_loop"] is False
+    assert data["processed_rows"] == 6
+    assert data["failed_count"] == 0
+    assert data["success_count"] == 6
+    # 第二行输入总功率应贴近本行 Excel，而不是被清洗器冻在第一行 ~720
+    second = data["results"][1]
+    assert second["measured_total_power"] < 500
+    assert second["result"]["status"] == "success"
+    assert second["result"].get("fallback_rule") != "circuit_break"

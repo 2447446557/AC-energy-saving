@@ -342,9 +342,16 @@ class TestEnergyModel:
                 cooling_pump_count=2,
             ),
         )
-        # 模拟阶段 equipment.json：泵额定 7.5 kW/台
-        assert bd.chilled_pump_power == pytest.approx(2 * 7.5 * (40.0 / 50.0) ** 3, rel=0.15)
-        assert bd.cooling_pump_power == pytest.approx(2 * 7.5 * (42.0 / 50.0) ** 3, rel=0.15)
+        # 泵功率按设备配置额定×(f/f_rated)³
+        from app.services.equipment_config import equipment_config_service
+
+        eq = equipment_config_service.get_config()
+        assert bd.chilled_pump_power == pytest.approx(
+            2 * eq.chilled_pump.motor_power_kw * (40.0 / 50.0) ** 3, rel=0.15
+        )
+        assert bd.cooling_pump_power == pytest.approx(
+            2 * eq.cooling_pump.motor_power_kw * (42.0 / 50.0) ** 3, rel=0.15
+        )
 
     def test_tower_power_fixed_70_for_scheme5(self):
         data = _base_data()

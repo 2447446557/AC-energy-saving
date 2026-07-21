@@ -254,6 +254,25 @@ def _columns_matching(df: pd.DataFrame, *parts: str) -> list[str]:
     return matched
 
 
+def _humidity_columns(df: pd.DataFrame, *scope_parts: str) -> list[str]:
+    """匹配湿度列；排除「温湿度」复合词里误命中的温度列。
+
+    扁平表头如「制冷机房室外温湿度__温度(℃)」同时含「室外」与「湿度」子串，
+    不能仅用 ``湿度 in column`` 判断。
+    """
+    candidates = _columns_matching(df, *scope_parts, "湿度") if scope_parts else []
+    filtered: list[str] = []
+    for column in candidates:
+        # 去掉复合词后仍含「湿度」才是真正的湿度度量列
+        remainder = str(column).replace("温湿度", "")
+        if "湿度" not in remainder:
+            continue
+        if "温度" in remainder:
+            continue
+        filtered.append(column)
+    return filtered
+
+
 def _first_number(row: pd.Series, columns: list[str], default: float = 0.0) -> float:
     for column in columns:
         value = _to_float(row.get(column), 0.0)
@@ -273,7 +292,12 @@ def _avg_nonzero(row: pd.Series, columns: list[str], default: float = 0.0) -> fl
 
 
 def _chiller_status_columns(df: pd.DataFrame) -> list[str]:
-    return _columns_matching(df, "约克离心机", "运行状态")
+    cols = _columns_matching(df, "约克离心机", "运行状态")
+    if not cols:
+        cols = _columns_matching(df, "制冷机组", "运行状态")
+    if not cols:
+        cols = _columns_matching(df, "冷水机组", "运行状态")
+    return cols
 
 
 def _is_running_row(row: pd.Series, status_column: str | None, chiller_status_columns: list[str]) -> bool:
@@ -286,7 +310,11 @@ def _is_running_row(row: pd.Series, status_column: str | None, chiller_status_co
 
 
 def _active_chiller_prefix(row: pd.Series, df: pd.DataFrame) -> str | None:
-    for prefix in ("1#约克离心机", "2#约克离心机"):
+    for prefix in _discover_chiller_prefixes(df):
+        cols = _columns_matching(df, prefix, "运行状态")
+        if cols and "运行" in _normalize(row.get(cols[0])):
+            return prefix
+    for prefix in ("1#约克离心机", "2#约克离心机", "制冷机组_1", "制冷机组_2", "制冷机组_3"):
         cols = _columns_matching(df, prefix, "运行状态")
         if cols and "运行" in _normalize(row.get(cols[0])):
             return prefix
@@ -341,10 +369,18 @@ def _discover_chiller_prefixes(df: pd.DataFrame) -> list[str]:
 
 
 def _chiller_load_columns(df: pd.DataFrame, prefix: str) -> list[str]:
-    cols = _columns_matching(df, prefix, "电机功率百分比")
-    if not cols:
-        cols = _columns_matching(df, prefix, "功率百分比")
-    return cols
+    """负载率列：优先电机功率百分比，其次电流百分比等。"""
+    for key in (
+        "电机功率百分比",
+        "功率百分比",
+        "电流百分比",
+        "负载百分比",
+        "负荷百分比",
+    ):
+        cols = _columns_matching(df, prefix, key)
+        if cols:
+            return cols
+    return []
 
 
 def _chiller_power_columns(df: pd.DataFrame, prefix: str) -> list[str]:
@@ -422,7 +458,14 @@ def extract_chillers_from_row(
 
 def _is_chiller_column(prefix: str, col_str: str) -> bool:
     text = f"{prefix} {col_str}"
-    return "约克离心机" in text or "冷水机组" in text or ("离心机" in text and "冷却塔" not in text)
+    if "冷却塔" in text:
+        return False
+    return (
+        "约克离心机" in text
+        or "冷水机组" in text
+        or "制冷机组" in text
+        or "离心机" in text
+    )
 
 
 def extract_equipment_units(row: pd.Series, df: pd.DataFrame) -> dict[str, list[dict[str, Any]]]:
@@ -496,9 +539,50 @@ def _chiller_cfg_units(eq: Any | None) -> list[Any]:
         return []
 
 
+def _plr_eir_coeffs() -> tuple[float, float, float, float]:
+    """读取能耗模型部分负荷 EIR 曲线系数（与 EnergyModel 默认一致）。"""
+    try:
+        from app.services.settings_config import settings_config_service
+
+        em = settings_config_service.get_app_settings().energy_model
+        return (
+            float(getattr(em, "plr_eir_a", 0.338) or 0.338),
+            float(getattr(em, "plr_eir_b", 0.284) or 0.284),
+            float(getattr(em, "plr_eir_c", 0.378) or 0.378),
+            float(getattr(em, "plr_eir_d", 0.0) or 0.0),
+        )
+    except Exception:
+        return (0.338, 0.284, 0.378, 0.0)
+
+
+def _eir_fplr(plr: float) -> float:
+    """部分负荷电功率比，PLR=1 时归一化为 1。"""
+    a, b, c, d = _plr_eir_coeffs()
+    x = min(max(float(plr), 0.05), 1.0)
+    raw = a + b * x + c * (x**2) + d * (x**3)
+    at_full = a + b + c + d
+    if at_full > 1e-6:
+        raw = raw / at_full
+    return max(raw, 0.05)
+
+
 def _estimate_chiller_power(load_pct: float, cfg: Any) -> float:
-    thermal_kw = float(cfg.rated_capacity_kw or 0.0) * float(cfg.max_load_rate or 0.8) * load_pct / 100.0
-    cop = max(float(cfg.rated_cop or 5.5), 2.0)
+    """缺功率列时按铭牌 + 部分负荷曲线估算。
+
+    变频离心机「电机功率百分比」≠ 电功率线性比例。采用与能耗模型一致的：
+    ``P ≈ P_rated × PLR × EIRFPLR(PLR)``（满负荷归一）。
+    例如 80% 负载、695.7 kW 铭牌 → 约 449 kW，贴近现场表计，而非 556 kW。
+    """
+    rated_power = float(getattr(cfg, "rated_power_kw", 0.0) or 0.0)
+    plr = min(max(float(load_pct) / 100.0, 0.0), 1.5)
+    if rated_power > 0 and plr > 0:
+        return round(rated_power * plr * _eir_fplr(plr), 3)
+    thermal_kw = (
+        float(getattr(cfg, "rated_capacity_kw", 0.0) or 0.0)
+        * float(getattr(cfg, "max_load_rate", 0.8) or 0.8)
+        * plr
+    )
+    cop = max(float(getattr(cfg, "rated_cop", 5.5) or 5.5), 2.0)
     return round(thermal_kw / cop, 3) if thermal_kw > 0 else 0.0
 
 
@@ -525,9 +609,9 @@ def _estimate_indoor_load_kw(
         elif eq is not None:
             capacity = float(eq.chiller.rated_capacity_kw or 0.0)
         else:
-            capacity = 516.2
+            capacity = 3868.0
         if capacity <= 0:
-            capacity = 516.2
+            capacity = 3868.0
         total += capacity * load_pct / 100.0
     if total > 0:
         return total
@@ -536,7 +620,7 @@ def _estimate_indoor_load_kw(
     load_pct = fallback_load_pct
     if load_pct <= 0:
         return 0.0
-    capacity = float(eq.chiller.rated_capacity_kw) if eq is not None else 516.2
+    capacity = float(eq.chiller.rated_capacity_kw) if eq is not None else 3868.0
     return capacity * load_pct / 100.0
 
 
@@ -697,9 +781,8 @@ def get_manual_input_config_defaults() -> dict[str, Any]:
     if eq is not None:
         load_pct = max(10.0, min(100.0, eq.chiller.max_load_rate * 100.0 * 0.8))
         thermal_kw = eq.chiller.rated_capacity_kw * load_pct / 100.0
-        cop = max(eq.chiller.rated_cop, 2.0)
         defaults["chiller_load"] = round(load_pct, 2)
-        defaults["chiller_power"] = round(thermal_kw / cop, 3)
+        defaults["chiller_power"] = _estimate_chiller_power(load_pct, eq.chiller)
         defaults["indoor_load"] = round(thermal_kw, 3)
         defaults["chilled_pump_freq"] = eq.chilled_pump.min_freq
         defaults["cooling_pump_freq"] = eq.cooling_pump.min_freq
@@ -957,9 +1040,7 @@ def apply_manual_input_config_defaults(
     if eq is not None and not _is_missing_scalar(device_data.get("chiller_load")):
         if _is_missing_scalar(device_data.get("chiller_power")):
             load_pct = float(device_data["chiller_load"])
-            thermal_kw = eq.chiller.rated_capacity_kw * eq.chiller.max_load_rate * load_pct / 100.0
-            cop = max(eq.chiller.rated_cop, 2.0)
-            device_data["chiller_power"] = round(thermal_kw / cop, 3)
+            device_data["chiller_power"] = _estimate_chiller_power(load_pct, eq.chiller)
             filled_fields.append("chiller_power")
         if _is_missing_scalar(device_data.get("indoor_load")):
             load_pct = float(device_data["chiller_load"])
@@ -1052,9 +1133,9 @@ def _derive_site_fields(
     # 制冷机房室外温湿度：多级表头为 制冷机房室外温湿度__湿度(%) / __温度(℃)
     outdoor_humidity = _first_number(
         row,
-        _columns_matching(df, "制冷机房室外温湿度", "湿度")
-        or _columns_matching(df, "室外温湿度", "湿度")
-        or _columns_matching(df, "室外", "湿度"),
+        _humidity_columns(df, "制冷机房室外温湿度")
+        or _humidity_columns(df, "室外温湿度")
+        or _humidity_columns(df, "室外"),
     )
     outdoor_temp = _first_number(
         row,
@@ -1064,8 +1145,10 @@ def _derive_site_fields(
     )
     if outdoor_humidity:
         device_data["outdoor_humidity"] = outdoor_humidity
-        cols = _columns_matching(df, "制冷机房室外温湿度", "湿度") or _columns_matching(
-            df, "室外", "湿度"
+        cols = (
+            _humidity_columns(df, "制冷机房室外温湿度")
+            or _humidity_columns(df, "室外温湿度")
+            or _humidity_columns(df, "室外")
         )
         mark_field(
             field_sources,
@@ -1093,9 +1176,9 @@ def _derive_site_fields(
 
     indoor_humidity = _first_number(
         row,
-        _columns_matching(df, "制冷机房室内温湿度", "湿度")
-        or _columns_matching(df, "室内温湿度", "湿度")
-        or _columns_matching(df, "室内", "湿度"),
+        _humidity_columns(df, "制冷机房室内温湿度")
+        or _humidity_columns(df, "室内温湿度")
+        or _humidity_columns(df, "室内"),
     )
     indoor_temp = _first_number(
         row,
@@ -1105,8 +1188,10 @@ def _derive_site_fields(
     )
     if indoor_humidity and not _excel_has_value(row, column_map, "indoor_humidity"):
         device_data["indoor_humidity"] = indoor_humidity
-        cols = _columns_matching(df, "制冷机房室内温湿度", "湿度") or _columns_matching(
-            df, "室内", "湿度"
+        cols = (
+            _humidity_columns(df, "制冷机房室内温湿度")
+            or _humidity_columns(df, "室内温湿度")
+            or _humidity_columns(df, "室内")
         )
         mark_field(
             field_sources,
@@ -1152,10 +1237,17 @@ def _derive_site_fields(
     if chiller_load == 0:
         chiller_load = _first_number(row, _chiller_load_columns(df, chiller_prefix))
     if chiller_load == 0:
-        chiller_load = max(
-            _first_number(row, _chiller_load_columns(df, "1#约克离心机")),
-            _first_number(row, _chiller_load_columns(df, "2#约克离心机")),
-        )
+        # 兼容约克/制冷机组等前缀
+        for prefix in _discover_chiller_prefixes(df) or (
+            "1#约克离心机",
+            "2#约克离心机",
+            "制冷机组_3",
+            "制冷机组_1",
+            "制冷机组_2",
+        ):
+            chiller_load = max(chiller_load, _first_number(row, _chiller_load_columns(df, prefix)))
+            if chiller_load > 0:
+                break
     if chiller_load:
         device_data["chiller_load"] = chiller_load
         load_cols = _chiller_load_columns(df, chiller_prefix) or _chiller_load_columns(
@@ -1181,33 +1273,28 @@ def _derive_site_fields(
                     substituted=True,
                 )
             elif eq:
-                thermal_kw = (
-                    eq.chiller.rated_capacity_kw
-                    * eq.chiller.max_load_rate
-                    * chiller_load
-                    / 100.0
-                )
-                cop = max(eq.chiller.rated_cop, 2.0)
-                device_data["chiller_power"] = thermal_kw / cop
+                device_data["chiller_power"] = _estimate_chiller_power(chiller_load, eq.chiller)
                 mark_field(
                     field_sources,
                     "chiller_power",
                     device_data["chiller_power"],
                     "equipment_config",
                     detail=(
-                        f"热负荷=额定制冷量×负荷上限×负载%={thermal_kw:.2f}kW，"
-                        f"÷COP({cop})"
+                        f"额定电功率{eq.chiller.rated_power_kw}kW×负载%{chiller_load:.1f}/100"
                     ),
                     substituted=True,
                 )
             else:
-                device_data["chiller_power"] = 516.2 * 0.8 * chiller_load / 100.0 / 5.5
+                device_data["chiller_power"] = round(
+                    695.7 * (chiller_load / 100.0) * _eir_fplr(chiller_load / 100.0),
+                    3,
+                )
                 mark_field(
                     field_sources,
                     "chiller_power",
                     device_data["chiller_power"],
                     "equipment_config",
-                    detail="默认设备参数推算",
+                    detail="默认铭牌×PLR×EIRFPLR 推算",
                     substituted=True,
                 )
 
@@ -1479,12 +1566,15 @@ def parse_runtime_file(content: bytes, filename: str) -> dict[str, Any]:
                 defaulted_fields.append(field)
 
         for field, patterns in (
-            ("outdoor_humidity", ("制冷机房室外温湿度", "湿度")),
+            ("outdoor_humidity", ("制冷机房室外温湿度",)),
             ("outdoor_temp", ("制冷机房室外温湿度", "温度")),
         ):
-            cols = _columns_matching(df, *patterns) or _columns_matching(
-                df, "室外", patterns[1]
-            )
+            if field == "outdoor_humidity":
+                cols = _humidity_columns(df, *patterns) or _humidity_columns(df, "室外")
+            else:
+                cols = _columns_matching(df, *patterns) or _columns_matching(
+                    df, "室外", patterns[1]
+                )
             if cols and _first_number(row, cols) != 0 and field in defaulted_fields:
                 defaulted_fields.remove(field)
 

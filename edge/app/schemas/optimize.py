@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 from datetime import datetime
+from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+# 系统总电最低 / 冷却回水（冷却水温度）最低
+OptimizeObjectiveMode = Literal["total_power", "min_cooling_water"]
 
 
 class OptimizeRequest(BaseModel):
@@ -22,6 +26,9 @@ class OptimizeRequest(BaseModel):
     # 是否强制重新寻优（忽略缓存）
     force: bool = False
 
+    # 寻优目标：total_power=系统总电最低；min_cooling_water=冷却回水最低
+    mode: OptimizeObjectiveMode = Field(default="total_power")
+
 
 class OptimizeResult(BaseModel):
     """寻优结果
@@ -34,6 +41,9 @@ class OptimizeResult(BaseModel):
 
     # 寻优状态
     status: str = "success"  # success / failed / timeout
+
+    # 本次寻优目标模式
+    objective_mode: OptimizeObjectiveMode = "total_power"
 
     # 最优控制参数
     chilled_water_temp: float = 7.0  # 冷水出水温度（℃）

@@ -541,7 +541,14 @@
                 <div><label>系统总功率 kW（自动汇总）</label><input id="in-total-power" type="number" step="0.1" value="377" readonly></div>
             </div>
             <div class="hint" id="optimize-unit-summary">冷水机组/冷冻泵/冷却泵/冷却塔汇总将用于寻优计算。</div>
-            <div class="actions">
+            <div class="actions" style="flex-wrap:wrap; gap:10px;">
+                <label style="display:inline-flex; align-items:center; gap:8px;">
+                    <span>寻优目标</span>
+                    <select id="optimize-mode" style="min-width:180px;" title="系统总电最低：辅机与主机综合最省电；冷却回水最低：定频塔靠多开台数+冷却泵提频压低冷却水温度">
+                        <option value="total_power" selected>系统总电最低</option>
+                        <option value="min_cooling_water">冷却回水最低</option>
+                    </select>
+                </label>
                 <button type="button" id="btn-run-optimize" onclick="runOptimizeFromInputs()">使用当前输入执行寻优</button>
                 <button type="button" class="secondary" id="btn-load-realtime" onclick="loadRealtimeToInputs()">读取最新实时数据到输入框</button>
                 <button type="button" id="btn-run-optimize-multi" onclick="runOptimizeMultipleFromInputs()">使用当前输入执行寻优多次</button>
@@ -562,11 +569,36 @@
                     <input id="optimize-weather-range" type="number" min="0.5" max="15" step="0.5" value="3" style="width:56px;">
                 </label>
             </div>
+            <div class="actions" style="margin-top:12px; flex-wrap:wrap; gap:10px;">
+                <label>批量寻优（Excel/CSV，对运行行逐行寻优）</label>
+                <input id="batch-optimize-file" type="file" accept=".xls,.xlsx,.csv">
+                <label style="display:inline-flex; align-items:center; gap:6px;">
+                    <span>最多处理行</span>
+                    <input id="batch-optimize-max-rows" type="number" min="1" max="500" value="20" style="width:72px;">
+                </label>
+                <button type="button" id="btn-batch-optimize" onclick="runBatchOptimize()">开始批量寻优</button>
+            </div>
+            <div id="batch-optimize-summary" class="hint">选择与上方相同的「寻优目标」；默认按 Excel 各运行时刻独立回放（不跨行闭环）。失败行节能率显示为 --。</div>
+            <div class="scroll-table" style="margin-top:8px;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>行号</th><th>模式</th><th>室外℃</th><th>输入总功率</th>
+                            <th>推荐冷水</th><th>冷冻泵Hz</th><th>冷却泵Hz</th><th>塔台数</th>
+                            <th>预测总功率</th><th>预测冷却水℃</th><th>节能率%</th><th>状态</th>
+                        </tr>
+                    </thead>
+                    <tbody id="batch-optimize-table">
+                        <tr><td colspan="12" style="text-align:center; color:#999;">尚未执行批量寻优</td></tr>
+                    </tbody>
+                </table>
+            </div>
             <div id="optimize-action-status" class="action-status">填写参数后点击上方按钮；单次寻优约 3~10 秒，结果在下方「寻优输出结果」区域展示。多次寻优会将每轮推荐值作为下一轮输入。</div>
             <div class="hint">现场 CSV/Excel 数据可先按字段填入这里。多次寻优会将每轮推荐值与预测工况作为下一轮输入，模拟逐步执行推荐后的闭环过程；勾选「模拟室外温变化」时，每轮室外温度会在基准附近小幅随机波动（冷水出水温度随室外温查表联动）。</div>
         </div>
 
         <h2 class="section-title" id="optimize-output-section">寻优输出结果</h2>
+        <div class="hint" id="out-objective-mode">寻优目标：系统总电最低</div>
         <div class="grid">
             <div class="card">
                 <h2>推荐冷水出水温度</h2>
@@ -890,6 +922,17 @@
             const cfg = optimizeEquipmentConfig;
             if (!cfg) return units;
             const estimateChillerPower = (loadPct, chCfg) => {
+                const rated = Number(chCfg && chCfg.rated_power_kw) || Number(cfg.chiller.rated_power_kw) || 0;
+                const plr = Math.min(Math.max(Number(loadPct) / 100, 0), 1.5);
+                if (rated > 0 && plr > 0) {
+                    // 与后端一致：P ≈ P_rated × PLR × EIRFPLR(PLR)
+                    const a = 0.338, b = 0.284, c = 0.378, d = 0.0;
+                    const x = Math.min(Math.max(plr, 0.05), 1);
+                    let eir = a + b * x + c * x * x + d * x * x * x;
+                    const atFull = a + b + c + d;
+                    if (atFull > 1e-6) eir = eir / atFull;
+                    return rated * plr * Math.max(eir, 0.05);
+                }
                 const cap = Number(chCfg && chCfg.rated_capacity_kw) || Number(cfg.chiller.rated_capacity_kw) || 0;
                 const mlr = Number(chCfg && chCfg.max_load_rate) || Number(cfg.chiller.max_load_rate) || 0.8;
                 const cop = Number(chCfg && chCfg.rated_cop) || calcChillerCop(cfg.chiller.rated_capacity_kw, cfg.chiller.rated_power_kw) || 5.5;
@@ -918,12 +961,16 @@
                     ? 50
                     : unit.rated_freq;
                 const freq = isEmptyInputValue(unit.freq) ? (data.chilled_pump_freq || cfg.chilled_pump.min_freq) : unit.freq;
-                // 泵功率一律由频率计算，忽略外部输入的 kW
+                // Excel/现场有实测功率时保留；仅缺省时用亲和律估算
+                const measuredPower = Number(unit.power);
+                const power = Number.isFinite(measuredPower) && measuredPower > 0
+                    ? measuredPower
+                    : pumpPowerFromRated(ratedPower, freq, ratedFreq);
                 return Object.assign({}, unit, {
                     rated_power_kw: ratedPower,
                     rated_freq: ratedFreq,
                     freq: freq,
-                    power: pumpPowerFromRated(ratedPower, freq, ratedFreq)
+                    power: power
                 });
             });
             units.cooling_pumps = units.cooling_pumps.map((unit, index) => {
@@ -935,11 +982,15 @@
                     ? 50
                     : unit.rated_freq;
                 const freq = isEmptyInputValue(unit.freq) ? (data.cooling_pump_freq || cfg.cooling_pump.min_freq) : unit.freq;
+                const measuredPower = Number(unit.power);
+                const power = Number.isFinite(measuredPower) && measuredPower > 0
+                    ? measuredPower
+                    : pumpPowerFromRated(ratedPower, freq, ratedFreq);
                 return Object.assign({}, unit, {
                     rated_power_kw: ratedPower,
                     rated_freq: ratedFreq,
                     freq: freq,
-                    power: pumpPowerFromRated(ratedPower, freq, ratedFreq)
+                    power: power
                 });
             });
             const enabledTowers = (cfg.cooling_towers || []).filter(t => t.enabled);
@@ -991,13 +1042,19 @@
                     const ratedPower = Number(unit.rated_power_kw ?? 0);
                     const ratedFreq = Number(unit.rated_freq ?? 50) || 50;
                     const freq = Number(unit.freq ?? 0);
-                    const power = pumpPowerFromRated(ratedPower, freq, ratedFreq);
+                    const measured = Number(unit.power);
+                    const power = Number.isFinite(measured) && measured > 0
+                        ? measured
+                        : pumpPowerFromRated(ratedPower, freq, ratedFreq);
+                    const powerTitle = Number.isFinite(measured) && measured > 0
+                        ? 'Excel/现场实测功率（改频率后可点额定/频率重算）'
+                        : '由频率与额定功率自动计算';
                     return '<tr>' +
                     '<td><input id="unit-' + kind + '-name-' + index + '" value="' + escapeHtml(unit.label || unit.name || (kind + (index + 1))) + '"></td>' +
                     '<td><input type="number" step="0.1" id="unit-' + kind + '-rated-power-' + index + '" value="' + ratedPower + '" oninput="onPumpRatedOrFreqChanged(\'' + kind + '\',' + index + ')"></td>' +
                     '<td><input type="number" step="0.1" id="unit-' + kind + '-rated-freq-' + index + '" value="' + ratedFreq + '" oninput="onPumpRatedOrFreqChanged(\'' + kind + '\',' + index + ')"></td>' +
                     '<td><input type="number" step="0.1" id="unit-' + kind + '-freq-' + index + '" value="' + freq + '" oninput="onPumpRatedOrFreqChanged(\'' + kind + '\',' + index + ')"></td>' +
-                    '<td><input type="number" step="0.001" id="unit-' + kind + '-power-' + index + '" value="' + power.toFixed(3) + '" readonly title="由频率与额定功率自动计算，无需填写"></td>' +
+                    '<td><input type="number" step="0.001" id="unit-' + kind + '-power-' + index + '" value="' + power.toFixed(3) + '" title="' + powerTitle + '"></td>' +
                     '<td><input type="number" step="0.1" id="unit-' + kind + '-current-' + index + '" value="' + (unit.current ?? 0) + '"></td>' +
                     '</tr>';
                 }).join('');
@@ -1205,8 +1262,11 @@
                 if (isPump) {
                     item.rated_power_kw = num('unit-' + kind + '-rated-power-' + index);
                     item.rated_freq = num('unit-' + kind + '-rated-freq-' + index) || 50;
-                    // 提交前再算一遍，确保不以旧功率为准
-                    item.power = pumpPowerFromRated(item.rated_power_kw, item.freq, item.rated_freq);
+                    // 优先用输入框功率（Excel 实测或手填）；仅空值时按亲和律补
+                    const typedPower = num('unit-' + kind + '-power-' + index);
+                    item.power = typedPower > 0
+                        ? typedPower
+                        : pumpPowerFromRated(item.rated_power_kw, item.freq, item.rated_freq);
                 }
                 return item;
             }).filter(item => item.name);
@@ -1221,9 +1281,11 @@
                     const ratedPower = Number(item.rated_power_kw || 0);
                     const ratedFreq = Number(item.rated_freq || 50) || 50;
                     const freq = Number(item.freq || 0) > 0 ? Number(item.freq) : avgFreq;
+                    const measured = Number(item.power || 0);
                     return Object.assign({}, item, {
                         freq: freq,
-                        power: pumpPowerFromRated(ratedPower, freq, ratedFreq)
+                        // 保留 Excel/现场实测；仅无功率时用亲和律补齐
+                        power: measured > 0 ? measured : pumpPowerFromRated(ratedPower, freq, ratedFreq)
                     });
                 });
             };
@@ -1354,6 +1416,10 @@
             const savingEl = document.getElementById('out-saving-rate');
             if (savingEl) {
                 savingEl.style.color = Number(r.energy_saving_rate) < 0 ? '#c0392b' : '';
+            }
+            const modeHint = document.getElementById('out-objective-mode');
+            if (modeHint) {
+                modeHint.textContent = '寻优目标：' + optimizeModeLabel(r.objective_mode || getOptimizeMode());
             }
             const recHint = document.getElementById('out-rec-vs-applied');
             if (recHint) {
@@ -2110,7 +2176,7 @@
         }
 
         function setOptimizeButtonsDisabled(disabled) {
-            ['btn-run-optimize', 'btn-load-realtime', 'btn-run-optimize-multi', 'btn-fill-from-excel'].forEach(id => {
+            ['btn-run-optimize', 'btn-load-realtime', 'btn-run-optimize-multi', 'btn-fill-from-excel', 'btn-batch-optimize'].forEach(id => {
                 const btn = document.getElementById(id);
                 if (btn) btn.disabled = disabled;
             });
@@ -2148,14 +2214,118 @@
             }
         }
 
+        function getOptimizeMode() {
+            const el = document.getElementById('optimize-mode');
+            const mode = el && el.value ? el.value : 'total_power';
+            return (mode === 'min_cooling_water') ? 'min_cooling_water' : 'total_power';
+        }
+
+        function optimizeModeLabel(mode) {
+            return mode === 'min_cooling_water' ? '冷却回水最低' : '系统总电最低';
+        }
+
         async function callOptimizeApi(deviceData) {
-            const payload = {device_data: deviceData, force: true};
+            const payload = {device_data: deviceData, force: true, mode: getOptimizeMode()};
             const res = await fetch('/api/v1/optimize/run', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify(payload)
             });
             return res.json();
+        }
+
+        function renderBatchOptimizeTable(summary) {
+            const tbody = document.getElementById('batch-optimize-table');
+            if (!tbody) return;
+            const rows = (summary && summary.results) || [];
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; color:#999;">无批量结果</td></tr>';
+                return;
+            }
+            const mode = summary.objective_mode || 'total_power';
+            tbody.innerHTML = rows.map(item => {
+                const input = item.input || {};
+                const result = item.result || {};
+                const ok = (result.status || '') === 'success';
+                const saving = ok
+                    ? (item.saving_rate_vs_measured != null
+                        ? item.saving_rate_vs_measured
+                        : (item.saving_rate != null ? item.saving_rate : result.energy_saving_rate))
+                    : null;
+                const savingStyle = (saving != null && Number(saving) < 0) ? ' style="color:#c0392b;"' : '';
+                const statusText = result.status || '--';
+                const statusTitle = result.remark
+                    ? (' title="' + String(result.remark).replace(/"/g, '&quot;') + '"')
+                    : '';
+                return '<tr>' +
+                    '<td>' + (item.row_number ?? '--') + '</td>' +
+                    '<td>' + optimizeModeLabel(result.objective_mode || mode) + '</td>' +
+                    '<td>' + fmt(input.outdoor_temp, 2) + '</td>' +
+                    '<td>' + fmt(item.measured_total_power || input.total_power, 2) + '</td>' +
+                    '<td>' + fmt(result.chilled_water_temp, 2) + '</td>' +
+                    '<td>' + fmt(result.chilled_pump_freq, 2) + '</td>' +
+                    '<td>' + fmt(result.cooling_pump_freq, 2) + '</td>' +
+                    '<td>' + (result.cooling_tower_count ?? '--') + '</td>' +
+                    '<td>' + fmt(result.predicted_power, 2) + '</td>' +
+                    '<td>' + fmt(result.predicted_cooling_water_temp, 2) + '</td>' +
+                    '<td' + savingStyle + '>' + (saving == null ? '--' : fmt(saving, 2)) + '</td>' +
+                    '<td' + statusTitle + '>' + statusText + '</td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        async function runBatchOptimize() {
+            const fileInput = document.getElementById('batch-optimize-file');
+            if (!fileInput || !fileInput.files || !fileInput.files.length) {
+                setOptimizeActionStatus('请先选择批量寻优 Excel/CSV 文件。', 'error');
+                return;
+            }
+            const maxRows = Math.max(1, Math.min(500, Number(document.getElementById('batch-optimize-max-rows')?.value) || 20));
+            const mode = getOptimizeMode();
+            setOptimizeButtonsDisabled(true);
+            setOptimizeActionStatus('批量寻优进行中（模式：' + optimizeModeLabel(mode) + '，最多 ' + maxRows + ' 行）...');
+            try {
+                const form = new FormData();
+                form.append('file', fileInput.files[0]);
+                const url = '/api/v1/optimize/batch-upload?max_rows=' + maxRows +
+                    '&max_results=' + maxRows +
+                    '&closed_loop=false' +
+                    '&mode=' + encodeURIComponent(mode);
+                const res = await fetch(url, {method: 'POST', body: form});
+                if (!res.ok) {
+                    throw new Error('接口返回 HTTP ' + res.status);
+                }
+                const json = await res.json();
+                if (json.code !== 0 || !json.data) {
+                    throw new Error(json.message || '批量寻优失败');
+                }
+                const data = json.data;
+                renderBatchOptimizeTable(data);
+                const summaryEl = document.getElementById('batch-optimize-summary');
+                if (summaryEl) {
+                    summaryEl.textContent =
+                        (data.filename || '') +
+                        ' · 模式 ' + optimizeModeLabel(data.objective_mode || mode) +
+                        ' · ' + (data.closed_loop ? '跨行闭环' : '逐行独立') +
+                        ' · 运行行 ' + (data.running_rows || 0) +
+                        ' · 已处理 ' + (data.processed_rows || 0) +
+                        ' · 成功 ' + (data.success_count || 0) +
+                        ' · 失败 ' + (data.failed_count || 0) +
+                        ' · 超时 ' + (data.timeout_count || 0);
+                }
+                if (data.results && data.results.length && data.results[0].result) {
+                    renderOptimizeOutputs(data.results[0].result);
+                }
+                setOptimizeActionStatus(
+                    '批量寻优完成：成功 ' + (data.success_count || 0) +
+                    ' / 处理 ' + (data.processed_rows || 0) + '。',
+                    'success'
+                );
+            } catch (e) {
+                setOptimizeActionStatus('批量寻优失败：' + e, 'error');
+            } finally {
+                setOptimizeButtonsDisabled(false);
+            }
         }
 
         async function runOptimizeFromInputs() {

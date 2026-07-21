@@ -139,12 +139,25 @@ async def batch_upload_optimize(
     file: UploadFile = File(...),
     max_rows: int = Query(default=1000, ge=1, le=10000),
     max_results: int = Query(default=200, ge=1, le=1000),
+    mode: str = Query(
+        default="total_power",
+        description="寻优目标：total_power=系统总电最低；min_cooling_water=冷却回水最低",
+    ),
+    closed_loop: bool = Query(
+        default=False,
+        description=(
+            "是否把上一行寻优结果回写到下一行输入。"
+            "默认 false：Excel 各运行时刻独立回放（推荐）；"
+            "true：跨行闭环仿真（易与行间负荷跳变冲突）。"
+        ),
+    ),
 ):
     """上传 Excel/CSV 运行趋势文件，对“运行状态=运行”的行批量寻优。"""
     from app.main import get_data_cleaner, get_energy_model, get_optimizer
     from app.services.power_baseline import current_operating_params, measured_baseline_breakdown
     from app.services.input_audit import build_pipeline_audit
 
+    objective_mode = mode if mode in ("total_power", "min_cooling_water") else "total_power"
     content = await file.read()
     parsed = parse_runtime_file(content, file.filename or "upload")
     optimizer = get_optimizer()
@@ -165,9 +178,13 @@ async def batch_upload_optimize(
     prev_result: OptimizeResult | None = None
 
     for item in parsed["rows"][:max_rows]:
-        # 闭环反馈：将上一轮寻优的预测值代入本轮输入，
-        # 使多次寻优形成连续闭环（预测功率→下一轮输入功率，预测室温→下一轮输入室温）
-        if prev_result is not None and prev_result.status == "success":
+        # 可选闭环：仅当 closed_loop=true 时，将上一轮寻优回写到本行输入。
+        # Excel 趋势回放默认关闭，避免把不同时刻工况串成假连续过程。
+        if (
+            closed_loop
+            and prev_result is not None
+            and prev_result.status == "success"
+        ):
             fb = dict(item["device_data"])
             # 当前功率随上一轮预测回写；首轮/现场实测功率单独保留为校准锚点，
             # 避免多轮模型自反馈把持续运行的多台主机压到非物理低功率。
@@ -229,7 +246,10 @@ async def batch_upload_optimize(
             fb["cooling_water_temp"] = round(prev_result.predicted_cooling_water_temp, 2)
             item["device_data"] = fb
 
-        # 与 /run 对齐：先清洗再寻优（批量 force=True，不推进负荷 EWMA）
+        # 批量行间工况可跳变数百 kW：每行重置清洗器，避免 spike/熔断串味。
+        # 在线定时任务仍用有状态清洗；离线 Excel 回放不应当作连续秒级采样。
+        if hasattr(cleaner, "reset"):
+            cleaner.reset()
         device_payload = item["device_data"]
         try:
             from app.schemas.device import DeviceData
@@ -239,7 +259,9 @@ async def batch_upload_optimize(
         except Exception:
             pass
 
-        request = OptimizeRequest(device_data=device_payload, force=True)
+        request = OptimizeRequest(
+            device_data=device_payload, force=True, mode=objective_mode
+        )
         result = optimizer.optimize(request)
         prev_result = result
         processed += 1
@@ -293,17 +315,21 @@ async def batch_upload_optimize(
                 )
                 physics_baseline_power = 0.0
 
-            saving_vs_measured = (
-                (measured_total - result.predicted_power) / measured_total * 100.0
-                if measured_total > 0
-                else 0.0
-            )
-            if model_baseline_power > 0:
+            # 失败/超时行不展示虚假节能率（兜底预测仍可能算得出正值）
+            if result.status == "success" and measured_total > 0:
+                saving_vs_measured = (
+                    (measured_total - result.predicted_power) / measured_total * 100.0
+                )
+            else:
+                saving_vs_measured = 0.0
+            if result.status == "success" and model_baseline_power > 0:
                 saving_vs_display_baseline = (
                     (model_baseline_power - result.predicted_power) / model_baseline_power * 100.0
                 )
-            else:
+            elif result.status == "success":
                 saving_vs_display_baseline = result.energy_saving_rate
+            else:
+                saving_vs_display_baseline = 0.0
             saving_vs_model_baseline = round(saving_vs_display_baseline, 2)
             field_sources = item.get("field_sources", {})
             pipeline_audit = build_pipeline_audit(
@@ -397,6 +423,8 @@ async def batch_upload_optimize(
 
     summary = {
         "filename": file.filename,
+        "objective_mode": objective_mode,
+        "closed_loop": bool(closed_loop),
         "total_rows": parsed["total_rows"],
         "running_rows": parsed["running_rows"],
         "processed_rows": processed,

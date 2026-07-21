@@ -1,5 +1,5 @@
 optimize:
-  enabled: true
+  enabled: false
   interval_minutes: 10
   timeout_seconds: 60
   inspired:
@@ -17,7 +17,7 @@ optimize:
 batch_defaults:
   outdoor_temp: 30.0
   outdoor_humidity: 60.0
-  indoor_temp: 27.0
+  indoor_temp: 25.0
   indoor_humidity: 55.0
   terminal_fan_power: 0.0
 energy_model:
@@ -29,7 +29,7 @@ energy_model:
   outdoor_stress_ref: 29.0
   outdoor_load_coupling: 0.02
   min_running_chiller_power_ratio: 0.65
-  max_component_power_rise_pct: 0.3
+  max_component_power_rise_pct: 0.15
   enable_part_load_curve: true
   plr_eir_a: 0.338
   plr_eir_b: 0.284
@@ -44,7 +44,7 @@ energy_model:
   cap_fun_t_max: 1.15
   tower_approach_water_k: 2.0
   design_chw_temp: 7.0
-  design_cw_temp: 30.0
+  design_cw_temp: 37.0
 simulator:
   enabled: false
   interval_seconds: 30
@@ -65,37 +65,37 @@ constraints:
     max_delta: 0.5
   outdoor_operating_floors:
     below_25:
-      chilled_pump_freq: 32.0
-      cooling_pump_freq: 32.0
+      chilled_pump_freq: 35.0
+      cooling_pump_freq: 35.0
       chiller_load_pct: 40.0
     range_25_29:
-      chilled_pump_freq: 34.0
-      cooling_pump_freq: 34.0
-      chiller_load_pct: 45.0
-    range_29_33:
-      chilled_pump_freq: 36.0
-      cooling_pump_freq: 38.0
-      chiller_load_pct: 55.0
-    range_33_37:
       chilled_pump_freq: 38.0
+      cooling_pump_freq: 38.0
+      chiller_load_pct: 50.0
+    range_29_33:
+      chilled_pump_freq: 40.0
       cooling_pump_freq: 42.0
-      chiller_load_pct: 70.0
-    above_37:
+      chiller_load_pct: 65.0
+    range_33_37:
       chilled_pump_freq: 40.0
       cooling_pump_freq: 45.0
-      chiller_load_pct: 80.0
+      chiller_load_pct: 75.0
+    above_37:
+      chilled_pump_freq: 42.0
+      cooling_pump_freq: 45.0
+      chiller_load_pct: 85.0
   comfort_margin:
-    base_from_ceiling: 0.7
+    base_from_ceiling: 0.5
     base_from_floor: 0.3
     outdoor_ref_temp: 29.0
-    outdoor_extra_per_degree: 0.05
+    outdoor_extra_per_degree: 0.1
     indoor_proximity_threshold: 0.3
-    indoor_proximity_extra: 0.1
+    indoor_proximity_extra: 0.15
   pump_frequency:
-    min: 25.0
+    min: 32.0
     max: 50.0
   cooling_tower_fan_frequency:
-    min: 20.0
+    min: 32.0
     max: 45.0
   indoor_temp:
     min: 24.0

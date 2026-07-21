@@ -2,9 +2,9 @@
   "chilled_pump": {
     "name": "冷冻泵",
     "count": 2,
-    "min_freq": 40.0,
-    "max_freq": 48.0,
-    "motor_power_kw": 7.5,
+    "min_freq": 35.0,
+    "max_freq": 50.0,
+    "motor_power_kw": 110.0,
     "active_count_schemes": [
       1,
       2
@@ -14,8 +14,8 @@
     "name": "冷却泵",
     "count": 2,
     "min_freq": 35.0,
-    "max_freq": 45.0,
-    "motor_power_kw": 7.5,
+    "max_freq": 50.0,
+    "motor_power_kw": 90.0,
     "active_count_schemes": [
       1,
       2
@@ -24,23 +24,44 @@
   "chiller": {
     "name": "1#约克离心机",
     "count": 2,
-    "rated_capacity_kw": 516.2,
-    "rated_power_kw": 94.0,
-    "rated_cop": 5.49,
-    "max_load_rate": 0.8
+    "rated_capacity_kw": 3868.0,
+    "rated_power_kw": 695.7,
+    "rated_cop": 5.56,
+    "max_load_rate": 1.0
   },
   "cooling_towers": [
     {
-      "id": "1",
+      "id": "cooling_tower_1",
       "name": "1号冷却塔",
       "motor_power_kw": 11.0,
       "fixed_freq": 50.0,
       "enabled": true
     },
     {
-      "id": "2",
+      "id": "cooling_tower_2",
       "name": "2号冷却塔",
       "motor_power_kw": 11.0,
+      "fixed_freq": 50.0,
+      "enabled": true
+    },
+    {
+      "id": "cooling_tower_3",
+      "name": "3号冷却塔",
+      "motor_power_kw": 11.0,
+      "fixed_freq": 50.0,
+      "enabled": true
+    },
+    {
+      "id": "cooling_tower_4",
+      "name": "4号冷却塔",
+      "motor_power_kw": 18.5,
+      "fixed_freq": 50.0,
+      "enabled": true
+    },
+    {
+      "id": "cooling_tower_5",
+      "name": "5号冷却塔",
+      "motor_power_kw": 18.5,
       "fixed_freq": 50.0,
       "enabled": true
     }
@@ -48,6 +69,8 @@
   "cooling_tower_schemes": [
     0,
     1,
-    2
+    2,
+    3,
+    5
   ]
 }
