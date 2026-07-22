@@ -42,6 +42,33 @@ class TestConstraints:
                         "above_37": 8.0,
                     },
                     "chilled_water_finetune": {"max_delta": 0.5},
+                    "outdoor_operating_floors": {
+                        "below_25": {
+                            "chilled_pump_freq": 45.0,
+                            "cooling_pump_freq": 45.0,
+                            "chiller_load_pct": 40.0,
+                        },
+                        "range_25_29": {
+                            "chilled_pump_freq": 45.0,
+                            "cooling_pump_freq": 45.0,
+                            "chiller_load_pct": 50.0,
+                        },
+                        "range_29_33": {
+                            "chilled_pump_freq": 45.0,
+                            "cooling_pump_freq": 45.0,
+                            "chiller_load_pct": 65.0,
+                        },
+                        "range_33_37": {
+                            "chilled_pump_freq": 45.0,
+                            "cooling_pump_freq": 45.0,
+                            "chiller_load_pct": 75.0,
+                        },
+                        "above_37": {
+                            "chilled_pump_freq": 45.0,
+                            "cooling_pump_freq": 45.0,
+                            "chiller_load_pct": 85.0,
+                        },
+                    },
                     "pump_frequency": {"min": 25.0, "max": 50.0},
                     "cooling_tower_fan_frequency": {"min": 20.0, "max": 45.0},
                     "indoor_temp": {"min": 24.0, "max": 26.0},
@@ -181,8 +208,22 @@ class TestConstraints:
         )
         assert bounds["chiller_load_pct"] == (80.0, 80.0)
 
-
-# ------------------------- 能耗模型 -------------------------
+    def test_measured_below_outdoor_floor_does_not_lift_search_lo(self):
+        """现场泵频低于室外分档时，搜索下限跟随实测（不低于设备下限）。"""
+        # 无实测：分档 45 抬高下限
+        bare = self.c.search_bounds(31.0, 80.0)
+        assert bare["cooling_pump_freq"][0] >= 45.0 - 1e-6
+        # 实测冷却泵 35（设备下限）：不被分档抬到 45
+        bounds = self.c.search_bounds(
+            31.0,
+            80.0,
+            measured_chilled_pump_freq=42.0,
+            measured_cooling_pump_freq=35.0,
+        )
+        assert bounds["cooling_pump_freq"][0] == pytest.approx(35.0)
+        # 冷冻泵设备下限多为 40：实测 42 高于分档时下限仍为分档 45？
+        # 实测 42 < 分档 45 → 跟随实测，但不低于设备 min（约 40）
+        assert bounds["chilled_pump_freq"][0] == pytest.approx(42.0)
 
 def _base_data() -> DeviceData:
     return DeviceData(
@@ -225,6 +266,36 @@ class TestEnergyModel:
         low = self.m.predict(self.data, self._p(chilled_water_temp=6.5)).chiller_power
         high = self.m.predict(self.data, self._p(chilled_water_temp=11.0)).chiller_power
         assert high < low  # 冷水温度越高 COP 越高，机组能耗越低
+
+    def test_pump_change_allows_chiller_below_85pct_floor(self):
+        """泵频有调时主机锚定地板用配置 min_ratio，不再强制 ≥85% 实测。"""
+        from app.services.power_baseline import current_operating_params
+
+        data = _base_data()
+        data.chiller_power = 400.0
+        data.indoor_load = 2500.0
+        data.chilled_pump_freq = 45.0
+        data.cooling_pump_freq = 45.0
+        baseline = current_operating_params(data.model_dump())
+        ctx = {
+            "_baseline_params": baseline,
+            "chilled_pump_count": baseline.get("chilled_pump_count", 1),
+            "cooling_pump_count": baseline.get("cooling_pump_count", 1),
+            "cooling_tower_count": baseline.get("cooling_tower_count", 1),
+        }
+        # 大幅降泵频：模型相对比可显著下降；若仍强制 0.85 地板则无法低于 340
+        pred = self.m.predict(
+            data,
+            {
+                **self._p(
+                    chilled_pump_freq=35.0,
+                    cooling_pump_freq=35.0,
+                    chilled_water_temp=10.0,
+                ),
+                **ctx,
+            },
+        )
+        assert pred.chiller_power < 400.0 * 0.85
 
     def test_chiller_anchor_splits_baseline_q_evap(self):
         """锚定缩放时基线蒸发负荷须按基线控制量计算，降低负荷应降低主机预测功率。"""
@@ -353,12 +424,51 @@ class TestEnergyModel:
             2 * eq.cooling_pump.motor_power_kw * (42.0 / 50.0) ** 3, rel=0.15
         )
 
-    def test_tower_power_fixed_70_for_scheme5(self):
+    def test_tower_power_follows_nameplate_for_requested_count(self):
+        """冷却塔功率 = 开启台数（不超过已启用）铭牌电机求和，无 70kW 硬编码。"""
+        from app.services.equipment_config import equipment_config_service
+
+        enabled = [
+            t
+            for t in equipment_config_service.get_config().cooling_towers
+            if t.enabled
+        ]
+        assert enabled
+        want_n = min(5, len(enabled))
+        expect = sum(t.motor_power_kw for t in enabled[:want_n])
         data = _base_data()
-        data.cooling_tower_fan_power = 70.0
+        data.cooling_tower_fan_power = 999.0
         data.cooling_tower_fan_freq = 50.0
-        bd = self.m.predict(data, self._p(cooling_tower_count=5, cooling_tower_fan_freq=50.0))
-        assert bd.cooling_tower_fan_power == 70.0
+        bd = self.m.predict(
+            data, self._p(cooling_tower_count=5, cooling_tower_fan_freq=50.0)
+        )
+        assert bd.cooling_tower_fan_power == pytest.approx(expect, abs=0.05)
+
+    def test_tower_power_nameplate_by_count_ignores_freq_and_measured(self):
+        """定频塔：功率只随台数取铭牌，不随频率/Excel 实测缩放。"""
+        from app.services.equipment_config import equipment_config_service
+
+        eq = equipment_config_service.get_config()
+        enabled = [t for t in eq.cooling_towers if t.enabled]
+        if len(enabled) < 3:
+            return
+        expect3 = sum(t.motor_power_kw for t in enabled[:3])
+        data = _base_data()
+        data.cooling_tower_fan_power = 99.0  # 故意给错实测
+        data.cooling_tower_fan_freq = 35.0
+        bd_hi = self.m.predict(
+            data, self._p(cooling_tower_count=3, cooling_tower_fan_freq=50.0)
+        )
+        bd_lo = self.m.predict(
+            data, self._p(cooling_tower_count=3, cooling_tower_fan_freq=30.0)
+        )
+        assert bd_hi.cooling_tower_fan_power == pytest.approx(expect3, abs=0.05)
+        assert bd_lo.cooling_tower_fan_power == pytest.approx(expect3, abs=0.05)
+        bd2 = self.m.predict(
+            data, self._p(cooling_tower_count=2, cooling_tower_fan_freq=50.0)
+        )
+        expect2 = sum(t.motor_power_kw for t in enabled[:2])
+        assert bd2.cooling_tower_fan_power == pytest.approx(expect2, abs=0.05)
 
     def test_wet_bulb_not_exceed_dry_bulb(self):
         assert self.m._wet_bulb(32.0, 60.0) <= 32.0
@@ -877,8 +987,8 @@ class TestPSOOptimizer:
         # 裕量惩罚始终可触发（靠近上限时）
         assert self.c.comfort_margin_penalty(25.9, 35.0, 25.0) > 0.0
 
-    def test_repeated_optimize_does_not_increase_power(self):
-        """连续多次寻优同一工况，预测功率不应高于实测基线。
+    def test_repeated_optimize_stable_power(self):
+        """连续多次寻优同一工况，预测功率应稳定（不再静默钳到实测）。
 
         注：实测 chw 应与查表值一致（outdoor_temp=32 → 10℃），
         保证 baseline 与 candidate 口径一致，只对比频率优化的节能。
@@ -902,11 +1012,13 @@ class TestPSOOptimizer:
             device_data=data.model_dump(mode="json"),
             force=True,
         )
+        powers: list[float] = []
         for _ in range(5):
             res = self.opt.optimize(req)
             assert res.status == "success"
-            assert res.predicted_power <= data.total_power + 1.0
-            assert res.energy_saving_rate >= 0.0
+            assert res.predicted_power > 0
+            powers.append(float(res.predicted_power))
+        assert max(powers) <= min(powers) * 1.08 + 2.0
 
     def test_cooling_tower_schemes_follow_equipment_config(self):
         """冷却塔方案不超过已启用台数；寻优侧台数定额不调，仅作吸附/回退。"""

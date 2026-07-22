@@ -106,7 +106,7 @@ def apply() -> None:
     settings.batch_defaults.terminal_fan_power = 0.0
 
     settings.energy_model.design_chw_temp = 7.0
-    settings.energy_model.design_cw_temp = 37.0
+    settings.energy_model.design_cw_temp = 30.0
     settings.energy_model.indoor_base_temp = 24.5
 
     svc.save_app_settings(settings)

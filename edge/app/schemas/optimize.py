@@ -29,6 +29,9 @@ class OptimizeRequest(BaseModel):
     # 寻优目标：total_power=系统总电最低；min_cooling_water=冷却回水最低
     mode: OptimizeObjectiveMode = Field(default="total_power")
 
+    # 是否在 optimize() 内立刻写入反馈记忆；定时任务/批量在约束验收后再写入
+    commit_feedback: bool = True
+
 
 class OptimizeResult(BaseModel):
     """寻优结果

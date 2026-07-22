@@ -163,10 +163,13 @@ async def batch_upload_optimize(
     optimizer = get_optimizer()
     energy_model = get_energy_model()
     cleaner = get_data_cleaner()
-    # 批量与定时闭环隔离：重置负荷 EWMA 与清洗器状态，避免历史行串味
+    # 批量与定时闭环隔离：重置负荷 EWMA、清洗器与实测回写状态，避免历史行串味
     forecast = getattr(optimizer, "_load_forecast", None)
     if forecast is not None and hasattr(forecast, "reset"):
         forecast.reset()
+    feedback = getattr(optimizer, "_feedback", None)
+    if feedback is not None and hasattr(feedback, "reset"):
+        feedback.reset()
     if hasattr(cleaner, "reset"):
         cleaner.reset()
 
@@ -176,30 +179,34 @@ async def batch_upload_optimize(
     timeout_count = 0
     processed = 0
     prev_result: OptimizeResult | None = None
+    # 闭环首行锚点：主机功率与室外温湿度固定为批量第一行实测，避免逐行覆盖漂移
+    loop_anchor: dict[str, float] | None = None
 
     for item in parsed["rows"][:max_rows]:
         # 可选闭环：仅当 closed_loop=true 时，将上一轮寻优回写到本行输入。
         # Excel 趋势回放默认关闭，避免把不同时刻工况串成假连续过程。
+        if closed_loop and loop_anchor is None:
+            raw0 = item["device_data"]
+            loop_anchor = {
+                "chiller_power": float(raw0.get("chiller_power") or 0.0),
+                "outdoor_temp": float(raw0.get("outdoor_temp") or 0.0),
+                "outdoor_humidity": float(raw0.get("outdoor_humidity") or 0.0),
+                "total_power": float(raw0.get("total_power") or 0.0),
+            }
         if (
             closed_loop
             and prev_result is not None
             and prev_result.status == "success"
+            and loop_anchor is not None
         ):
             fb = dict(item["device_data"])
-            # 当前功率随上一轮预测回写；首轮/现场实测功率单独保留为校准锚点，
-            # 避免多轮模型自反馈把持续运行的多台主机压到非物理低功率。
-            fb["chiller_power_reference"] = float(
-                fb.get("chiller_power_reference") or fb.get("chiller_power") or 0.0
-            )
+            # 校准锚点始终用首行实测，不随行覆盖
+            fb["chiller_power_reference"] = float(loop_anchor["chiller_power"])
             fb["chiller_power_reference_outdoor_temp"] = float(
-                fb.get("chiller_power_reference_outdoor_temp")
-                or fb.get("outdoor_temp")
-                or 0.0
+                loop_anchor["outdoor_temp"]
             )
             fb["chiller_power_reference_outdoor_humidity"] = float(
-                fb.get("chiller_power_reference_outdoor_humidity")
-                or fb.get("outdoor_humidity")
-                or 0.0
+                loop_anchor["outdoor_humidity"]
             )
             # 闭环主机功率：允许随预测微调，但禁止相对首轮锚点持续上抬形成“越寻越费”
             pred_chiller = float(prev_result.predicted_chiller_power or 0.0)
@@ -260,9 +267,28 @@ async def batch_upload_optimize(
             pass
 
         request = OptimizeRequest(
-            device_data=device_payload, force=True, mode=objective_mode
+            device_data=device_payload,
+            force=True,
+            mode=objective_mode,
+            commit_feedback=False,
         )
         result = optimizer.optimize(request)
+        # 闭环批量：成功后再写入反馈，供下一扰动辨识；开环回放不污染全局反馈
+        if (
+            closed_loop
+            and result.status == "success"
+            and hasattr(optimizer, "commit_feedback")
+        ):
+            try:
+                from app.schemas.device import DeviceData
+
+                optimizer.commit_feedback(
+                    DeviceData(**device_payload),
+                    baseline_power=float(result.baseline_power or 0.0),
+                    predicted_power=float(result.predicted_power or 0.0),
+                )
+            except Exception:
+                pass
         prev_result = result
         processed += 1
         if result.status == "success":

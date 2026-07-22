@@ -1,5 +1,5 @@
 optimize:
-  enabled: false
+  enabled: true
   interval_minutes: 10
   timeout_seconds: 60
   inspired:
@@ -14,10 +14,29 @@ optimize:
     load_forecast_enabled: true
     load_forecast_alpha: 0.35
     blackbox_baseline_enabled: false
+  control_stability:
+    enabled: true
+    outdoor_slow_delta_c: 0.8
+    load_sudden_delta_pct: 8.0
+    power_sudden_delta_frac: 0.12
+    power_sudden_delta_kw: 40.0
+    chw_step_c: 0.5
+    pump_step_hz: 2.0
+    sudden_chw_step_c: 0.3
+    sudden_pump_step_hz: 1.0
+    low_load_pct: 35.0
+    low_load_pump_step_hz: 1.5
+    min_saving_frac: 0.01
+    min_saving_kw_floor: 0.5
+    pump_trim_saving_frac: 0.002
+    pump_trim_saving_floor: 0.2
+    low_load_extra_saving_kw: 8.0
+    feedback_overstatement_gain: 0.5
+    feedback_max_extra_frac: 0.03
 batch_defaults:
   outdoor_temp: 30.0
   outdoor_humidity: 60.0
-  indoor_temp: 25.0
+  indoor_temp: 27.0
   indoor_humidity: 55.0
   terminal_fan_power: 0.0
 energy_model:
@@ -29,7 +48,7 @@ energy_model:
   outdoor_stress_ref: 29.0
   outdoor_load_coupling: 0.02
   min_running_chiller_power_ratio: 0.65
-  max_component_power_rise_pct: 0.15
+  max_component_power_rise_pct: 0.25
   enable_part_load_curve: true
   plr_eir_a: 0.338
   plr_eir_b: 0.284
@@ -44,7 +63,8 @@ energy_model:
   cap_fun_t_max: 1.15
   tower_approach_water_k: 2.0
   design_chw_temp: 7.0
-  design_cw_temp: 37.0
+  # 设计冷却水进水（冷凝器进水），典型 29~32℃；勿取冷凝温度/出水
+  design_cw_temp: 30.0
 simulator:
   enabled: false
   interval_seconds: 30
@@ -63,26 +83,28 @@ constraints:
     above_37: 8.0
   chilled_water_finetune:
     max_delta: 0.5
+  # 室外分档泵频下限：贴近现场趋势（常 35~40Hz），避免 29~33℃ 档 40/42
+  # 把实测 35Hz 基线抬高后制造假节能空间。
   outdoor_operating_floors:
     below_25:
-      chilled_pump_freq: 35.0
-      cooling_pump_freq: 35.0
+      chilled_pump_freq: 32.0
+      cooling_pump_freq: 32.0
       chiller_load_pct: 40.0
     range_25_29:
-      chilled_pump_freq: 38.0
-      cooling_pump_freq: 38.0
+      chilled_pump_freq: 35.0
+      cooling_pump_freq: 35.0
       chiller_load_pct: 50.0
     range_29_33:
-      chilled_pump_freq: 40.0
-      cooling_pump_freq: 42.0
+      chilled_pump_freq: 36.0
+      cooling_pump_freq: 36.0
       chiller_load_pct: 65.0
     range_33_37:
-      chilled_pump_freq: 40.0
-      cooling_pump_freq: 45.0
+      chilled_pump_freq: 38.0
+      cooling_pump_freq: 38.0
       chiller_load_pct: 75.0
     above_37:
-      chilled_pump_freq: 42.0
-      cooling_pump_freq: 45.0
+      chilled_pump_freq: 40.0
+      cooling_pump_freq: 40.0
       chiller_load_pct: 85.0
   comfort_margin:
     base_from_ceiling: 0.5
@@ -92,10 +114,10 @@ constraints:
     indoor_proximity_threshold: 0.3
     indoor_proximity_extra: 0.15
   pump_frequency:
-    min: 32.0
+    min: 25.0
     max: 50.0
   cooling_tower_fan_frequency:
-    min: 32.0
+    min: 20.0
     max: 45.0
   indoor_temp:
     min: 24.0

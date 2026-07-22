@@ -63,7 +63,9 @@ def test_energy_model_uses_affinity_pump_power():
     assert breakdown.cooling_pump_power == pytest.approx(
         2 * eq.cooling_pump.motor_power_kw * (40.0 / 50.0) ** 3, rel=0.15
     )
-    assert breakdown.cooling_tower_fan_power == 70.0
+    enabled = [t for t in eq.cooling_towers if t.enabled]
+    expect_tower = sum(t.motor_power_kw for t in enabled[: min(5, len(enabled))])
+    assert breakdown.cooling_tower_fan_power == pytest.approx(expect_tower, abs=0.05)
 
 
 def test_energy_model_scales_with_frequency():

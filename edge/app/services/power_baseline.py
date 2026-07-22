@@ -128,12 +128,7 @@ def infer_active_counts(device_data: dict[str, Any]) -> dict[str, int]:
         best_diff = float("inf")
         for n in schemes:
             n = max(0, min(int(n), len(enabled)))
-            if n >= 5:
-                scheme_power = 70.0
-            elif n >= 3:
-                scheme_power = 70.0 * n / 5.0
-            else:
-                scheme_power = sum(t.motor_power_kw for t in enabled[:n])
+            scheme_power = sum(t.motor_power_kw for t in enabled[:n])
             diff = abs(scheme_power - tower_power)
             if diff < best_diff:
                 best_diff = diff

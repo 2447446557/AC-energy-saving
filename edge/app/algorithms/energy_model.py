@@ -367,7 +367,7 @@ class ACEnergyModel:
         flow_cp_ratio = max(
             (p.cooling_pump_count / max(p.cooling_pump_total_count, 1))
             * (f_cp / p.freq_rated),
-            0.2,
+            0.05,
         )
         approach0 = self._tower_approach(f_fan, p, flow_cp_ratio=flow_cp_ratio)
         t_cw_enter0 = wet_bulb + approach0
@@ -491,9 +491,10 @@ class ACEnergyModel:
 
         capacity_ratio = delivered_capacity / max(demand, 1.0)
         indoor_span = max(hi - lo, 1e-6)
-        # 安全距离：目标约 hi-0.7（26→25.3），预测上限约 hi-0.6（≤25.4）
-        safety_target = hi - 0.7
-        safety_ceiling = hi - 0.6
+        # 与 settings.yaml comfort_margin.base_from_ceiling=0.5 对齐
+        # （完整室外/邻近修正在 SafetyConstraints.effective_comfort_ceiling）
+        safety_ceiling = hi - 0.5
+        safety_target = max(lo, safety_ceiling - 0.15)
         at_hi = measured_indoor >= hi - 0.05
         above_safety = measured_indoor >= safety_ceiling - 1e-9
         near_hi = measured_indoor >= hi - 0.4
@@ -667,12 +668,8 @@ class ACEnergyModel:
             tower_count = max(0, min(int(tower_count), max_scheme))
             selected_towers = enabled_towers[: min(len(enabled_towers), tower_count)]
             tower_total = max(len(enabled_towers), max_scheme, 1)
-            if tower_count >= 5:
-                tower_power = 70.0
-            elif tower_count >= 3:
-                tower_power = 70.0 * tower_count / 5.0
-            else:
-                tower_power = sum(tower.motor_power_kw for tower in selected_towers)
+            # 定频塔：额定功率 = 开启台数铭牌电机功率之和（与频率无关）
+            tower_power = sum(tower.motor_power_kw for tower in selected_towers)
 
             chilled_units = [
                 unit
@@ -702,14 +699,12 @@ class ACEnergyModel:
             ]
             design_capacity = sum(
                 float(unit.rated_capacity_kw or 0.0)
-                * float(unit.max_load_rate or 0.8)
                 for unit in chillers
             )
             if design_capacity <= 0:
                 design_capacity = (
                     eq.chiller.count
                     * eq.chiller.rated_capacity_kw
-                    * eq.chiller.max_load_rate
                 )
             design_power = sum(
                 float(unit.rated_power_kw or 0.0) for unit in chillers
@@ -718,10 +713,9 @@ class ACEnergyModel:
                 design_power = float(getattr(eq.chiller, "rated_power_kw", 0.0) or 0.0) * max(
                     int(getattr(eq.chiller, "count", 1) or 1), 1
                 )
-            # 铭牌校准用全额额定冷量（不含 max_load_rate 折减）
-            nameplate_capacity = sum(
-                float(unit.rated_capacity_kw or 0.0) for unit in chillers
-            )
+            # 铭牌校准与 Q_nom 均用全额额定冷量；max_load_rate 仅作负载% 硬上限
+            # （见 SafetyConstraints.max_chiller_load_pct），避免与 BMS 负载% 双重折减。
+            nameplate_capacity = design_capacity
             if nameplate_capacity <= 0:
                 nameplate_capacity = float(eq.chiller.rated_capacity_kw or 0.0) * max(
                     int(eq.chiller.count or 1), 1
@@ -775,7 +769,6 @@ class ACEnergyModel:
                     design_capacity = (
                         eq.chiller.count
                         * eq.chiller.rated_capacity_kw
-                        * eq.chiller.max_load_rate
                     )
                     if design_capacity > 0:
                         chilled_n = (
@@ -803,14 +796,9 @@ class ACEnergyModel:
                             if tower_count is None
                             else max(0, min(int(tower_count), max_scheme))
                         )
-                        if tower_n >= 5:
-                            tower_rated = 70.0
-                        elif tower_n >= 3:
-                            tower_rated = 70.0 * tower_n / 5.0
-                        else:
-                            tower_rated = sum(
-                                t.motor_power_kw for t in enabled_towers[:tower_n]
-                            )
+                        tower_rated = sum(
+                            t.motor_power_kw for t in enabled_towers[:tower_n]
+                        )
                         p = replace(
                             p,
                             chilled_pump_rated=chilled_n * eq.chilled_pump.motor_power_kw,
@@ -829,8 +817,6 @@ class ACEnergyModel:
             except Exception:
                 pass
         return p
-
-    _TOWER_SCHEME5_NOMINAL_KW = 70.0
 
     def _predict_pump_power(
         self,
@@ -854,10 +840,23 @@ class ACEnergyModel:
 
     @classmethod
     def _tower_nominal_kw(cls, scheme_count: int) -> float:
-        if scheme_count >= 5:
-            return cls._TOWER_SCHEME5_NOMINAL_KW
-        if scheme_count >= 3:
-            return cls._TOWER_SCHEME5_NOMINAL_KW * scheme_count / 5.0
+        """定频冷却塔铭牌合计：按开启台数累加电机功率，与频率无关。"""
+        scheme_count = max(int(scheme_count), 0)
+        if scheme_count <= 0:
+            return 0.0
+        try:
+            from app.services.equipment_config import equipment_config_service
+
+            enabled = [
+                tower
+                for tower in equipment_config_service.get_config().cooling_towers
+                if tower.enabled
+            ]
+            if enabled:
+                selected = enabled[: min(scheme_count, len(enabled))]
+                return round(sum(float(tower.motor_power_kw) for tower in selected), 4)
+        except Exception:
+            pass
         return 0.0
 
     def _predict_tower_power(
@@ -869,34 +868,15 @@ class ACEnergyModel:
         rated_total: float,
         p: EnergyModelParams,
     ) -> float:
-        """冷却塔功率：定频方案定额；5 台方案固定 70 kW。"""
-        from app.services.power_baseline import infer_active_counts
-
+        """冷却塔功率：现场定频，只随开启台数取铭牌合计，不按频率三次方、不跟实测比例缩放。"""
+        del data, params, new_freq, rated_total, p  # 定频定额，显式不参与
         scheme_count = max(int(scheme_count), 0)
         if scheme_count <= 0:
             return 0.0
-        if scheme_count >= 5:
-            return self._TOWER_SCHEME5_NOMINAL_KW
-
-        measured = _finite(data.cooling_tower_fan_power, 0.0)
-        active_counts = params.get("_active_counts")
-        if not isinstance(active_counts, dict):
-            active_counts = infer_active_counts(data.model_dump())
-        base_count = int(active_counts.get("cooling_tower_count", scheme_count) or scheme_count)
-
-        if measured > 0:
-            if base_count >= 5:
-                nominal = self._TOWER_SCHEME5_NOMINAL_KW
-            else:
-                nominal = measured
-            if scheme_count != base_count and base_count > 0:
-                return round(nominal * scheme_count / base_count, 4)
-            return round(nominal, 4)
-
         nominal = self._tower_nominal_kw(scheme_count)
         if nominal > 0:
             return nominal
-        return max(rated_total, 0.0)
+        return 0.0
 
     def _predict_chiller_power(
         self,
@@ -985,7 +965,7 @@ class ACEnergyModel:
         flow_cp_b = max(
             (base_p.cooling_pump_count / max(base_p.cooling_pump_total_count, 1))
             * (f_cp_b / base_p.freq_rated),
-            0.2,
+            0.05,
         )
         wet_bulb_base = self._wet_bulb(
             reference_outdoor_temp, reference_outdoor_humidity
@@ -1028,13 +1008,21 @@ class ACEnergyModel:
             if max_rise < 0:
                 max_rise = 0.25
             max_rise = min(max(max_rise, 0.05), 0.50)
+            min_ratio = min(
+                max(float(p.min_running_chiller_power_ratio), 0.0),
+                1.0,
+            )
+            # 仅当控制几乎不变时抬高地板；泵频/水温有调时保留配置下限，
+            # 避免 0.85 地板把泵侧变化传导到主机的真实效应抹掉。
+            if has_measured and controls_near_baseline:
+                min_ratio = max(min_ratio, 0.85)
             if has_measured:
                 if controls_near_baseline:
                     # 控制不变：主要反映室外湿球/负荷变化，信任模型相对变化
                     ratio = min(max(raw_ratio, 0.88), 1.0 + max_rise)
                 else:
-                    # 有调参：允许更大相对变化，仍用配置涨幅帽兜底
-                    ratio = min(max(raw_ratio, 0.80), 1.0 + max_rise)
+                    # 有调参：比例下限跟配置 min_ratio，允许泵→主机耦合体现
+                    ratio = min(max(raw_ratio, min_ratio), 1.0 + max_rise)
             else:
                 ratio = raw_ratio
             scaled = measured * ratio
@@ -1047,12 +1035,6 @@ class ACEnergyModel:
             except Exception:
                 running_count = 1
             per_unit_measured = measured / running_count
-            min_ratio = min(
-                max(float(p.min_running_chiller_power_ratio), 0.0),
-                1.0,
-            )
-            if has_measured:
-                min_ratio = max(min_ratio, 0.85)
             running_floor = per_unit_measured * running_count * min_ratio
             scaled = max(scaled, running_floor)
             if measured > 0:
@@ -1070,12 +1052,14 @@ class ACEnergyModel:
     ) -> float:
         """用铭牌冷量/电功率把 eta 校准到设计工况附近的卡诺修正系数。
 
+        标定水温口径与求解器一致：冷凝侧用设计冷却水**进水** + 冷凝器逼近度。
         铭牌 COP 异常偏高（如统计口径含非压缩机功率）时钳位，避免 eta>1。
         """
         if design_capacity <= 0 or design_power <= 0:
             return p.eta_chiller
         target_cop = design_capacity / design_power
         t_evap_k = (p.design_chw_temp - p.evap_approach) + _KELVIN
+        # 与 _solve_condenser / CapFunT 一致：进水参考，非冷凝器出水
         t_cond_k = (p.design_cw_temp + p.cond_approach) + _KELVIN
         carnot = t_evap_k / max(t_cond_k - t_evap_k, 1.0)
         if carnot <= 0:
@@ -1178,8 +1162,8 @@ class ACEnergyModel:
         flow_cp_ratio = max(
             (p.cooling_pump_count / max(p.cooling_pump_total_count, 1))
             * (f_cp / p.freq_rated),
-            0.2,
-        )  # 下限保护，防止除零/发散
+            0.05,
+        )  # 下限保护，防止除零/发散；过低时才钳，避免掩盖低流量升温
         approach = self._tower_approach(f_fan, p, flow_cp_ratio=flow_cp_ratio)
         flow_chw = max(float(flow_chw_ratio), 0.0)
 
@@ -1198,12 +1182,20 @@ class ACEnergyModel:
 
         for _i in range(6):
             q_reject = q_evap + chiller_power
-            # 冷却水温 = 湿球 + 塔逼近度 + 冷凝器温升（排热/流量，流量越小温升越大）
+            # 冷却水温 = 湿球 + 塔逼近度 + 冷凝器温升
+            # ΔT = Q_rej / (ṁ·cp)；设计流量按「设计排热 / 5K 温升」反推
             capacity = max(p.design_cooling_capacity, 1e-6)
-            cond_range = q_reject / (capacity * flow_cp_ratio) * 5.0
+            design_cop = 5.5
+            if float(getattr(p, "design_chiller_power", 0.0) or 0.0) > 1e-6:
+                design_cop = max(capacity / float(p.design_chiller_power), 2.0)
+            q_rej_design = capacity * (1.0 + 1.0 / design_cop)
+            m_cp = (q_rej_design / 5.0) * max(float(flow_cp_ratio), 1e-6)  # kW/K
+            cond_range = q_reject / max(m_cp, 1e-6)
             t_cw_enter = wet_bulb + approach  # 冷凝器进水 ≈ 塔出水
             cooling_water_temp = t_cw_enter + cond_range
-            t_cond_k = (cooling_water_temp + p.cond_approach) + _KELVIN
+            # ElectricEIR / CapFunT：温区依赖用冷凝器进水，与铭牌 η 标定口径一致
+            # （出水仅用于回路水温展示，不参与卡诺 COP）
+            t_cond_k = (t_cw_enter + p.cond_approach) + _KELVIN
 
             denom = max(t_cond_k - t_evap_k, 1.0)  # 防止温差过小导致 COP 爆炸
             cop_carnot = p.eta_chiller * t_evap_k / denom

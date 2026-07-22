@@ -211,8 +211,11 @@ class SafetyConstraints:
             indoor = (lo + hi) / 2.0
         if math.isfinite(indoor) and indoor > hi - self.comfort_margin.indoor_proximity_threshold:
             margin += self.comfort_margin.indoor_proximity_extra
-        # 至少留 0.6℃ 安全距离（26→≤25.4），最多 0.9℃（≥25.1）
-        margin = min(max(margin, 0.6), 0.9)
+        # 至少留 base_from_ceiling 安全距离，最多 0.9℃
+        base = float(self.comfort_margin.base_from_ceiling)
+        if not math.isfinite(base) or base < 0:
+            base = 0.5
+        margin = min(max(margin, base), 0.9)
         return max(lo, hi - margin)
 
     def safety_indoor_target(
@@ -329,6 +332,19 @@ class SafetyConstraints:
         chp_hi = device["chilled_pump_freq"][1]
         cwp_lo = max(device["cooling_pump_freq"][0], floors.cooling_pump_freq)
         cwp_hi = device["cooling_pump_freq"][1]
+        # 现场实测已低于室外分档时：搜索下限跟随实测，避免把当前基线抬高后假节能
+        try:
+            meas_chp = float(measured_chilled_pump_freq or 0.0)
+        except (TypeError, ValueError):
+            meas_chp = 0.0
+        try:
+            meas_cwp = float(measured_cooling_pump_freq or 0.0)
+        except (TypeError, ValueError):
+            meas_cwp = 0.0
+        if meas_chp > 0 and meas_chp < chp_lo:
+            chp_lo = max(device["chilled_pump_freq"][0], meas_chp)
+        if meas_cwp > 0 and meas_cwp < cwp_lo:
+            cwp_lo = max(device["cooling_pump_freq"][0], meas_cwp)
         # 寻优输入中的最低频率：可抬高本次搜索下限，但不能超过设备上限
         try:
             input_chp_min = float(min_chilled_pump_freq or 0.0)

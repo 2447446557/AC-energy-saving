@@ -70,11 +70,26 @@ def run_optimize() -> None:
                 ),
             )
 
-        # 3. 执行寻优（模拟/定时路径走平滑，保护设备）
+        # 2b. 实测回写：用本轮总电校正上一轮预测虚高（抬高后续节能门槛）
         optimizer = get_optimizer()
+        try:
+            measured_now = float(
+                getattr(cleaned_data, "total_power", 0.0)
+                or cleaned_data.model_dump().get("total_power")
+                or 0.0
+            )
+            if measured_now > 1e-6 and hasattr(optimizer, "observe_measured_power"):
+                extra = optimizer.observe_measured_power(measured_now)
+                if extra > 1e-6:
+                    logger.info(f"实测回写抬高节能门槛比例={extra:.3f}")
+        except Exception as e:
+            logger.debug(f"实测回写跳过: {e}")
+
+        # 3. 执行寻优（模拟/定时路径走平滑，保护设备）
         request = OptimizeRequest(
             device_data=cleaned_data.model_dump(mode="json"),
             force=False,
+            commit_feedback=False,
         )
         result = optimizer.optimize(request)
 
@@ -128,6 +143,14 @@ def run_optimize() -> None:
                 detail='{"reason":"constraint_invalid"}',
             )
             return
+
+        # 约束验收通过后再写入反馈记忆
+        if result.status == "success" and hasattr(optimizer, "commit_feedback"):
+            optimizer.commit_feedback(
+                cleaned_data,
+                baseline_power=float(result.baseline_power or 0.0),
+                predicted_power=float(result.predicted_power or 0.0),
+            )
 
         # 5. 保存记录
         from app.models.optimize_record import OptimizeRecord

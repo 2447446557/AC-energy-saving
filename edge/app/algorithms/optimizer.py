@@ -28,6 +28,7 @@
 - 参数平滑：最优解经阶梯平滑后输出，保护设备；结果区分 PSO 推荐值与实发值。
 - 短时负荷 EWMA 预测后再寻优；可选 LightGBM 旁路节能对照。
 - 局部最优规避：多粒子 + 惯性权重 + 适度迭代，兼顾收敛速度与全局性。
+- 控制稳定性：扰动辨识、动态节能死区、单周期变化率限幅、实测回写校正。
 """
 
 from __future__ import annotations
@@ -54,6 +55,15 @@ from app.algorithms.chillstream_features import (
     unmet_cooling_penalty,
 )
 from app.algorithms.constraints import VAR_ORDER, SafetyConstraints
+from app.algorithms.control_stability import (
+    DisturbanceReport,
+    FeedbackCalibrator,
+    classify_disturbance,
+    dynamic_min_saving_kw,
+    limits_from_config,
+    merge_stability_config,
+    rate_limit_params,
+)
 from app.algorithms.energy_model import ACEnergyModel
 from app.algorithms.fallback import SafeOutputGuard
 from app.algorithms.indoor_temp import control_indoor_temp
@@ -151,6 +161,9 @@ class PSOOptimizer:
         self._timeout = timeout_seconds
         self._load_forecast = LoadForecastState()
         self._inspired_cfg = merge_feature_config(cfg.get("inspired"))
+        self._stability_cfg = merge_stability_config(cfg.get("control_stability"))
+        self._feedback = FeedbackCalibrator()
+        self._last_disturbance: DisturbanceReport | None = None
 
     def apply_runtime_settings(self, config: dict | None = None) -> None:
         """热更新寻优任务参数（超时等），不重建 PSO 实例。"""
@@ -175,9 +188,87 @@ class PSOOptimizer:
                 except (TypeError, ValueError):
                     pass
         self._inspired_cfg = merge_feature_config(optimize_cfg.get("inspired"))
+        self._stability_cfg = merge_stability_config(
+            optimize_cfg.get("control_stability")
+        )
 
     def _inspired_config(self) -> dict[str, Any]:
         return self._inspired_cfg if isinstance(self._inspired_cfg, dict) else merge_feature_config(None)
+
+    def _stability_config(self) -> dict[str, Any]:
+        return (
+            self._stability_cfg
+            if isinstance(self._stability_cfg, dict)
+            else merge_stability_config(None)
+        )
+
+    def observe_measured_power(self, measured_total: float) -> float:
+        """定时闭环：用本轮实测总电校正上一轮预测虚高，返回抬高的节能门槛比例。"""
+        cfg = self._stability_config()
+        if not bool(cfg.get("enabled", True)):
+            return 0.0
+        limits = limits_from_config(cfg)
+        return self._feedback.update_with_measured(
+            measured_total,
+            gain=limits.feedback_overstatement_gain,
+            max_extra_frac=limits.feedback_max_extra_frac,
+        )
+
+    def commit_feedback(
+        self,
+        data: DeviceData,
+        *,
+        baseline_power: float,
+        predicted_power: float,
+    ) -> None:
+        """约束验收通过后再记忆，避免丢弃方案仍污染下一轮反馈。"""
+        cfg = self._stability_config()
+        if not bool(cfg.get("enabled", True)):
+            return
+        self._feedback.remember_prediction(
+            float(baseline_power or 0.0), float(predicted_power or 0.0)
+        )
+        self._feedback.remember_snapshot(
+            outdoor_temp=float(data.outdoor_temp or 30.0),
+            load_pct=float(data.chiller_load or 0.0),
+            total_power=float(data.total_power or 0.0),
+        )
+
+    def _classify_runtime_disturbance(self, data: DeviceData) -> DisturbanceReport:
+        cfg = self._stability_config()
+        outdoor = float(data.outdoor_temp or 30.0)
+        load = float(data.chiller_load or 0.0)
+        total = float(data.total_power or 0.0)
+        prev_out, prev_load, prev_total = self._feedback.snapshot_refs()
+        outdoor_ref = float(
+            getattr(data, "chiller_power_reference_outdoor_temp", 0.0) or 0.0
+        )
+        if prev_out is not None:
+            outdoor_ref = float(prev_out)
+        elif outdoor_ref <= 0:
+            outdoor_ref = outdoor
+        load_ref = float(prev_load) if prev_load is not None else load
+        if prev_total is not None and float(prev_total) > 1e-6:
+            power_ref_total = float(prev_total)
+        else:
+            power_ref = float(getattr(data, "chiller_power_reference", 0.0) or 0.0)
+            if power_ref > 1e-6 and total > 1e-6:
+                chiller_now = float(data.chiller_power or 0.0)
+                aux = max(0.0, total - chiller_now)
+                power_ref_total = power_ref + aux
+            else:
+                power_ref_total = total
+        report = classify_disturbance(
+            outdoor_temp=outdoor,
+            outdoor_ref=outdoor_ref,
+            load_pct=load,
+            load_ref=load_ref,
+            total_power=total,
+            power_ref=power_ref_total,
+            cfg=cfg,
+        )
+        self._last_disturbance = report
+        return report
 
     # ---------- IOptimizer 协议实现 ----------
 
@@ -440,28 +531,66 @@ class PSOOptimizer:
             smoothed["cooling_tower_count"] = self._resolve_tower_count(
                 data, best_params, mode
             )
+            # 控制稳定性：扰动辨识 + 单周期变化率限幅。
+            # force=True（手动/批量）展示 PSO 解，跳过步进限幅；定时闭环仍限幅护设备。
+            stability_remark = ""
+            disturbance = DisturbanceReport(kind="none")
+            stab_cfg = self._stability_config()
+            use_stability = bool(stab_cfg.get("enabled", True))
+            apply_rate_limit = use_stability and not bool(
+                getattr(request, "force", False)
+            )
+            if use_stability:
+                disturbance = self._classify_runtime_disturbance(data)
+                if apply_rate_limit:
+                    limits = limits_from_config(stab_cfg)
+                    smoothed, stability_remark = rate_limit_params(
+                        current_full,
+                        smoothed,
+                        report=disturbance,
+                        limits=limits,
+                        load_pct=measured_load,
+                    )
+                    smoothed = self._finalize_control_params(data, smoothed)
             # 回水最低模式：不套用「无节能则粘住当前」的能耗闸；总电模式保持原逻辑
             gate_remark = ""
             guard_remark = ""
             if mode == OBJECTIVE_MIN_COOLING_WATER:
                 smoothed, gate_remark = self._apply_output_hard_gates(
-                    data, current_full, smoothed, mode=mode
+                    data, current_full, smoothed, mode=mode, disturbance=disturbance
                 )
                 mode_note = "目标=冷却回水最低"
                 remark_prefix = mode_note
             else:
                 smoothed, guard_remark = self._prefer_current_if_no_saving(
-                    data, current_full, smoothed
+                    data, current_full, smoothed, disturbance=disturbance
                 )
                 smoothed, gate_remark = self._apply_output_hard_gates(
-                    data, current_full, smoothed, mode=mode
+                    data, current_full, smoothed, mode=mode, disturbance=disturbance
                 )
                 if self._constraints.is_in_comfort_band(control_indoor_temp(data)):
                     smoothed = self._refine_for_policy_saving(
                         data, current_full, smoothed
                     )
+                    # refine 后再次限幅，避免绕过单周期步进
+                    if apply_rate_limit:
+                        limits = limits_from_config(stab_cfg)
+                        smoothed, rate2 = rate_limit_params(
+                            current_full,
+                            smoothed,
+                            report=disturbance,
+                            limits=limits,
+                            load_pct=measured_load,
+                        )
+                        smoothed = self._finalize_control_params(data, smoothed)
+                        if rate2:
+                            stability_remark = (
+                                f"{stability_remark}; {rate2}"
+                                if stability_remark
+                                else rate2
+                            )
                     smoothed, gate_remark2 = self._apply_output_hard_gates(
-                        data, current_full, smoothed, mode=mode
+                        data, current_full, smoothed, mode=mode, disturbance=disturbance
                     )
                     if gate_remark2:
                         gate_remark = (
@@ -488,6 +617,10 @@ class PSOOptimizer:
 
             remark = "" if converged else "达到最大迭代（未提前收敛）"
             remark = f"{remark_prefix}; {remark}" if remark else remark_prefix
+            if disturbance.note:
+                remark = f"{remark}; 扰动={disturbance.note}" if remark else f"扰动={disturbance.note}"
+            if stability_remark:
+                remark = f"{remark}; {stability_remark}" if remark else stability_remark
             if guard_remark:
                 remark = f"{remark}; {guard_remark}" if remark else guard_remark
             if gate_remark:
@@ -505,7 +638,7 @@ class PSOOptimizer:
             bb_power, bb_saving = self._blackbox_compare(
                 data, current_full, smoothed, inspired
             )
-            return self._build_result(
+            result = self._build_result(
                 task_id,
                 "success",
                 data,
@@ -520,6 +653,16 @@ class PSOOptimizer:
                 fallback_rule="ok",
                 objective_mode=mode,
             )
+            # 实测回写：默认在此记忆；定时任务/批量可关闭并在约束验收后手动 commit
+            if bool(stab_cfg.get("enabled", True)) and bool(
+                getattr(request, "commit_feedback", True)
+            ):
+                self.commit_feedback(
+                    data,
+                    baseline_power=baseline_power,
+                    predicted_power=float(result.predicted_power or 0.0),
+                )
+            return result
         finally:
             self._run_site_params_cache = {}
 
@@ -627,6 +770,9 @@ class PSOOptimizer:
         # 超时时不阻塞等待 worker 完成（cancel_futures 取消排队任务，
         # 运行中的 daemon 线程会自行结束），正常完成时等待收尾。
         pool.shutdown(wait=not timed_out, cancel_futures=timed_out)
+        # 部分离散方案未跑完不得冒充 success，统一走超时兜底
+        if timed_out:
+            return None, None, False
 
         best_params = None
         best_y = None
@@ -1434,6 +1580,7 @@ class PSOOptimizer:
         data: DeviceData,
         current_params: dict[str, float],
         candidate: dict[str, float],
+        disturbance: DisturbanceReport | None = None,
     ) -> tuple[dict[str, float], str]:
         """仅在舒适+节能+稳定三条件同时满足时才调整主机负荷、泵频率和冷水。
 
@@ -1482,11 +1629,23 @@ class PSOOptimizer:
             or float(candidate.get("cooling_pump_freq", 0.0))
             < float(current_params.get("cooling_pump_freq", 0.0)) - 0.05
         )
-        min_saving_kw = (
-            max(0.2, baseline_ref * 0.002)
-            if pumps_trimmed
-            else max(0.5, baseline_ref * 0.01)
-        )
+        report = disturbance or DisturbanceReport(kind="none")
+        stab_cfg = self._stability_config()
+        if bool(stab_cfg.get("enabled", True)):
+            min_saving_kw = dynamic_min_saving_kw(
+                baseline_ref=baseline_ref,
+                pumps_trimmed=pumps_trimmed,
+                load_pct=float(data.chiller_load or 0.0),
+                report=report,
+                limits=limits_from_config(stab_cfg),
+                feedback_extra_frac=self._feedback.extra_saving_frac,
+            )
+        else:
+            min_saving_kw = (
+                max(0.2, baseline_ref * 0.002)
+                if pumps_trimmed
+                else max(0.5, baseline_ref * 0.01)
+            )
         # 相对现场实测节能；若模型整体偏高，也接受“相对维持现状更省、且不超过实测过多”的降泵方案
         energy_saving = candidate_bd.total_power < baseline_ref - min_saving_kw
         if not energy_saving and pumps_trimmed:
@@ -1498,7 +1657,10 @@ class PSOOptimizer:
             energy_saving = vs_current and not_much_worse_than_site
 
         def _merge_keep_current(remark: str, keep_candidate_chw: bool) -> tuple[dict[str, float], str]:
-            """回退主机负荷/泵频率；无节能时连冷水一并粘住当前，避免越调越费电。"""
+            """回退主机负荷/泵频率/台数；无节能时连冷水一并粘住当前，避免越调越费电。
+
+            必须同时回退离散台数，禁止出现「1 台泵 + 当前高频」这类错配设定。
+            """
             merged = dict(candidate)
             merged["chiller_load_pct"] = float(
                 current_params.get("chiller_load_pct", data.chiller_load or 80.0)
@@ -1509,6 +1671,11 @@ class PSOOptimizer:
             merged["cooling_pump_freq"] = float(
                 current_params.get("cooling_pump_freq", data.cooling_pump_freq or 35.0)
             )
+            for key in count_keys:
+                if key in current_params:
+                    merged[key] = int(current_params[key])
+                elif key in cur:
+                    merged[key] = int(cur[key])
             if keep_candidate_chw:
                 # 室温未舒适：允许策略冷水微调纠偏，仍保留候选 offset
                 pass
@@ -1606,6 +1773,7 @@ class PSOOptimizer:
         current_full: dict[str, float | int],
         candidate: dict[str, float | int],
         mode: OptimizeObjectiveMode = OBJECTIVE_TOTAL_POWER,
+        disturbance: DisturbanceReport | None = None,
     ) -> tuple[dict[str, float | int], str]:
         """最后一道硬闸：预测室温/功耗/负荷超限则回退当前设定。
 
@@ -1617,6 +1785,7 @@ class PSOOptimizer:
         outdoor = float(data.outdoor_temp or 30.0)
         load = float(data.chiller_load or 0.0)
         min_cw_mode = mode == OBJECTIVE_MIN_COOLING_WATER
+        report = disturbance or self._last_disturbance or DisturbanceReport(kind="none")
 
         cand = self._finalize_control_params(data, candidate)
         try:
@@ -1635,7 +1804,7 @@ class PSOOptimizer:
         # 室外降温不应给“增功率恢复”开绿灯；仅升温才放宽功耗上限
         outdoor_warmer = (
             reference_outdoor > 0 and outdoor > reference_outdoor + 0.3
-        )
+        ) or report.kind in ("slow_weather", "mixed")
         site_comfortable = self._constraints.is_in_comfort_band(measured_indoor)
         current_in_margin = self._constraints.is_within_comfort_margin(
             cur_bd.predicted_indoor_temp, outdoor, measured_indoor
@@ -1677,6 +1846,8 @@ class PSOOptimizer:
             reasons.append("预测室温越出舒适裕量")
         # 总电模式：有实测总功率且当前仍在舒适裕量时，预测不得超过输入。
         # 回水最低模式：允许总电升高以换更低冷却水温度。
+        # 突变工况：进一步收紧“允许增功率”空间，先稳住再寻优。
+        sudden = report.kind in ("sudden_demand", "mixed")
         if not min_cw_mode:
             if measured_total > 1e-6:
                 if current_in_margin and not outdoor_warmer:
@@ -1684,6 +1855,8 @@ class PSOOptimizer:
                         reasons.append("预测总功耗高于实测输入")
                 elif outdoor_warmer:
                     weather_allowance = max(measured_total * 0.15, 50.0)
+                    if sudden:
+                        weather_allowance = max(measured_total * 0.05, 20.0)
                     if cand_bd.total_power > measured_total + weather_allowance:
                         reasons.append("室外工况变化所需功率超过安全增幅")
                 else:
@@ -1698,6 +1871,10 @@ class PSOOptimizer:
                         recovery_allowance = max(measured_total * 0.08, 25.0)
                     else:
                         recovery_allowance = max(measured_total * 0.15, 50.0)
+                    if sudden:
+                        recovery_allowance = min(
+                            recovery_allowance, max(measured_total * 0.04, 15.0)
+                        )
                     if cand_bd.total_power > measured_total + recovery_allowance:
                         reasons.append("恢复舒适裕量所需功率超过安全增幅")
             elif site_comfortable and current_in_margin:
@@ -1705,6 +1882,8 @@ class PSOOptimizer:
                     reasons.append("预测总功耗高于基线")
             else:
                 power_allowance = max(baseline_ref * 0.1, 50.0)
+                if sudden:
+                    power_allowance = max(baseline_ref * 0.04, 20.0)
                 if cand_bd.total_power > baseline_ref + power_allowance:
                     reasons.append("预测总功耗显著高于基线")
 
@@ -1821,7 +2000,8 @@ class PSOOptimizer:
             reference_outdoor > 0
             and abs(float(data.outdoor_temp or 0.0) - reference_outdoor) > 0.3
         )
-        # 总电模式：预测高于实测时锚定显示；回水最低模式保留真实预测（允许辅机多耗电）
+        # 总电模式：模型预测高于实测时仅备注，保留物理预测与节能率，
+        # 避免静默钳回实测后清零节能、扭曲分项功率。
         if (
             objective_mode != OBJECTIVE_MIN_COOLING_WATER
             and status == "success"
@@ -1829,35 +2009,11 @@ class PSOOptimizer:
             and predicted > measured_total + 0.5
             and not weather_shifted
         ):
-            predicted = measured_total
-            saving = 0.0
-            if breakdown:
-                from dataclasses import replace
-
-                # 锚定总功率时按比例缩放分项，保证分项之和 = 预测总功率
-                model_total = max(float(breakdown.total_power or 0.0), 1e-6)
-                scale = measured_total / model_total
-                breakdown = replace(
-                    breakdown,
-                    total_power=measured_total,
-                    chiller_power=round(float(breakdown.chiller_power) * scale, 4),
-                    chilled_pump_power=round(
-                        float(breakdown.chilled_pump_power) * scale, 4
-                    ),
-                    cooling_pump_power=round(
-                        float(breakdown.cooling_pump_power) * scale, 4
-                    ),
-                    cooling_tower_fan_power=round(
-                        float(breakdown.cooling_tower_fan_power) * scale, 4
-                    ),
-                    terminal_fan_power=round(
-                        float(breakdown.terminal_fan_power) * scale, 4
-                    ),
-                )
-            if remark and "高于实测输入" not in remark:
-                remark = f"{remark}; 预测总功耗高于实测输入，已锚定输入功率"
-            elif not remark:
-                remark = "预测总功耗高于实测输入，已锚定输入功率"
+            note = (
+                f"模型总功耗{predicted:.1f}kW高于实测输入{measured_total:.1f}kW"
+                "（未钳位，保留物理预测）"
+            )
+            remark = f"{remark}; {note}" if remark else note
 
         measured_indoor = control_indoor_temp(data)
         display_indoor = (
@@ -2124,18 +2280,16 @@ class PSOOptimizer:
 
     @staticmethod
     def _cooling_tower_power(count: int) -> float:
-        """按推荐开启台数计算冷却塔定频总功率。"""
+        """按推荐开启台数计算冷却塔定频总功率（铭牌电机求和）。"""
         count = max(int(count), 0)
-        if count >= 5:
-            return 70.0
-        if count >= 3:
-            return 70.0 * count / 5.0
+        if count <= 0:
+            return 0.0
         try:
             from app.services.equipment_config import equipment_config_service
 
             eq = equipment_config_service.get_config()
             enabled = [tower for tower in eq.cooling_towers if tower.enabled]
             count = min(count, len(enabled))
-            return sum(tower.motor_power_kw for tower in enabled[:count])
+            return sum(float(tower.motor_power_kw) for tower in enabled[:count])
         except Exception:
             return 0.0

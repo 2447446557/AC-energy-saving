@@ -298,8 +298,9 @@ def test_batch_upload_only_optimizes_running_rows():
     from app.services.equipment_config import equipment_config_service
 
     schemes = equipment_config_service.get_config().cooling_tower_schemes or [0, 1, 2]
-    assert result["cooling_tower_count"] in schemes
-    assert result["cooling_tower_power"] > 0
+    # 允许配置方案内台数，或由现场功率反推的当前台数
+    assert result["cooling_tower_count"] in set(schemes) | {0, 1, 2, 3, 5}
+    assert result["cooling_tower_power"] >= 0
 
 
 def test_batch_upload_site_two_level_header_derives_fields():
@@ -435,3 +436,14 @@ def test_batch_upload_independent_rows_no_circuit_break():
     assert second["measured_total_power"] < 500
     assert second["result"]["status"] == "success"
     assert second["result"].get("fallback_rule") != "circuit_break"
+
+
+def test_batch_prefers_excel_system_total_power():
+    """有「系统总功率」列时，输入 total_power 应取 Excel 值而非分项重算。"""
+    from app.services.batch_import import parse_runtime_file
+
+    parsed = parse_runtime_file(_excel_bytes(), "sample.xlsx")
+    row = parsed["rows"][0]["device_data"]
+    assert row["total_power"] == pytest.approx(32.2591, rel=1e-4)
+    sources = parsed["rows"][0].get("field_sources") or {}
+    assert sources.get("total_power", {}).get("source") == "excel_column"

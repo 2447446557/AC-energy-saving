@@ -87,7 +87,7 @@ class ComfortMarginConfig(BaseModel):
     """舒适区预防性裕量：预测室温不得过于接近上限或下限。"""
 
     # 默认距舒适上限约 0.7℃（26→目标天花板约 25.3），保证安全距离区间
-    base_from_ceiling: float = Field(default=0.7, ge=0.0, le=2.0)
+    base_from_ceiling: float = Field(default=0.5, ge=0.0, le=2.0)
     base_from_floor: float = Field(default=0.3, ge=0.0, le=2.0)
     outdoor_ref_temp: float = Field(default=29.0, ge=0.0, le=50.0)
     outdoor_extra_per_degree: float = Field(default=0.05, ge=0.0, le=1.0)

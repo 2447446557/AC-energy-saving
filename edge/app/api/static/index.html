@@ -583,13 +583,32 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>行号</th><th>模式</th><th>室外℃</th><th>输入总功率</th>
-                            <th>推荐冷水</th><th>冷冻泵Hz</th><th>冷却泵Hz</th><th>塔台数</th>
-                            <th>预测总功率</th><th>预测冷却水℃</th><th>节能率%</th><th>状态</th>
+                            <th>行号</th>
+                            <th>输入室外℃</th>
+                            <th>输入冷水℃</th>
+                            <th>输入室内℃</th>
+                            <th>输入冷冻泵Hz</th>
+                            <th>输入冷却泵Hz</th>
+                            <th>输入主机kW</th>
+                            <th>输入主机%</th>
+                            <th>输入总功率kW</th>
+                            <th>推荐冷水℃</th>
+                            <th>推荐主机%</th>
+                            <th>推荐冷冻泵Hz</th>
+                            <th>推荐冷却泵Hz</th>
+                            <th>预测总功率kW</th>
+                            <th>预测主机kW</th>
+                            <th>预测冷冻泵kW(单台)</th>
+                            <th>预测冷却泵kW(单台)</th>
+                            <th>预测冷却塔kW</th>
+                            <th>预测室内℃</th>
+                            <th>预测冷却水℃</th>
+                            <th>节能率%</th>
+                            <th>耗时s</th>
                         </tr>
                     </thead>
                     <tbody id="batch-optimize-table">
-                        <tr><td colspan="12" style="text-align:center; color:#999;">尚未执行批量寻优</td></tr>
+                        <tr><td colspan="22" style="text-align:center; color:#999;">尚未执行批量寻优</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -866,11 +885,26 @@
                 cooling_pump_min_freq: 0
             };
             if (cfg && cfg.chiller) {
+                const nCh = Math.max(Number(cfg.chiller.count) || 1, 1);
                 const loadPct = Math.max(10, Math.min(100, (cfg.chiller.max_load_rate || 1) * 100 * 0.8));
-                const thermal = cfg.chiller.rated_capacity_kw * (cfg.chiller.max_load_rate || 1) * loadPct / 100;
-                const cop = cfg.chiller.rated_cop > 0 ? cfg.chiller.rated_cop : 6.47;
+                // 冷量 = 铭牌×台数×负载%；max_load_rate 只决定默认负载%，不再二次折减
+                const thermal = cfg.chiller.rated_capacity_kw * nCh * loadPct / 100;
                 defaults.chiller_load = loadPct;
-                defaults.chiller_power = thermal / cop;
+                const rated = Number(cfg.chiller.rated_power_kw) || 0;
+                const plr1 = Math.min(Math.max(loadPct / 100, 0), 1);
+                if (rated > 0 && plr1 > 0) {
+                    const a = 0.338, b = 0.284, c = 0.378, d = 0.0;
+                    const cr = Math.min(plr1 / 0.15, 1.0);
+                    const plr2 = Math.max(plr1, 0.30);
+                    const x = Math.min(Math.max(plr2, 0.05), 1);
+                    let eir = a + b * x + c * x * x + d * x * x * x;
+                    const atFull = a + b + c + d;
+                    if (atFull > 1e-6) eir = eir / atFull;
+                    defaults.chiller_power = rated * Math.max(eir, 0.05) * cr * nCh;
+                } else {
+                    const cop = cfg.chiller.rated_cop > 0 ? cfg.chiller.rated_cop : 5.5;
+                    defaults.chiller_power = thermal / Math.max(cop, 2);
+                }
                 defaults.indoor_load = thermal;
             }
             if (cfg && cfg.chilled_pump) {
@@ -923,20 +957,22 @@
             if (!cfg) return units;
             const estimateChillerPower = (loadPct, chCfg) => {
                 const rated = Number(chCfg && chCfg.rated_power_kw) || Number(cfg.chiller.rated_power_kw) || 0;
-                const plr = Math.min(Math.max(Number(loadPct) / 100, 0), 1.5);
-                if (rated > 0 && plr > 0) {
-                    // 与后端一致：P ≈ P_rated × PLR × EIRFPLR(PLR)
+                const plr1 = Math.min(Math.max(Number(loadPct) / 100, 0), 1.0);
+                if (rated > 0 && plr1 > 0) {
+                    // ElectricEIR：P ≈ P_rated × EIRFPLR(PLR2) × CR（不再额外乘 PLR）
                     const a = 0.338, b = 0.284, c = 0.378, d = 0.0;
-                    const x = Math.min(Math.max(plr, 0.05), 1);
+                    const plrMin = 0.15, plrMinUnl = 0.30;
+                    const cr = Math.min(plr1 / plrMin, 1.0);
+                    const plr2 = Math.max(plr1, plrMinUnl);
+                    const x = Math.min(Math.max(plr2, 0.05), 1);
                     let eir = a + b * x + c * x * x + d * x * x * x;
                     const atFull = a + b + c + d;
                     if (atFull > 1e-6) eir = eir / atFull;
-                    return rated * plr * Math.max(eir, 0.05);
+                    return rated * Math.max(eir, 0.05) * cr;
                 }
                 const cap = Number(chCfg && chCfg.rated_capacity_kw) || Number(cfg.chiller.rated_capacity_kw) || 0;
-                const mlr = Number(chCfg && chCfg.max_load_rate) || Number(cfg.chiller.max_load_rate) || 0.8;
                 const cop = Number(chCfg && chCfg.rated_cop) || calcChillerCop(cfg.chiller.rated_capacity_kw, cfg.chiller.rated_power_kw) || 5.5;
-                return cap > 0 && loadPct > 0 ? (cap * mlr * loadPct / 100) / Math.max(cop, 2) : 0;
+                return cap > 0 && loadPct > 0 ? (cap * loadPct / 100) / Math.max(cop, 2) : 0;
             };
             const chillerCfgUnits = (equipmentDocument && equipmentDocument.units || [])
                 .filter(u => u.unit_type === 'chiller' && u.enabled !== false);
@@ -1086,10 +1122,21 @@
             const chilledLabels = ['东', '西', '3', '4'];
             const coolingLabels = ['东', '西', '3', '4'];
             const estimateChillerUnitPower = (loadPct, chCfg) => {
+                const rated = Number(chCfg && chCfg.rated_power_kw) || Number(cfg.chiller.rated_power_kw) || 0;
+                const plr1 = Math.min(Math.max(Number(loadPct) / 100, 0), 1.0);
+                if (rated > 0 && plr1 > 0) {
+                    const a = 0.338, b = 0.284, c = 0.378, d = 0.0;
+                    const cr = Math.min(plr1 / 0.15, 1.0);
+                    const plr2 = Math.max(plr1, 0.30);
+                    const x = Math.min(Math.max(plr2, 0.05), 1);
+                    let eir = a + b * x + c * x * x + d * x * x * x;
+                    const atFull = a + b + c + d;
+                    if (atFull > 1e-6) eir = eir / atFull;
+                    return rated * Math.max(eir, 0.05) * cr;
+                }
                 const cap = Number(chCfg && chCfg.rated_capacity_kw) || Number(cfg.chiller.rated_capacity_kw) || 0;
-                const mlr = Number(chCfg && chCfg.max_load_rate) || Number(cfg.chiller.max_load_rate) || 0.8;
                 const cop = Number(chCfg && chCfg.rated_cop) || calcChillerCop(cfg.chiller.rated_capacity_kw, cfg.chiller.rated_power_kw) || 5.5;
-                return cap > 0 && loadPct > 0 ? (cap * mlr * loadPct / 100) / Math.max(cop, 2) : 0;
+                return cap > 0 && loadPct > 0 ? (cap * loadPct / 100) / Math.max(cop, 2) : 0;
             };
 
             if (documentUnits && documentUnits.length) {
@@ -2239,37 +2286,50 @@
             if (!tbody) return;
             const rows = (summary && summary.results) || [];
             if (!rows.length) {
-                tbody.innerHTML = '<tr><td colspan="12" style="text-align:center; color:#999;">无批量结果</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="22" style="text-align:center; color:#999;">无批量结果</td></tr>';
                 return;
             }
-            const mode = summary.objective_mode || 'total_power';
             tbody.innerHTML = rows.map(item => {
                 const input = item.input || {};
                 const result = item.result || {};
                 const ok = (result.status || '') === 'success';
+                const baseline = item.measured_total_power || input.total_power || result.baseline_power || 0;
+                const predicted = result.predicted_power || 0;
                 const saving = ok
                     ? (item.saving_rate_vs_measured != null
                         ? item.saving_rate_vs_measured
-                        : (item.saving_rate != null ? item.saving_rate : result.energy_saving_rate))
+                        : (baseline > 0 && predicted > 0
+                            ? (baseline - predicted) / baseline * 100
+                            : (item.saving_rate != null ? item.saving_rate : result.energy_saving_rate)))
                     : null;
                 const savingStyle = (saving != null && Number(saving) < 0) ? ' style="color:#c0392b;"' : '';
-                const statusText = result.status || '--';
-                const statusTitle = result.remark
-                    ? (' title="' + String(result.remark).replace(/"/g, '&quot;') + '"')
-                    : '';
+                const rowTitle = [
+                    result.status ? ('状态=' + result.status) : '',
+                    result.remark || ''
+                ].filter(Boolean).join('；').replace(/"/g, '&quot;');
                 return '<tr>' +
-                    '<td>' + (item.row_number ?? '--') + '</td>' +
-                    '<td>' + optimizeModeLabel(result.objective_mode || mode) + '</td>' +
+                    '<td' + (rowTitle ? ' title="' + rowTitle + '"' : '') + '>' + (item.row_number ?? '--') + '</td>' +
                     '<td>' + fmt(input.outdoor_temp, 2) + '</td>' +
-                    '<td>' + fmt(item.measured_total_power || input.total_power, 2) + '</td>' +
+                    '<td>' + fmt(input.chilled_water_temp, 2) + '</td>' +
+                    '<td>' + fmt(input.indoor_temp, 2) + '</td>' +
+                    '<td>' + fmt(input.chilled_pump_freq, 2) + '</td>' +
+                    '<td>' + fmt(input.cooling_pump_freq, 2) + '</td>' +
+                    '<td>' + fmt(input.chiller_power, 2) + '</td>' +
+                    '<td>' + fmt(input.chiller_load, 2) + '</td>' +
+                    '<td>' + fmt(baseline, 2) + '</td>' +
                     '<td>' + fmt(result.chilled_water_temp, 2) + '</td>' +
+                    '<td>' + fmt(result.chiller_load_pct, 2) + '</td>' +
                     '<td>' + fmt(result.chilled_pump_freq, 2) + '</td>' +
                     '<td>' + fmt(result.cooling_pump_freq, 2) + '</td>' +
-                    '<td>' + (result.cooling_tower_count ?? '--') + '</td>' +
                     '<td>' + fmt(result.predicted_power, 2) + '</td>' +
+                    '<td>' + fmt(result.predicted_chiller_power, 2) + '</td>' +
+                    '<td>' + fmt(result.chilled_pump_power, 2) + '</td>' +
+                    '<td>' + fmt(result.cooling_pump_power, 2) + '</td>' +
+                    '<td>' + fmt(result.cooling_tower_power, 2) + '</td>' +
+                    '<td>' + fmt(result.predicted_indoor_temp, 2) + '</td>' +
                     '<td>' + fmt(result.predicted_cooling_water_temp, 2) + '</td>' +
                     '<td' + savingStyle + '>' + (saving == null ? '--' : fmt(saving, 2)) + '</td>' +
-                    '<td' + statusTitle + '>' + statusText + '</td>' +
+                    '<td>' + fmt(result.duration, 2) + '</td>' +
                     '</tr>';
             }).join('');
         }

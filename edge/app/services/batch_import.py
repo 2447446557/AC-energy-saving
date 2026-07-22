@@ -567,21 +567,22 @@ def _eir_fplr(plr: float) -> float:
 
 
 def _estimate_chiller_power(load_pct: float, cfg: Any) -> float:
-    """缺功率列时按铭牌 + 部分负荷曲线估算。
+    """缺功率列时按铭牌 + ElectricEIR 部分负荷曲线估算单台功率。
 
-    变频离心机「电机功率百分比」≠ 电功率线性比例。采用与能耗模型一致的：
-    ``P ≈ P_rated × PLR × EIRFPLR(PLR)``（满负荷归一）。
-    例如 80% 负载、695.7 kW 铭牌 → 约 449 kW，贴近现场表计，而非 556 kW。
+    与能耗模型一致：EIRFPLR 定义为 ``P/P_full``，故
+    ``P ≈ P_rated × EIRFPLR(PLR2) × CR``（含 PLRMin / PLRMinUnl），
+    **不再**额外乘 PLR。
     """
     rated_power = float(getattr(cfg, "rated_power_kw", 0.0) or 0.0)
-    plr = min(max(float(load_pct) / 100.0, 0.0), 1.5)
-    if rated_power > 0 and plr > 0:
-        return round(rated_power * plr * _eir_fplr(plr), 3)
-    thermal_kw = (
-        float(getattr(cfg, "rated_capacity_kw", 0.0) or 0.0)
-        * float(getattr(cfg, "max_load_rate", 0.8) or 0.8)
-        * plr
-    )
+    plr1 = min(max(float(load_pct) / 100.0, 0.0), 1.0)
+    if rated_power > 0 and plr1 > 0:
+        plr_min = 0.15
+        plr_min_unl = 0.30
+        cr = min(plr1 / plr_min, 1.0)
+        plr2 = max(plr1, plr_min_unl)
+        return round(rated_power * _eir_fplr(plr2) * cr, 3)
+    # 无电功率铭牌：冷量×PLR/COP（负载% 相对满额铭牌，不再乘 max_load_rate）
+    thermal_kw = float(getattr(cfg, "rated_capacity_kw", 0.0) or 0.0) * plr1
     cop = max(float(getattr(cfg, "rated_cop", 5.5) or 5.5), 2.0)
     return round(thermal_kw / cop, 3) if thermal_kw > 0 else 0.0
 
@@ -782,8 +783,11 @@ def get_manual_input_config_defaults() -> dict[str, Any]:
         load_pct = max(10.0, min(100.0, eq.chiller.max_load_rate * 100.0 * 0.8))
         thermal_kw = eq.chiller.rated_capacity_kw * load_pct / 100.0
         defaults["chiller_load"] = round(load_pct, 2)
-        defaults["chiller_power"] = _estimate_chiller_power(load_pct, eq.chiller)
-        defaults["indoor_load"] = round(thermal_kw, 3)
+        n_ch = max(int(eq.chiller.count or 1), 1)
+        defaults["chiller_power"] = round(
+            _estimate_chiller_power(load_pct, eq.chiller) * n_ch, 3
+        )
+        defaults["indoor_load"] = round(thermal_kw * n_ch, 3)
         defaults["chilled_pump_freq"] = eq.chilled_pump.min_freq
         defaults["cooling_pump_freq"] = eq.cooling_pump.min_freq
         # 0 = 不额外抬高寻优下限，仅用「设备min ∪ 分档地板」
@@ -1038,14 +1042,17 @@ def apply_manual_input_config_defaults(
                 )
 
     if eq is not None and not _is_missing_scalar(device_data.get("chiller_load")):
+        n_ch = max(int(eq.chiller.count or 1), 1)
         if _is_missing_scalar(device_data.get("chiller_power")):
             load_pct = float(device_data["chiller_load"])
-            device_data["chiller_power"] = _estimate_chiller_power(load_pct, eq.chiller)
+            device_data["chiller_power"] = round(
+                _estimate_chiller_power(load_pct, eq.chiller) * n_ch, 3
+            )
             filled_fields.append("chiller_power")
         if _is_missing_scalar(device_data.get("indoor_load")):
             load_pct = float(device_data["chiller_load"])
             device_data["indoor_load"] = round(
-                eq.chiller.rated_capacity_kw * load_pct / 100.0,
+                eq.chiller.rated_capacity_kw * n_ch * load_pct / 100.0,
                 3,
             )
             filled_fields.append("indoor_load")
@@ -1055,7 +1062,7 @@ def apply_manual_input_config_defaults(
                     "indoor_load",
                     device_data["indoor_load"],
                     "equipment_config",
-                    detail="额定制冷量×机组负载%/100（估算）",
+                    detail="额定制冷量×台数×机组负载%/100（估算）",
                     substituted=True,
                 )
 
@@ -1068,7 +1075,7 @@ def apply_manual_input_config_defaults(
             device_data[field] = config_defaults.get(field, 0.0)
             filled_fields.append(field)
 
-    device_data["total_power"] = round(
+    component_sum = round(
         float(device_data.get("chiller_power") or 0.0)
         + float(device_data.get("chilled_pump_power") or 0.0)
         + float(device_data.get("cooling_pump_power") or 0.0)
@@ -1076,14 +1083,39 @@ def apply_manual_input_config_defaults(
         + float(device_data.get("terminal_fan_power") or 0.0),
         3,
     )
+    # 若上游已标记为 Excel 系统总功率，补齐分项后仍保留该值
+    keep_excel = False
+    excel_total = 0.0
+    excel_col = None
     if field_sources is not None:
+        src = field_sources.get("total_power") or {}
+        if src.get("source") == "excel_column":
+            try:
+                excel_total = float(src.get("value") or 0.0)
+            except (TypeError, ValueError):
+                excel_total = 0.0
+            excel_col = src.get("excel_column")
+            keep_excel = excel_total > 1e-6
+    if keep_excel:
+        device_data["total_power"] = round(excel_total, 3)
         mark_field(
             field_sources,
             "total_power",
             device_data["total_power"],
-            "computed",
-            detail="机组+冷冻泵+冷却泵+冷却塔+末端（缺省补齐后重算）",
+            "excel_column",
+            excel_column=excel_col,
+            detail="优先采用 Excel 系统总功率（缺省补齐后保留）",
         )
+    else:
+        device_data["total_power"] = component_sum
+        if field_sources is not None:
+            mark_field(
+                field_sources,
+                "total_power",
+                device_data["total_power"],
+                "computed",
+                detail="机组+冷冻泵+冷却泵+冷却塔+末端（缺省补齐后重算）",
+            )
     return device_data, enriched_units, sorted(set(filled_fields))
 
 
@@ -1273,28 +1305,39 @@ def _derive_site_fields(
                     substituted=True,
                 )
             elif eq:
-                device_data["chiller_power"] = _estimate_chiller_power(chiller_load, eq.chiller)
+                n_ch = (
+                    max(len(chiller_loads), 1)
+                    if chiller_loads
+                    else max(int(getattr(eq.chiller, "count", 1) or 1), 1)
+                )
+                device_data["chiller_power"] = round(
+                    _estimate_chiller_power(chiller_load, eq.chiller) * n_ch, 3
+                )
                 mark_field(
                     field_sources,
                     "chiller_power",
                     device_data["chiller_power"],
                     "equipment_config",
                     detail=(
-                        f"额定电功率{eq.chiller.rated_power_kw}kW×负载%{chiller_load:.1f}/100"
+                        f"ElectricEIR: P_rated×EIRFPLR×CR ×{n_ch}台"
+                        f"（负载%{chiller_load:.1f}）"
                     ),
                     substituted=True,
                 )
             else:
+                plr1 = min(max(chiller_load / 100.0, 0.0), 1.0)
+                plr_min, plr_min_unl = 0.15, 0.30
+                cr = min(plr1 / plr_min, 1.0) if plr1 > 0 else 0.0
+                plr2 = max(plr1, plr_min_unl) if plr1 > 0 else plr_min_unl
                 device_data["chiller_power"] = round(
-                    695.7 * (chiller_load / 100.0) * _eir_fplr(chiller_load / 100.0),
-                    3,
-                )
+                    695.7 * _eir_fplr(plr2) * cr, 3
+                ) if plr1 > 0 else 0.0
                 mark_field(
                     field_sources,
                     "chiller_power",
                     device_data["chiller_power"],
                     "equipment_config",
-                    detail="默认铭牌×PLR×EIRFPLR 推算",
+                    detail="默认铭牌×EIRFPLR×CR 推算（ElectricEIR，无设备配置时）",
                     substituted=True,
                 )
 
@@ -1468,20 +1511,37 @@ def _derive_site_fields(
                 substituted=True,
             )
 
-    device_data["total_power"] = (
-        device_data.get("chiller_power", 0.0)
-        + device_data.get("chilled_pump_power", 0.0)
-        + device_data.get("cooling_pump_power", 0.0)
-        + device_data.get("cooling_tower_fan_power", 0.0)
-        + device_data.get("terminal_fan_power", 0.0)
+    component_sum = (
+        float(device_data.get("chiller_power", 0.0) or 0.0)
+        + float(device_data.get("chilled_pump_power", 0.0) or 0.0)
+        + float(device_data.get("cooling_pump_power", 0.0) or 0.0)
+        + float(device_data.get("cooling_tower_fan_power", 0.0) or 0.0)
+        + float(device_data.get("terminal_fan_power", 0.0) or 0.0)
     )
-    mark_field(
-        field_sources,
-        "total_power",
-        device_data["total_power"],
-        "computed",
-        detail="机组+冷冻泵+冷却泵+冷却塔+末端",
-    )
+    # 优先保留 Excel「系统总功率」；缺列或值为空时用分项求和
+    excel_total = 0.0
+    total_col = column_map.get("total_power")
+    if _excel_has_value(row, column_map, "total_power") and total_col is not None:
+        excel_total = float(_to_float(row.get(total_col), 0.0) or 0.0)
+    if excel_total > 1e-6:
+        device_data["total_power"] = round(excel_total, 3)
+        mark_field(
+            field_sources,
+            "total_power",
+            device_data["total_power"],
+            "excel_column",
+            excel_column=total_col,
+            detail="优先采用 Excel 系统总功率",
+        )
+    else:
+        device_data["total_power"] = round(component_sum, 3)
+        mark_field(
+            field_sources,
+            "total_power",
+            device_data["total_power"],
+            "computed",
+            detail="机组+冷冻泵+冷却泵+冷却塔+末端",
+        )
 
     site_defaults = _site_defaults()
     for field, default in site_defaults.items():
