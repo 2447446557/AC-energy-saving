@@ -489,7 +489,7 @@ class ACEnergyModel:
         if demand <= 1e-6:
             return measured_indoor
 
-        capacity_ratio = delivered_capacity / max(demand, 1.0)
+        capacity_ratio = delivered_capacity / max(demand, 1e-6)
         indoor_span = max(hi - lo, 1e-6)
         # 与 settings.yaml comfort_margin.base_from_ceiling=0.5 对齐
         # （完整室外/邻近修正在 SafetyConstraints.effective_comfort_ceiling）
@@ -1026,16 +1026,8 @@ class ACEnergyModel:
             else:
                 ratio = raw_ratio
             scaled = measured * ratio
-            # 设备配置中的冷机均为已启用设备，当前策略没有冷机启停变量；
-            # 因此主机台数固定运行时，不能因模型比例缩放降到非物理低功率。
-            try:
-                from app.services.equipment_config import equipment_config_service
-
-                running_count = max(int(equipment_config_service.get_config().chiller.count), 1)
-            except Exception:
-                running_count = 1
-            per_unit_measured = measured / running_count
-            running_floor = per_unit_measured * running_count * min_ratio
+            # 主机台数固定运行时，禁止比例缩放低于实测×min_ratio
+            running_floor = measured * min_ratio
             scaled = max(scaled, running_floor)
             if measured > 0:
                 cap = measured * (1.0 + max_rise)
