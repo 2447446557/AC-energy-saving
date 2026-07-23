@@ -5,6 +5,21 @@ from __future__ import annotations
 from typing import Any
 
 
+def compute_plant_eer(cooling_kw: float, power_kw: float) -> float:
+    """冷站综合能效 EER = 供冷量(kW) / 冷站总电(kW)。
+
+    越大越好；任一分母/分子无效时返回 0。
+    """
+    try:
+        q = float(cooling_kw or 0.0)
+        p = float(power_kw or 0.0)
+    except (TypeError, ValueError):
+        return 0.0
+    if q <= 1e-6 or p <= 1e-6:
+        return 0.0
+    return round(q / p, 3)
+
+
 def _pump_rated_unit_kw(device_data: dict[str, Any], kind: str, fallback: float) -> float:
     key = f"{kind}_pump_rated_power_kw"
     value = float(device_data.get(key) or 0.0)

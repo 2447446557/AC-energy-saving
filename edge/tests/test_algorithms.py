@@ -955,7 +955,7 @@ class TestPSOOptimizer:
         assert 24.0 <= res.predicted_indoor_temp <= 26.0
 
     def test_in_band_objective_applies_margin_and_power(self):
-        """适宜温度内目标仍含裕量惩罚；同裕量下更高频率不应更优。"""
+        """适宜温度内无裕量惩罚；同舒适区内更高频率不应更优。"""
         data = _base_data()
         data.outdoor_temp = 20.0  # 查表 → 14℃
         data.indoor_temp = 25.0
@@ -984,9 +984,11 @@ class TestPSOOptimizer:
         assert self.c.comfort_penalty(25.5) == 0.0
         assert self.c.comfort_penalty(26.0) == 0.0
         assert self.c.comfort_penalty(27.0) > 0.0
-        # 裕量惩罚始终可触发（靠近上限时）
-        assert self.c.comfort_margin_penalty(25.9, 35.0, 25.0) > 0.0
-
+        # 裕量逻辑已取消：舒适硬区间内惩罚为 0，越界才惩罚
+        assert self.c.comfort_margin_penalty(25.9, 35.0, 25.0) == 0.0
+        assert self.c.comfort_margin_penalty(26.5, 35.0, 25.0) > 0.0
+        assert self.c.effective_comfort_ceiling(35.0, 25.0) == 26.0
+        assert self.c.effective_comfort_floor(35.0, 25.0) == 24.0
     def test_repeated_optimize_stable_power(self):
         """连续多次寻优同一工况，预测功率应稳定（不再静默钳到实测）。
 

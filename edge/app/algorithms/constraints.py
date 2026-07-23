@@ -12,7 +12,7 @@
 
 2. 软约束（Soft Constraints）：舒适度目标，通过目标函数惩罚项实现。
    - 室内舒适温度：24℃ ~ 26℃        （医院手术室/病房舒适刚需）
-   - 预防性裕量：预测室温不得过于接近舒适区上限（随室外温度收紧）
+   - 仅在预测室温越出该硬区间时施加惩罚；区间内不再额外要求距上下限的安全距离
 
 设计约定
 --------
@@ -155,7 +155,7 @@ class SafetyConstraints:
             indoor = 0.0
 
         ceiling = self.effective_comfort_ceiling(outdoor_temp, indoor)
-        # 已触及/越过安全天花板：禁止抬冷水减冷量，先把室温拉回安全距离
+        # 已触及/越过舒适硬上限：禁止抬冷水减冷量，先把室温拉回舒适区
         near_hot = indoor >= ceiling - 0.05
         if near_hot and measured > 0:
             chw = min(chw, measured)
@@ -190,69 +190,26 @@ class SafetyConstraints:
     def effective_comfort_ceiling(
         self, outdoor_temp: float, measured_indoor: float
     ) -> float:
-        """预测室温允许的最高值（℃），须明显低于舒适硬上限并留安全距离。
-
-        默认约距上限 0.7℃（26→25.3）；总裕量封顶 0.9℃，避免压到过度供冷。
-        """
-        lo, hi = self.indoor_temp_range
-        margin = self.comfort_margin.base_from_ceiling
-        try:
-            outdoor = float(outdoor_temp)
-        except (TypeError, ValueError):
-            outdoor = 30.0
-        if not math.isfinite(outdoor):
-            outdoor = 30.0
-        margin += max(0.0, outdoor - self.comfort_margin.outdoor_ref_temp) * (
-            self.comfort_margin.outdoor_extra_per_degree
-        )
-        try:
-            indoor = float(measured_indoor)
-        except (TypeError, ValueError):
-            indoor = (lo + hi) / 2.0
-        if math.isfinite(indoor) and indoor > hi - self.comfort_margin.indoor_proximity_threshold:
-            margin += self.comfort_margin.indoor_proximity_extra
-        # 至少留 base_from_ceiling 安全距离，最多 0.9℃
-        base = float(self.comfort_margin.base_from_ceiling)
-        if not math.isfinite(base) or base < 0:
-            base = 0.5
-        margin = min(max(margin, base), 0.9)
-        return max(lo, hi - margin)
+        """预测室温允许的最高值（℃）= 舒适硬上限，不额外扣减安全距离。"""
+        _ = outdoor_temp, measured_indoor
+        _, hi = self.indoor_temp_range
+        return float(hi)
 
     def safety_indoor_target(
         self, outdoor_temp: float, measured_indoor: float
     ) -> float:
-        """寻优/预测应瞄准的室内温度目标（℃），略低于安全天花板。"""
-        floor = self.effective_comfort_floor(outdoor_temp, measured_indoor)
-        ceiling = self.effective_comfort_ceiling(outdoor_temp, measured_indoor)
-        return max(floor, ceiling - 0.15)
+        """寻优/预测应瞄准的室内温度目标（℃）= 舒适区间中点。"""
+        _ = outdoor_temp, measured_indoor
+        lo, hi = self.indoor_temp_range
+        return (float(lo) + float(hi)) / 2.0
 
     def effective_comfort_floor(
         self, outdoor_temp: float, measured_indoor: float
     ) -> float:
-        """预测室温允许的最低值（℃），高于舒适区下限并留预防裕量。
-
-        防止预测室温过低（过度供冷浪费能源），且室外温度偏低时收紧下限，
-        避免室温贴近下限时室外骤降导致脱离舒适区。
-        """
-        lo, hi = self.indoor_temp_range
-        margin = self.comfort_margin.base_from_floor
-        try:
-            outdoor = float(outdoor_temp)
-        except (TypeError, ValueError):
-            outdoor = 30.0
-        if not math.isfinite(outdoor):
-            outdoor = 30.0
-        if outdoor < self.comfort_margin.outdoor_ref_temp:
-            margin += (self.comfort_margin.outdoor_ref_temp - outdoor) * (
-                self.comfort_margin.outdoor_extra_per_degree
-            )
-        try:
-            indoor = float(measured_indoor)
-        except (TypeError, ValueError):
-            indoor = (lo + hi) / 2.0
-        if math.isfinite(indoor) and indoor < lo + self.comfort_margin.indoor_proximity_threshold:
-            margin += self.comfort_margin.indoor_proximity_extra
-        return min(hi, lo + margin)
+        """预测室温允许的最低值（℃）= 舒适硬下限，不额外抬高安全距离。"""
+        _ = outdoor_temp, measured_indoor
+        lo, _ = self.indoor_temp_range
+        return float(lo)
 
     def comfort_margin_penalty(
         self,
@@ -260,20 +217,9 @@ class SafetyConstraints:
         outdoor_temp: float,
         measured_indoor: float,
     ) -> float:
-        """预测室温超出预防性上下限时的惩罚（适宜区内也可能非零）。"""
-        if not isinstance(predicted_indoor, (int, float)) or not math.isfinite(
-            predicted_indoor
-        ):
-            return 1.0e6
-        ceiling = self.effective_comfort_ceiling(outdoor_temp, measured_indoor)
-        floor = self.effective_comfort_floor(outdoor_temp, measured_indoor)
-        if predicted_indoor <= ceiling + 1e-9 and predicted_indoor >= floor - 1e-9:
-            return 0.0
-        if predicted_indoor > ceiling:
-            deviation = predicted_indoor - ceiling
-        else:
-            deviation = floor - predicted_indoor
-        return 1.0 + float(deviation ** 2)
+        """与 comfort_penalty 等价：仅当预测室温越出舒适硬区间时惩罚。"""
+        _ = outdoor_temp, measured_indoor
+        return self.comfort_penalty(predicted_indoor)
 
     @staticmethod
     def max_chiller_load_pct() -> float:
@@ -664,11 +610,9 @@ class SafetyConstraints:
         outdoor_temp: float,
         measured_indoor: float,
     ) -> bool:
-        """预测室温是否在预防性上下限（舒适区裕量）内。"""
-        return self.comfort_margin_penalty(
-            predicted_indoor, outdoor_temp, measured_indoor
-        ) == 0.0
-
+        """预测室温是否在舒适硬区间内（与 is_in_comfort_band 等价）。"""
+        _ = outdoor_temp, measured_indoor
+        return self.is_in_comfort_band(predicted_indoor)
     def comfort_penalty(self, indoor_temp: float) -> float:
         if not isinstance(indoor_temp, (int, float)) or not math.isfinite(indoor_temp):
             return 1.0e6

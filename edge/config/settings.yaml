@@ -107,12 +107,13 @@ constraints:
       cooling_pump_freq: 40.0
       chiller_load_pct: 85.0
   comfort_margin:
-    base_from_ceiling: 0.5
-    base_from_floor: 0.3
+    # 已停用：舒适硬区间内不再额外要求距上下限距离；字段保留兼容旧配置
+    base_from_ceiling: 0.0
+    base_from_floor: 0.0
     outdoor_ref_temp: 29.0
-    outdoor_extra_per_degree: 0.1
-    indoor_proximity_threshold: 0.3
-    indoor_proximity_extra: 0.15
+    outdoor_extra_per_degree: 0.0
+    indoor_proximity_threshold: 0.0
+    indoor_proximity_extra: 0.0
   pump_frequency:
     min: 25.0
     max: 50.0

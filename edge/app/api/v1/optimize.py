@@ -215,7 +215,7 @@ async def batch_upload_optimize(
                 fb["chiller_power"] = round(min(pred_chiller, ref_chiller * 1.03), 2)
             else:
                 fb["chiller_power"] = round(pred_chiller, 2)
-            # 闭环室温回写：钳在安全天花板以下，禁止把下一轮输入又贴回 26℃
+            # 闭环室温回写：钳在舒适硬上限以内
             pred_indoor = float(prev_result.predicted_indoor_temp or 0.0)
             try:
                 from app.algorithms.constraints import SafetyConstraints
@@ -226,7 +226,7 @@ async def batch_upload_optimize(
                 )
                 pred_indoor = min(pred_indoor, _ceiling)
             except Exception:
-                pred_indoor = min(pred_indoor, 25.4)
+                pred_indoor = min(pred_indoor, 26.0)
             fb["indoor_temp"] = round(pred_indoor, 2)
             chp_n = max(int(prev_result.chilled_pump_count or 0), 1)
             cwp_n = max(int(prev_result.cooling_pump_count or 0), 1)
@@ -432,6 +432,9 @@ async def batch_upload_optimize(
                     "saving_rate": saving_vs_model_baseline,
                     "saving_rate_vs_measured": round(saving_vs_measured, 2),
                     "optimizer_internal_saving_rate": round(result.energy_saving_rate, 2),
+                    "input_eer": float(getattr(result, "input_eer", 0.0) or 0.0),
+                    "predicted_eer": float(getattr(result, "predicted_eer", 0.0) or 0.0),
+                    "cooling_load_kw": float(getattr(result, "cooling_load_kw", 0.0) or 0.0),
                     "baseline_params": baseline_params,
                     "optimized_params": optimized_params if optimized_breakdown else None,
                     "baseline_breakdown": baseline_breakdown,

@@ -42,13 +42,13 @@ async def ml_power_train_json(request: MlPowerTrainJsonRequest):
 async def ml_power_train_upload(
     file: UploadFile = File(...),
     target: str = Form(default="total_power"),
-    max_rows: int = Form(default=20000),
+    max_rows: int = Form(default=50000),
 ):
     """上传 Excel/CSV 运行趋势训练（复用现有批量解析，取运行行）。"""
     content = await file.read()
     try:
         parsed = parse_runtime_file(content, file.filename or "upload.csv")
-        rows = rows_from_batch_parse(parsed)[: max(1, min(int(max_rows), 100000))]
+        rows = rows_from_batch_parse(parsed)[: max(1, min(int(max_rows), 200000))]
         metrics = train_from_rows(rows, target=target)
     except Exception as e:
         return {"code": 400, "message": str(e), "data": None}
@@ -58,6 +58,7 @@ async def ml_power_train_upload(
             "parsed_rows": len(parsed.get("rows") or []),
             "trained_rows": len(rows),
             "filename": file.filename,
+            "backend": get_lightgbm_power_model().status().get("backend"),
         },
         message="LightGBM 训练完成",
     )

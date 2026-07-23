@@ -473,7 +473,9 @@
                 <div><label>室内温度 ℃</label><input id="in-indoor-temp" type="number" step="0.1" value="25"></div>
                 <div><label>室内湿度 %</label><input id="in-indoor-humidity" type="number" step="0.1" value="55"></div>
                 <div><label>室内负荷 kW</label><input id="in-indoor-load" type="number" step="0.1" value="" placeholder="按设备额定冷量自动估算"></div>
+                <div><label>输入冷站综合能效 EER</label><input id="in-plant-eer" type="number" step="0.001" value="" readonly title="EER = 室内负荷 / 系统总功率，越大越好"></div>
             </div>
+            <div class="hint">冷站综合能效 EER = 供冷量(室内负荷 kW) / 冷站总电(kW)，越大越好；随负荷与总功率自动刷新。</div>
 
             <h2 class="section-title">冷水机组（逐台）</h2>
             <div class="scroll-table">
@@ -578,7 +580,7 @@
                 </label>
                 <button type="button" id="btn-batch-optimize" onclick="runBatchOptimize()">开始批量寻优</button>
             </div>
-            <div id="batch-optimize-summary" class="hint">选择与上方相同的「寻优目标」；默认按 Excel 各运行时刻独立回放（不跨行闭环）。失败行节能率显示为 --。</div>
+            <div id="batch-optimize-summary" class="hint">选择与上方相同的「寻优目标」；默认按 Excel 各运行时刻独立回放（不跨行闭环）。失败行节能率/预测EER显示为 --。EER = 供冷量/冷站总电，越大越好。</div>
             <div class="scroll-table" style="margin-top:8px;">
                 <table>
                     <thead>
@@ -592,6 +594,7 @@
                             <th>输入主机kW</th>
                             <th>输入主机%</th>
                             <th>输入总功率kW</th>
+                            <th>输入EER</th>
                             <th>推荐冷水℃</th>
                             <th>推荐主机%</th>
                             <th>推荐冷冻泵Hz</th>
@@ -603,12 +606,13 @@
                             <th>预测冷却塔kW</th>
                             <th>预测室内℃</th>
                             <th>预测冷却水℃</th>
+                            <th>预测EER</th>
                             <th>节能率%</th>
                             <th>耗时s</th>
                         </tr>
                     </thead>
                     <tbody id="batch-optimize-table">
-                        <tr><td colspan="22" style="text-align:center; color:#999;">尚未执行批量寻优</td></tr>
+                        <tr><td colspan="24" style="text-align:center; color:#999;">尚未执行批量寻优</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -703,7 +707,17 @@
             <div class="card">
                 <h2>预测 COP</h2>
                 <div class="value" id="out-predicted-cop">--</div>
-                <div class="sub">--</div>
+                <div class="sub">主机 COP</div>
+            </div>
+            <div class="card">
+                <h2>输入冷站综合能效 EER</h2>
+                <div class="value" id="out-input-eer">--</div>
+                <div class="sub">供冷量/输入总电</div>
+            </div>
+            <div class="card">
+                <h2>预测冷站综合能效 EER</h2>
+                <div class="value" id="out-predicted-eer">--</div>
+                <div class="sub">供冷量/预测总电（越大越好）</div>
             </div>
             <div class="card">
                 <h2>预测节能率</h2>
@@ -720,7 +734,7 @@
 
         <h2 class="section-title collapsible-header expanded" id="ml-power-header" onclick="toggleCollapse('ml-power-body', 'ml-power-header')">LightGBM 黑盒功率模型</h2>
         <div class="card collapsible-body" id="ml-power-body">
-            <div class="hint">用现场运行数据训练功率预测模型（不替代 PSO）。训练后可估算总功率，并与白盒对比。推荐设定仍由上方寻优给出。</div>
+            <div class="hint">用现场运行数据训练功率预测模型（不替代 PSO）。默认使用 LightGBM；若原生库异常会自动回退 sklearn。训练后可估算总功率并与白盒对比，推荐设定仍由上方寻优给出。</div>
             <div class="form-grid">
                 <div>
                     <label>训练文件（.xls / .xlsx / .csv）</label>
@@ -735,7 +749,7 @@
                 </div>
                 <div>
                     <label>最多训练行数</label>
-                    <input id="ml-train-max-rows" type="number" min="30" max="100000" step="1" value="20000">
+                    <input id="ml-train-max-rows" type="number" min="30" max="200000" step="1" value="50000">
                 </div>
             </div>
             <div class="actions">
@@ -763,6 +777,7 @@
                             <th>输入主机kW</th>
                             <th>输入主机%</th>
                             <th>输入总功率kW</th>
+                            <th>输入EER</th>
                             <th>推荐冷水℃</th>
                             <th>推荐主机%</th>
                             <th>推荐冷冻泵Hz</th>
@@ -774,12 +789,13 @@
                             <th>预测冷却塔kW</th>
                             <th>预测室内℃</th>
                             <th>预测冷却水℃</th>
+                            <th>预测EER</th>
                             <th>节能率%</th>
                             <th>耗时s</th>
                         </tr>
                     </thead>
                     <tbody id="multi-run-table">
-                        <tr><td colspan="22" style="text-align:center; color:#999;">尚未执行多次寻优</td></tr>
+                        <tr><td colspan="24" style="text-align:center; color:#999;">尚未执行多次寻优</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -1405,16 +1421,32 @@
             let total = chillerPower + chilledPower + coolingPower + towerPower + terminalPower;
             const totalInput = document.getElementById('in-total-power');
             if (totalInput) totalInput.value = total.toFixed(2);
+            updateInputPlantEer(total);
             const summary = document.getElementById('optimize-unit-summary');
             if (summary) {
+                const eer = computePlantEer(num('in-indoor-load'), total);
                 summary.textContent =
                     '汇总：冷水机组平均负载 ' + fmt(chillerLoad, 2) + ' % / 合计 ' + fmt(chillerPower, 2) + ' kW；' +
                     '冷冻泵平均 ' + fmt(chilledFreq, 2) + ' Hz / ' + fmt(chilledPower, 2) + ' kW；' +
                     '冷却泵平均 ' + fmt(coolingFreq, 2) + ' Hz / ' + fmt(coolingPower, 2) + ' kW；' +
                     '冷却塔平均 ' + fmt(towerFreq, 2) + ' Hz / 合计 ' + fmt(towerPower, 2) + ' kW；' +
-                    '系统总功率 = ' + fmt(total, 2) + ' kW（自动计算）';
+                    '系统总功率 = ' + fmt(total, 2) + ' kW；冷站综合能效 EER = ' +
+                    (eer > 0 ? fmt(eer, 3) : '--') + '（自动计算）';
             }
             return total;
+        }
+
+        function computePlantEer(coolingKw, powerKw) {
+            const q = Number(coolingKw);
+            const p = Number(powerKw);
+            if (!(q > 0) || !(p > 0)) return 0;
+            return Math.round((q / p) * 1000) / 1000;
+        }
+
+        function updateInputPlantEer(totalPower) {
+            const eer = computePlantEer(num('in-indoor-load'), totalPower != null ? totalPower : num('in-total-power'));
+            const el = document.getElementById('in-plant-eer');
+            if (el) el.value = eer > 0 ? eer.toFixed(3) : '';
         }
 
         function updateOptimizeUnitSummary() {
@@ -1459,6 +1491,8 @@
             document.getElementById('out-predicted-tower').textContent = fmt(r.cooling_tower_power, 2);
             document.getElementById('out-predicted-cooling-water').textContent = fmt(r.predicted_cooling_water_temp, 2);
             document.getElementById('out-predicted-cop').textContent = fmt(r.predicted_cop, 2);
+            document.getElementById('out-input-eer').textContent = Number(r.input_eer) > 0 ? fmt(r.input_eer, 3) : '--';
+            document.getElementById('out-predicted-eer').textContent = Number(r.predicted_eer) > 0 ? fmt(r.predicted_eer, 3) : '--';
             document.getElementById('out-saving-rate').textContent = fmt(r.energy_saving_rate, 2);
             const savingEl = document.getElementById('out-saving-rate');
             if (savingEl) {
@@ -2286,7 +2320,7 @@
             if (!tbody) return;
             const rows = (summary && summary.results) || [];
             if (!rows.length) {
-                tbody.innerHTML = '<tr><td colspan="22" style="text-align:center; color:#999;">无批量结果</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="24" style="text-align:center; color:#999;">无批量结果</td></tr>';
                 return;
             }
             tbody.innerHTML = rows.map(item => {
@@ -2295,6 +2329,16 @@
                 const ok = (result.status || '') === 'success';
                 const baseline = item.measured_total_power || input.total_power || result.baseline_power || 0;
                 const predicted = result.predicted_power || 0;
+                const inputEer = item.input_eer != null && Number(item.input_eer) > 0
+                    ? item.input_eer
+                    : (result.input_eer > 0
+                        ? result.input_eer
+                        : computePlantEer(input.indoor_load, baseline));
+                const predictedEer = ok
+                    ? (item.predicted_eer != null && Number(item.predicted_eer) > 0
+                        ? item.predicted_eer
+                        : (result.predicted_eer > 0 ? result.predicted_eer : 0))
+                    : 0;
                 const saving = ok
                     ? (item.saving_rate_vs_measured != null
                         ? item.saving_rate_vs_measured
@@ -2317,6 +2361,7 @@
                     '<td>' + fmt(input.chiller_power, 2) + '</td>' +
                     '<td>' + fmt(input.chiller_load, 2) + '</td>' +
                     '<td>' + fmt(baseline, 2) + '</td>' +
+                    '<td>' + (Number(inputEer) > 0 ? fmt(inputEer, 3) : '--') + '</td>' +
                     '<td>' + fmt(result.chilled_water_temp, 2) + '</td>' +
                     '<td>' + fmt(result.chiller_load_pct, 2) + '</td>' +
                     '<td>' + fmt(result.chilled_pump_freq, 2) + '</td>' +
@@ -2328,6 +2373,7 @@
                     '<td>' + fmt(result.cooling_tower_power, 2) + '</td>' +
                     '<td>' + fmt(result.predicted_indoor_temp, 2) + '</td>' +
                     '<td>' + fmt(result.predicted_cooling_water_temp, 2) + '</td>' +
+                    '<td>' + (Number(predictedEer) > 0 ? fmt(predictedEer, 3) : '--') + '</td>' +
                     '<td' + savingStyle + '>' + (saving == null ? '--' : fmt(saving, 2)) + '</td>' +
                     '<td>' + fmt(result.duration, 2) + '</td>' +
                     '</tr>';
@@ -2418,7 +2464,7 @@
             const tbody = document.getElementById('multi-run-table');
             if (!tbody) return;
             if (!history || !history.length) {
-                tbody.innerHTML = '<tr><td colspan="22" style="text-align:center; color:#999;">尚未执行多次寻优</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="24" style="text-align:center; color:#999;">尚未执行多次寻优</td></tr>';
                 return;
             }
             tbody.innerHTML = history.map(item => {
@@ -2426,6 +2472,10 @@
                 const result = item.result || {};
                 const baseline = input.total_power || item.measured_total_power || result.baseline_power || 0;
                 const predicted = result.predicted_power || 0;
+                const inputEer = Number(result.input_eer) > 0
+                    ? result.input_eer
+                    : computePlantEer(input.indoor_load, baseline);
+                const predictedEer = Number(result.predicted_eer) > 0 ? result.predicted_eer : 0;
                 const saving = baseline > 0 && predicted > 0
                     ? (baseline - predicted) / baseline * 100
                     : (result.energy_saving_rate || 0);
@@ -2440,6 +2490,7 @@
                     '<td>' + fmt(input.chiller_power, 2) + '</td>' +
                     '<td>' + fmt(input.chiller_load, 2) + '</td>' +
                     '<td>' + fmt(input.total_power, 2) + '</td>' +
+                    '<td>' + (Number(inputEer) > 0 ? fmt(inputEer, 3) : '--') + '</td>' +
                     '<td>' + fmt(result.chilled_water_temp, 2) + '</td>' +
                     '<td>' + fmt(result.chiller_load_pct, 2) + '</td>' +
                     '<td>' + fmt(result.chilled_pump_freq, 2) + '</td>' +
@@ -2451,6 +2502,7 @@
                     '<td>' + fmt(result.cooling_tower_power, 2) + '</td>' +
                     '<td>' + fmt(result.predicted_indoor_temp, 2) + '</td>' +
                     '<td>' + fmt(result.predicted_cooling_water_temp, 2) + '</td>' +
+                    '<td>' + (Number(predictedEer) > 0 ? fmt(predictedEer, 3) : '--') + '</td>' +
                     '<td' + savingStyle + '>' + fmt(saving, 2) + '</td>' +
                     '<td>' + fmt(result.duration, 2) + '</td>' +
                     '</tr>';
@@ -2602,7 +2654,10 @@
                 const d = json.data;
                 const m = d.metrics || {};
                 el.textContent = '就绪=' + (d.ready ? '是' : '否')
+                    + '；后端=' + (d.backend || '--')
+                    + '；策略=' + (d.backend_policy || '--')
                     + '；lightgbm包=' + (d.lightgbm_available ? '已安装' : '未安装')
+                    + (d.lightgbm_native_ok === false ? '（当前不优先原生库）' : '')
                     + '；目标=' + (d.target || '--')
                     + '；MAE=' + (m.mae != null ? m.mae : '--')
                     + '；RMSE=' + (m.rmse != null ? m.rmse : '--')
@@ -2633,7 +2688,10 @@
                     return;
                 }
                 const m = (json.data && json.data.metrics) || {};
-                resultEl.textContent = '训练完成：解析'
+                const backend = (json.data && json.data.backend) || '';
+                resultEl.textContent = '训练完成'
+                    + (backend ? '（后端=' + backend + '）' : '')
+                    + '：解析'
                     + (json.data.parsed_rows || 0) + ' 行，有效训练 '
                     + (json.data.trained_rows || 0) + ' 行；测试集 MAE='
                     + m.mae + '，RMSE=' + m.rmse + '，R²=' + m.r2;

@@ -17,15 +17,15 @@
     "terminal_fan_power"
   ],
   "metrics": {
-    "n_train": 84,
-    "n_valid": 18,
-    "n_test": 18,
-    "mae": 3.2866,
-    "rmse": 4.4192,
-    "mape": 0.5233,
-    "r2": 0.90965,
+    "n_train": 9373,
+    "n_valid": 2008,
+    "n_test": 2008,
+    "mae": 43.8292,
+    "rmse": 48.1282,
+    "mape": 9.5087,
+    "r2": 0.290821,
     "target": "total_power",
-    "trained_at": "2026-07-17T01:13:01.552177+00:00",
+    "trained_at": "2026-07-23T05:54:10.297474+00:00",
     "feature_columns": [
       "outdoor_temp",
       "outdoor_humidity",
@@ -42,7 +42,7 @@
       "cooling_pump_running_count",
       "terminal_fan_power"
     ],
-    "best_iteration": 178
+    "best_iteration": 24
   },
   "params": {
     "objective": "regression",
@@ -54,6 +54,9 @@
     "bagging_freq": 1,
     "min_data_in_leaf": 10,
     "verbosity": -1,
-    "seed": 42
-  }
+    "seed": 42,
+    "num_threads": 1,
+    "force_col_wise": true
+  },
+  "backend": "lightgbm"
 }

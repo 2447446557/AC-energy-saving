@@ -491,47 +491,39 @@ class ACEnergyModel:
 
         capacity_ratio = delivered_capacity / max(demand, 1e-6)
         indoor_span = max(hi - lo, 1e-6)
-        # 与 settings.yaml comfort_margin.base_from_ceiling=0.5 对齐
-        # （完整室外/邻近修正在 SafetyConstraints.effective_comfort_ceiling）
-        safety_ceiling = hi - 0.5
-        safety_target = max(lo, safety_ceiling - 0.15)
+        # 舒适硬区间 [lo, hi]，不再额外要求距上下限的安全距离
+        band_ceiling = hi
+        band_target = mid
         at_hi = measured_indoor >= hi - 0.05
-        above_safety = measured_indoor >= safety_ceiling - 1e-9
         near_hi = measured_indoor >= hi - 0.4
 
-        # 贴近硬上限或已越过安全天花板：有供冷能力时主动拉回安全目标区
-        if (at_hi or above_safety) and demand > 1e-6:
+        # 贴近/越过硬上限：有供冷能力时主动拉回舒适区中点附近
+        if at_hi and demand > 1e-6:
             cool_strength = min(
                 max(control_effect, 0.0) * min(max(capacity_ratio, 0.0), 1.25),
                 1.25,
             )
             pull = min(0.95, 0.55 + 0.40 * cool_strength)
-            predicted = measured_indoor - (measured_indoor - safety_target) * pull
+            predicted = measured_indoor - (measured_indoor - band_target) * pull
             predicted -= max(0.0, 0.5 - chw_norm) * 0.20 * min(cool_strength, 1.0)
-            predicted = min(safety_ceiling, max(lo, predicted))
+            predicted = min(band_ceiling, max(lo, predicted))
         elif capacity_ratio + 1e-6 < 0.98:
             unmet = max(demand - delivered_capacity, 0.0)
             if lo <= measured_indoor <= hi:
                 drift = min(unmet / max(p.indoor_gain, 1e-6), 0.35)
-                # 已在安全区内：禁止向 26℃ 爬升；轻微欠供冷也粘住或略漂
-                if measured_indoor <= safety_ceiling:
-                    if capacity_ratio >= 0.70:
-                        predicted = measured_indoor
-                    else:
-                        soft = min(drift, 0.05) * max(0.0, 0.85 - capacity_ratio)
-                        predicted = min(safety_ceiling, measured_indoor + soft)
-                    predicted = min(safety_ceiling, max(lo, predicted))
-                elif near_hi:
+                if capacity_ratio >= 0.70:
+                    predicted = measured_indoor
+                else:
+                    soft = min(drift, 0.05) * max(0.0, 0.85 - capacity_ratio)
+                    predicted = min(band_ceiling, measured_indoor + soft)
+                if near_hi and capacity_ratio < 0.70:
                     relief = min(max(control_effect, 0.0), 1.0) * min(
                         capacity_ratio / 0.98, 1.0
                     )
                     predicted = measured_indoor + drift * (1.0 - 0.90 * relief)
                     if capacity_ratio >= 0.80:
-                        predicted -= (measured_indoor - safety_target) * 0.45 * relief
-                    predicted = min(safety_ceiling, max(lo, predicted))
-                else:
-                    predicted = min(safety_ceiling, measured_indoor + drift * 0.2)
-                    predicted = min(hi, max(lo, predicted))
+                        predicted -= (measured_indoor - band_target) * 0.45 * relief
+                predicted = min(band_ceiling, max(lo, predicted))
             else:
                 predicted = measured_indoor + unmet / max(p.indoor_gain, 1e-6)
         else:
@@ -539,19 +531,18 @@ class ACEnergyModel:
             chw_effect = (chw_norm - 0.5) * indoor_span * 0.5
             surplus_effect = -surplus * indoor_span * 0.4 * max(control_effect, 0.1)
             equilibrium = mid + chw_effect + surplus_effect
-            # 平衡点也钳在安全天花板以下，避免“舒适带内”预测贴 26
-            equilibrium = min(safety_ceiling, max(lo, equilibrium))
+            equilibrium = min(band_ceiling, max(lo, equilibrium))
 
             if lo <= measured_indoor <= hi:
-                if measured_indoor > safety_target:
+                if measured_indoor > band_target:
                     blend = 0.45 if near_hi else 0.30
                     predicted = (1.0 - blend) * measured_indoor + blend * min(
-                        equilibrium, safety_target
+                        equilibrium, band_target
                     )
                 else:
                     blend = 0.12
                     predicted = (1.0 - blend) * measured_indoor + blend * equilibrium
-                predicted = min(safety_ceiling, max(lo - 0.5, predicted))
+                predicted = min(band_ceiling, max(lo - 0.5, predicted))
             else:
                 surplus_ratio = min(
                     max((capacity_ratio - 1.0) / max(capacity_ratio, 1.0), 0.0), 1.0
@@ -559,7 +550,7 @@ class ACEnergyModel:
                 relief = control_effect * surplus_ratio
 
                 if measured_indoor > hi:
-                    predicted = measured_indoor - (measured_indoor - safety_target) * relief
+                    predicted = measured_indoor - (measured_indoor - band_target) * relief
                     predicted = max(lo, predicted)
                 elif measured_indoor < lo:
                     predicted = measured_indoor + (mid - measured_indoor) * relief
@@ -572,7 +563,6 @@ class ACEnergyModel:
             outdoor_stress > 0
             and capacity_ratio < 1.05
             and not at_hi
-            and not above_safety
             and not (lo <= measured_indoor <= hi)
         ):
             tightness = min(max(1.05 - capacity_ratio, 0.0) / 0.05, 1.0)
@@ -583,11 +573,11 @@ class ACEnergyModel:
                 * (1.0 - 0.5 * control_effect)
             )
 
-        # 有供冷时预测室温不得贴硬上限；强制落在安全距离内
+        # 有供冷时预测室温钳在舒适硬区间内
         if capacity_ratio >= 0.75 or control_effect >= 0.35:
-            predicted = min(safety_ceiling, max(lo, predicted))
+            predicted = min(band_ceiling, max(lo, predicted))
         elif lo <= measured_indoor <= hi:
-            predicted = min(hi - 0.15, max(lo - 1.0, predicted))
+            predicted = min(hi, max(lo - 1.0, predicted))
         else:
             predicted = min(predicted, hi + 1.0)
 

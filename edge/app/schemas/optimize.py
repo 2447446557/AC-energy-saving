@@ -77,6 +77,11 @@ class OptimizeResult(BaseModel):
     # 节能率（%）
     energy_saving_rate: float = 0.0
 
+    # 冷站综合能效 EER = 供冷量(kW) / 冷站总电(kW)，越大越好；0 表示无法计算
+    input_eer: float = 0.0  # 输入工况：室内负荷 / 输入总功率
+    predicted_eer: float = 0.0  # 寻优后：供冷量(优先模型 delivered) / 预测总功率
+    cooling_load_kw: float = 0.0  # 计算 EER 所用的供冷量口径（kW）
+
     # 主控制字段 = 实发值（平滑/硬闸后）；下列为 PSO 原始推荐（平滑前）
     recommended_chilled_water_temp: float | None = None
     recommended_chilled_pump_freq: float | None = None

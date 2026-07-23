@@ -31,15 +31,34 @@ _FIELD_ALIASES: dict[str, tuple[str, ...]] = {
     "indoor_temp": ("室内温度", "室内温度℃", "室内温度°C"),
     "indoor_humidity": ("室内湿度", "室内湿度%"),
     # 勿用过于宽泛的「负荷」，以免误匹配导叶开度等列
-    "indoor_load": ("室内负荷", "室内负荷kw", "室内负荷kW", "冷负荷", "空调负荷"),
-    "chiller_load": ("机组负载", "机组负荷", "机组负载%", "冷机负载"),
-    "chiller_power": ("机组功率", "机组功率kw", "机组功率kW", "冷机功率"),
+    "indoor_load": ("室内负荷", "室内负荷kw", "室内负荷kW", "室内冷负荷", "冷负荷", "空调负荷"),
+    "chiller_load": (
+        "机组负载",
+        "机组负荷",
+        "机组负载%",
+        "冷机负载",
+        "主机负荷",
+        "主机负载",
+        "有效负荷",
+    ),
+    "chiller_power": (
+        "机组功率",
+        "机组功率kw",
+        "机组功率kW",
+        "冷机功率",
+        "主机功率",
+        "主机功率_计算",
+        "主机功率计算",
+    ),
     "chilled_water_temp": (
         "冷水出水温度",
         "冷冻水出水温度",
         "冷冻水温度",
         "RA2冷冻出口温度",
         "冷冻出口温度",
+        "冷冻出水",
+        "冷冻出水温度",
+        "冷冻出水℃",
     ),
     "cooling_water_temp": (
         "冷却水出水温度",
@@ -48,14 +67,22 @@ _FIELD_ALIASES: dict[str, tuple[str, ...]] = {
         "冷却出口温度",
     ),
     "chilled_pump_freq": ("当前冷冻泵频率", "冷冻泵频率", "冷冻泵频率hz"),
-    "chilled_pump_power": ("当前冷冻泵功率", "冷冻泵功率"),
+    "chilled_pump_power": ("当前冷冻泵功率", "冷冻泵功率", "冷冻泵功率合计"),
     "cooling_pump_freq": ("当前冷却泵频率", "冷却泵频率", "冷却泵频率hz"),
-    "cooling_pump_power": ("当前冷却泵功率", "冷却泵功率"),
+    "cooling_pump_power": ("当前冷却泵功率", "冷却泵功率", "冷却泵功率合计"),
     "cooling_tower_fan_freq": ("冷却塔频率", "冷却塔风机频率", "冷却塔频率hz"),
-    "cooling_tower_fan_power": ("冷却塔总功率", "冷却塔功率", "冷却塔风机功率"),
+    "cooling_tower_fan_power": ("冷却塔总功率", "冷却塔功率", "冷却塔风机功率", "冷却塔功率合计"),
+    "chilled_pump_running_count": ("冷冻泵开台数", "冷冻水泵开台数", "冷冻泵台数"),
+    "cooling_pump_running_count": ("冷却泵开台数", "冷却水泵开台数", "冷却泵台数"),
     "terminal_fan_power": ("末端风机功率", "末端风机功率kw"),
     "total_power": ("系统总功率", "总功率", "系统功率"),
 }
+
+# 非必填但训练/寻优会用到的字段（有列则写入 device_data）
+_OPTIONAL_IMPORT_FIELDS = (
+    "chilled_pump_running_count",
+    "cooling_pump_running_count",
+)
 
 _STATUS_ALIASES = ("运行状态", "寻优运行状态", "设备状态", "状态")
 _SITE_DEFAULTS_FALLBACK = {
@@ -1347,6 +1374,7 @@ def _derive_site_fields(
         _columns_matching(df, "RA2", "冷冻出口")
         or _columns_matching(df, "冷冻出口温度")
         or _columns_matching(df, "冷冻出口")
+        or _columns_matching(df, "冷冻出水")
     )
     ra2_cooling_out_cols = (
         _columns_matching(df, "RA2", "冷却出口")
@@ -1616,6 +1644,19 @@ def parse_runtime_file(content: bytes, filename: str) -> dict[str, Any]:
                     detail="Excel列存在但值为0，使用缺省",
                     substituted=True,
                 )
+        for field in _OPTIONAL_IMPORT_FIELDS:
+            column = column_map.get(field)
+            if not column:
+                continue
+            raw_val = _to_float(row.get(column), 0.0)
+            device_data[field] = raw_val
+            mark_field(
+                field_sources,
+                field,
+                raw_val,
+                "excel_column",
+                excel_column=column,
+            )
         defaulted_fields = [
             field
             for field in _REQUIRED_FIELDS

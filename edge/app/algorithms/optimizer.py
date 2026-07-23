@@ -2054,6 +2054,18 @@ class PSOOptimizer:
         rec_cwp = rec.get("cooling_pump_freq")
         rec_tower = rec.get("cooling_tower_fan_freq")
 
+        from app.services.power_baseline import compute_plant_eer
+
+        # 冷站综合能效：供冷量 / 冷站总电（越大越好）
+        input_cooling_kw = float(data.indoor_load or 0.0)
+        if input_cooling_kw <= 1e-6 and float(forecast_indoor_load or 0.0) > 1e-6:
+            input_cooling_kw = float(forecast_indoor_load)
+        delivered = float(getattr(breakdown, "delivered_cooling", 0.0) or 0.0) if breakdown else 0.0
+        cooling_for_predicted = delivered if delivered > 1e-6 else input_cooling_kw
+        power_for_input = measured_total if measured_total > 1e-6 else float(baseline_power or 0.0)
+        input_eer = compute_plant_eer(input_cooling_kw, power_for_input)
+        predicted_eer = compute_plant_eer(cooling_for_predicted, predicted)
+
         return OptimizeResult(
             task_id=task_id,
             status=status,
@@ -2083,6 +2095,9 @@ class PSOOptimizer:
             ),
             predicted_cop=round(breakdown.cop, 3) if breakdown else 0.0,
             energy_saving_rate=round(saving, 2),
+            input_eer=input_eer,
+            predicted_eer=predicted_eer,
+            cooling_load_kw=round(cooling_for_predicted, 2),
             recommended_chilled_water_temp=(
                 round(float(rec_chw), 2) if rec_chw is not None else None
             ),
